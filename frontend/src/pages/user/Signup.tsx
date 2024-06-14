@@ -4,8 +4,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useState } from "react";
 
 
-const Login = () => {
-    // const steps = ['Step 1', 'Step 2'];
+const Signup = () => {
     const [showPassword, setShowPassword] = useState(false);
 
     const togglePasswordVisibility = () => {
@@ -52,7 +51,7 @@ const Login = () => {
                     <img src="LoginImage.jpg" alt="" style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '10px' }} />
                 </Box>
                 <Stack
-                    spacing={9}
+                    spacing={6}
                     sx={{
                         width: '50%',
                         height: '100vh',
@@ -60,22 +59,15 @@ const Login = () => {
                         flexDirection: 'column',
                         alignItems: 'center',
                         textAlign: 'center',
-                        padding: '20px',
+                        padding: '4px',
+                        paddingTop: '6rem'
+
                     }}
                 >
-                    <Box>
-                        <Typography variant="h6" color='whitesmoke'>
-                            Step 1 of 2
-                        </Typography>
-                        <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 1 }}>
-                            <Box sx={{ width: '100px', height: '4px', backgroundColor: '#57D7FF' }} />
-                            <Box sx={{ width: '100px', height: '4px', backgroundColor: 'whitesmoke' }} />
-                        </Stack>
-                    </Box>
 
                     <Box>
                         <Typography variant="h4" color='whitesmoke'>
-                            Welcome back to Oasic...👋🏻
+                            Sign up
                         </Typography>
                     </Box>
 
@@ -96,6 +88,7 @@ const Login = () => {
                                 fullWidth
                                 sx={{ mb: 2, width: '70%' }}
                             />
+
                             <TextField
                                 label="Password"
                                 variant="outlined"
@@ -110,21 +103,26 @@ const Login = () => {
                                         </InputAdornment>
                                     ),
                                 }}
-                                sx={{ mb: 1, width: '70%' }}
+                                sx={{ mb: 2, width: '70%' }}
                             />
-                            <Box sx={{ width: '70%', mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                                <Link
-                                        href="#"
-                                        variant="body2"
-                                        sx={{
-                                            marginLeft: 1,
-                                            color:'greenyellow',
-                                            textDecoration: 'none', 
-                                        }}
-                                    >
-                                    forgot password?
-                                    </Link>
-                            </Box>
+
+                            <TextField
+                                label="Confirm password"
+                                variant="outlined"
+                                fullWidth
+                                type={showPassword ? 'text' : 'password'}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={togglePasswordVisibility} edge="end" style={{ color: 'white' }}>
+                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{ mb: 3, width: '70%' }}
+                            />
+
 
                             <Button
                                 variant="contained"
@@ -135,22 +133,22 @@ const Login = () => {
                                 Next
                             </Button>
 
-                            <Box sx={{ width: '70%', mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                            <Box sx={{ width: '70%', mt: 3 }}>
                                 <Typography
                                     variant="body2"
                                     sx={{
-                                        color: 'white',
-                                        textAlign: 'end',
+                                        color:'white'
                                     }}
                                 >
                                     Don't have an account?
+
                                     <Link
                                         href="#"
                                         variant="body2"
                                         sx={{
                                             marginLeft: 1,
-                                            color:'greenyellow',
-                                            textDecoration: 'none', 
+                                            color: 'greenyellow',
+                                            textDecoration: 'none',
                                         }}
                                     >
                                         Sign up
@@ -168,4 +166,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default Signup;

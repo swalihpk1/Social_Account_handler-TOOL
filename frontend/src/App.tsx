@@ -5,7 +5,7 @@ import './index.css';
 const App = () => {
   return (
     <>
-      <Login/>
+      {/* <Login/> */}
     </>
   );
 };
