@@ -1,0 +1,19 @@
+{
+  "name": "social-media-handle",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/swalihpk1/Social_Account_handler-TOOL.git"
+  },
+  "author": "Swalihpk1",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/swalihpk1/Social_Account_handler-TOOL/issues"
+  },
+  "homepage": "https://github.com/swalihpk1/Social_Account_handler-TOOL#readme"
+}
