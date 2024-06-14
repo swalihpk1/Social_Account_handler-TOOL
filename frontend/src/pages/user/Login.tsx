@@ -1,10 +1,16 @@
-import { Box, Button, Container, TextField, Stack, ThemeProvider, Typography } from "@mui/material";
+import { Box, Button, Container, TextField, Stack, ThemeProvider, Typography, InputAdornment, IconButton } from "@mui/material";
 import theme from "./theme";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { useState } from "react";
 
 
 const Login = () => {
     // const steps = ['Step 1', 'Step 2'];
+    const [showPassword, setShowPassword] = useState(false);
 
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
 
 
     return (
@@ -46,68 +52,99 @@ const Login = () => {
                     <img src="LoginImage.jpg" alt="" style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '10px' }} />
                 </Box>
                 <Stack
+                    spacing={9}
                     sx={{
                         width: '50%',
-                        height: '100%',
+                        height: '100vh',
                         display: 'flex',
                         flexDirection: 'column',
-                        justifyContent: 'flex-end', // Align content to bottom
                         alignItems: 'center',
                         textAlign: 'center',
                         padding: '20px',
                     }}
                 >
+                    <Box>
+                        <Typography variant="h6" color='whitesmoke'>
+                            Step 1 of 2
+                        </Typography>
+                        <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 1 }}>
+                            <Box sx={{ width: '100px', height: '4px', backgroundColor: '#57D7FF' }} />
+                            <Box sx={{ width: '100px', height: '4px', backgroundColor: 'whitesmoke' }} />
+                        </Stack>
+                    </Box>
 
+                    <Box>
+                        <Typography variant="h4" color='whitesmoke'>
+                            Welcome back to Oasic...👋🏻
+                        </Typography>
+                    </Box>
 
-                    <Typography variant="h6" color='whitesmoke'>
-                        Step 1 of 2
-                    </Typography>
-                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 1 }}>
-                        <Box sx={{ width: '100px', height: '4px', backgroundColor: '#57D7FF'}} />
-                        <Box sx={{ width: '100px', height: '4px', backgroundColor: 'whitesmoke' }} />
-                    </Stack>
-                  
                     <ThemeProvider theme={theme}>
-                       
                         <Box
                             sx={{
-                                width: '100%', // Set width to 100% for responsiveness
+                                width: '100%',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 justifyContent: 'center',
                                 alignItems: 'center',
                                 textAlign: 'center',
-                                margin: 'auto',
                             }}
                         >
-                           
-                            <TextField
-                                label="Last Name"
-                                variant="outlined"
-                                fullWidth
-                                sx={{ mb: 2, width: '70%' }}
-                            />
-                            <TextField
-                                label="Last Name"
-                                variant="outlined"
-                                fullWidth
-                                sx={{ mb: 2, width: '70%' }}
-                            />
                             <TextField
                                 label="Email"
                                 variant="outlined"
                                 fullWidth
                                 sx={{ mb: 2, width: '70%' }}
                             />
+                            <TextField
+                                label="Password"
+                                variant="outlined"
+                                fullWidth
+                                type={showPassword ? 'text' : 'password'}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={togglePasswordVisibility} edge="end" style={{ color: 'white' }}>
+                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{ mb: 1, width: '70%' }}
+                            />
+                            <Box sx={{ width: '70%',mb:3, display: 'flex', justifyContent: 'flex-end' }}>
+                                <Typography
+                                    variant="body2"
+                                    sx={{
+                                        color: 'greenyellow',
+                                        textAlign: 'end',
+                                    }}
+                                >
+                                    forgot password?
+                                </Typography>
+                            </Box>
+
                             <Button
                                 variant="contained"
                                 color="primary"
                                 fullWidth
                                 sx={{ mt: 2, width: '70%' }}
-                            // onClick={handleNext}
                             >
                                 Next
                             </Button>
+
+                            <Box sx={{ width: '70%', mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                                <Typography
+                                    variant="body2"
+                                    sx={{
+                                        color:'greenyellow',
+                                        textAlign: 'end',
+                                    }}
+                                >
+                                    Don't have an account?
+                                </Typography>
+                            </Box>
+
                         </Box>
                     </ThemeProvider>
                 </Stack>

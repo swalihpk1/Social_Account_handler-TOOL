@@ -10,7 +10,7 @@ const theme = createTheme({
                         color: 'white',
                     },
                     '& .MuiInputLabel-root.Mui-focused': {
-                        color: 'white',  // Change label color after focus to white
+                        color: 'white',
                     },
                     '& .MuiOutlinedInput-root': {
                         '& fieldset': {
@@ -23,7 +23,7 @@ const theme = createTheme({
                             borderColor: 'white',
                         },
                         '& .MuiInputBase-input': {
-                            color: 'white', 
+                            color: 'white',
                         },
                         '&.Mui-focused .MuiInputBase-input': {
                             backgroundColor: 'rgba(255, 255, 255, 0.12)',
