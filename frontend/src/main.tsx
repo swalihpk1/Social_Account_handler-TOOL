@@ -5,6 +5,8 @@ import App from './App';
 import Login from './pages/user/Login';
 import './index.css';
 import Signup from './pages/user/Signup';
+import Connect from './pages/user/Connect';
+
 
 const Root: React.FC = () => (
   <React.StrictMode>
@@ -12,7 +14,8 @@ const Root: React.FC = () => (
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/login" element={<Login />} />
-        <Route path='/Signup' element={<Signup/>}></Route>
+        <Route path='/signup' element={<Signup/>}></Route>
+        <Route path='/connect' element={<Connect/>}></Route>
       </Routes>
     </Router>
   </React.StrictMode>

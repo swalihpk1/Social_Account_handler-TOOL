@@ -4,7 +4,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useState } from "react";
 
 
-const Signup = () => {
+const Signup: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
 
     const togglePasswordVisibility = () => {
@@ -137,7 +137,7 @@ const Signup = () => {
                                 <Typography
                                     variant="body2"
                                     sx={{
-                                        color:'white'
+                                        color: 'white'
                                     }}
                                 >
                                     Don't have an account?

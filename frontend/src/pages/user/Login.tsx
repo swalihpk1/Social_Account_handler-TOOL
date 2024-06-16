@@ -4,7 +4,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useState } from "react";
 
 
-const Login = () => {
+const Login: React.FC = () => {
     // const steps = ['Step 1', 'Step 2'];
     const [showPassword, setShowPassword] = useState(false);
 
@@ -114,16 +114,16 @@ const Login = () => {
                             />
                             <Box sx={{ width: '70%', mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
                                 <Link
-                                        href="#"
-                                        variant="body2"
-                                        sx={{
-                                            marginLeft: 1,
-                                            color:'greenyellow',
-                                            textDecoration: 'none', 
-                                        }}
-                                    >
+                                    href="#"
+                                    variant="body2"
+                                    sx={{
+                                        marginLeft: 1,
+                                        color: 'greenyellow',
+                                        textDecoration: 'none',
+                                    }}
+                                >
                                     forgot password?
-                                    </Link>
+                                </Link>
                             </Box>
 
                             <Button
@@ -149,8 +149,8 @@ const Login = () => {
                                         variant="body2"
                                         sx={{
                                             marginLeft: 1,
-                                            color:'greenyellow',
-                                            textDecoration: 'none', 
+                                            color: 'greenyellow',
+                                            textDecoration: 'none',
                                         }}
                                     >
                                         Sign up
