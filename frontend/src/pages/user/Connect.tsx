@@ -42,7 +42,6 @@ const Connect: React.FC = () => {
                         height: { xs: '50%', sm: '100%' },
                         display: 'flex',
                         justifyContent: 'center',
-                        alignItems: 'center',
                     }}
                 >
                     <img src="LoginImage.jpg" alt="" style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '10px' }} />

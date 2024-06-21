@@ -143,7 +143,7 @@ const Signup: React.FC = () => {
                                     Don't have an account?
 
                                     <Link
-                                        href="#"
+                                        href="/login"
                                         variant="body2"
                                         sx={{
                                             marginLeft: 1,
@@ -151,7 +151,7 @@ const Signup: React.FC = () => {
                                             textDecoration: 'none',
                                         }}
                                     >
-                                        Sign up
+                                        Sign in
                                     </Link>
                                 </Typography>
                             </Box>

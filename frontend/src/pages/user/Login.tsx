@@ -145,7 +145,7 @@ const Login: React.FC = () => {
                                 >
                                     Don't have an account?
                                     <Link
-                                        href="#"
+                                        href="/signup"
                                         variant="body2"
                                         sx={{
                                             marginLeft: 1,
