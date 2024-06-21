@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from "@nestjs/common";
+import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { UserData } from "./dto/auth.dto";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from 'mongoose'
@@ -14,26 +14,36 @@ export class AuthService {
     ) { }
 
     //Signup
-    async signup(user: UserData): Promise<User> {
-        const { email } = user
+    async signup(userDto: UserData): Promise<User> {
+        const { email } = userDto
 
         const existingUser = await this.userModel.findOne({ email })
         if (existingUser) {
             throw new ConflictException('User already exists')
         }
-        const createdUser = new this.userModel(user);
+        const createdUser = new this.userModel(userDto);
         await createdUser.save()
 
-        const token = this.jwtSecret.generateJwtToken({ email: user.email, sub: createdUser._id })
-        console.log("TOKEN : ",token);
+        const token = this.jwtSecret.generateJwtToken({ email: userDto.email, sub: createdUser._id })
+        console.log("TOKEN : ", token);
         return (createdUser)
     }
 
     //Login
-    async login(user: UserData) {
+    async login(userDto: UserData): Promise<{ token: string }> {
+        const { email, password } = userDto
 
+        const user = await this.userModel.findOne({ email })
+        if (!user) {
+            throw new UnauthorizedException('email is not valid')
+        }
 
-        return { message: "Login completed" }
+        const isMatch = await user.comparePassword(password)
+        if (!isMatch) {
+            throw new UnauthorizedException('Incorrect password')
+        }
 
+        const token = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id })
+        return { token };
     }
 } 
