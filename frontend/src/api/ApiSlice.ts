@@ -1,30 +1,18 @@
-import { apiSlice } from "../Slices";
-const USER_URL = '/users';
+import { authSlice } from "../features/auth/AuthSlice";
+import { AuthResponse, UserData } from "../types/Types";
+const USER_URL = '/user';
 
-interface SignUpData {
-    username: string;
-    password: string;
-}
 
-interface LoginData {
-    username: string;
-    password: string;
-}
-
-interface AuthResponse {
-    token: string;
-}
-
-export const userApiSlice = apiSlice.injectEndpoints({
+export const userApiSlice = authSlice.injectEndpoints({
     endpoints: (builder) => ({
-        signUp: builder.mutation<AuthResponse, SignUpData>({
+        signUp: builder.mutation<AuthResponse, UserData>({
             query: (data) => ({
                 url: `${USER_URL}/signup`,
                 method: 'POST',
                 body: data,
             }),
         }),
-        login: builder.mutation<AuthResponse, LoginData>({
+        login: builder.mutation<AuthResponse, UserData>({
             query: (data) => ({
                 url: `${USER_URL}/login`,
                 method: 'POST',

@@ -1,5 +1,5 @@
 import { Box, Button, Container, TextField, Stack, ThemeProvider, Typography, InputAdornment, IconButton, Link } from "@mui/material";
-import theme from "./theme";
+import theme from "./Theme";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useState } from "react";
 

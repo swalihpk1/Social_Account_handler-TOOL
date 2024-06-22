@@ -4,7 +4,7 @@ import { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/qu
 
 const baseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = fetchBaseQuery({ baseUrl: '' });
 
-export const apiSlice = createApi({
+export const authSlice = createApi({
     baseQuery,
     tagTypes: ['User'],
     endpoints: (builder) => ({})
