@@ -1,5 +1,6 @@
 export interface UserData {
-    username: string;
+    name?: string;
+    email: string
     password: string;
 }
 
@@ -7,6 +8,7 @@ export interface AuthResponse {
     token: string;
 }
 
+//UserInfo for Local Storage
 export interface UserInfo {
     name: string;
     email: string;

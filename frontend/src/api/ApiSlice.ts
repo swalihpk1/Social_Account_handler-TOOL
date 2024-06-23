@@ -1,9 +1,12 @@
-import { authSlice } from "../features/auth/AuthSlice";
-import { AuthResponse, UserData } from "../types/Types";
-const USER_URL = '/user';
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { AuthResponse, UserData } from '../types/Types';
 
+const USER_URL = '/api/user';
 
-export const userApiSlice = authSlice.injectEndpoints({
+const baseQuery = fetchBaseQuery({ baseUrl: '' });
+
+export const apiSlice = createApi({
+    baseQuery,
     endpoints: (builder) => ({
         signUp: builder.mutation<AuthResponse, UserData>({
             query: (data) => ({
@@ -22,4 +25,4 @@ export const userApiSlice = authSlice.injectEndpoints({
     }),
 });
 
-export const { useSignUpMutation, useLoginMutation } = userApiSlice;
+export const { useSignUpMutation, useLoginMutation } = apiSlice;

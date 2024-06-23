@@ -4,12 +4,13 @@ import { UserData } from "./dto/auth.dto";
 import { JwtAuthGuard } from "./guards/jwtAuth.guard";
 
 
-@Controller('api/user')
+@Controller('user')
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
     @Post('signup')
     async signup(@Body() user: UserData) {
+        console.log(user)
         return this.authService.signup(user)
     }
 
