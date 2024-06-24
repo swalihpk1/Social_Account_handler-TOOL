@@ -24,8 +24,6 @@ export class AuthService {
         const createdUser = new this.userModel(userDto);
         await createdUser.save()
 
-        const token = this.jwtSecret.generateJwtToken({ email: userDto.email, sub: createdUser._id })
-        console.log("TOKEN : ", token);
         return (createdUser)
     }
 
@@ -46,4 +44,4 @@ export class AuthService {
         const token = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id })
         return { token };
     }
-} 
+}   

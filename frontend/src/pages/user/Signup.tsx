@@ -176,9 +176,6 @@ const Signup: React.FC = () => {
                                     mb: 2,
                                     width: '70%',
                                     backgroundColor: errors.password ? 'transparent' : 'rgba(217, 217, 217, 0.28)',
-                                    '& .MuiFormHelperText-root': {
-                                        backgroundColor: 'transparent',
-                                    },
                                 }}
                                 {...register('password')}
                                 error={!!errors.password}
@@ -203,9 +200,6 @@ const Signup: React.FC = () => {
                                     mb: 3,
                                     width: '70%',
                                     backgroundColor: errors.confirmPassword ? 'transparent' : 'rgba(217, 217, 217, 0.28)',
-                                    '& .MuiFormHelperText-root': {
-                                        backgroundColor: 'transparent',
-                                    },
                                 }}
                                 {...register('confirmPassword')}
                                 error={!!errors.confirmPassword}

@@ -5,7 +5,6 @@ const theme = createTheme({
         MuiTextField: {
             styleOverrides: {
                 root: {
-                    // backgroundColor: errors.email ? 'transparent' : 'rgba(217, 217, 217, 0.28)',
                     '& .MuiInputLabel-root': {
                         color: 'white',
                     },

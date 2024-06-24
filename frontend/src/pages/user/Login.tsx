@@ -1,17 +1,70 @@
-import { Box, Button, Container, TextField, Stack, ThemeProvider, Typography, InputAdornment, IconButton, Link } from "@mui/material";
+import { Box, Button, Container, TextField, Stack, ThemeProvider, Typography, InputAdornment, IconButton, Link, CircularProgress } from "@mui/material";
 import theme from "./Theme";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useLoginMutation } from "../../api/ApiSlice";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
+interface LoginFormData {
+    email: string;
+    password: string;
+}
 
 const Login: React.FC = () => {
-    // const steps = ['Step 1', 'Step 2'];
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
+
+    const [login] = useLoginMutation();
+
+    const { register, handleSubmit, setError, formState: { errors } } = useForm<LoginFormData>();
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
 
+    const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
+        setIsLoading(true);
+        try {
+            await new Promise((resolve) => setTimeout(resolve, 2000)); 
+            await login({ email: data.email, password: data.password }).unwrap();
+            navigate('/connect');
+        } catch (error) {
+            console.error('Login failed:', error);
+            if (isFetchBaseQueryError(error)) {
+                const errorMessage = getErrorMessage(error);
+                if (errorMessage.toLowerCase().includes('email')) {
+                    setError('email', { type: 'server', message: errorMessage });
+                }
+                if (errorMessage.toLowerCase().includes('password')) {
+                    setError('password', { type: 'server', message: errorMessage });
+                }
+                if (!errorMessage.toLowerCase().includes('email') && !errorMessage.toLowerCase().includes('password')) {
+                    setError('email', { type: 'server', message: 'Invalid login credentials' });
+                    setError('password', { type: 'server', message: 'Invalid login credentials' });
+                }
+            } else {
+                setError('email', { type: 'server', message: 'An unexpected error occurred' });
+                setError('password', { type: 'server', message: 'An unexpected error occurred' });
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+    const isFetchBaseQueryError = (error: any): error is FetchBaseQueryError => {
+        return error && typeof error === 'object' && 'data' in error;
+    };
+
+    const getErrorMessage = (error: FetchBaseQueryError): string => {
+        if ('data' in error && typeof error.data === 'object' && error.data !== null && 'message' in error.data) {
+            return (error.data as { message: string }).message;
+        }
+        return 'An error occurred';
+    };
 
     return (
         <Container
@@ -89,12 +142,17 @@ const Login: React.FC = () => {
                                 alignItems: 'center',
                                 textAlign: 'center',
                             }}
+                            component='form'
+                            onSubmit={handleSubmit(onSubmit)}
                         >
                             <TextField
                                 label="Email"
                                 variant="outlined"
                                 fullWidth
                                 sx={{ mb: 2, width: '70%' }}
+                                {...register('email', { required: 'Email is required' })}
+                                error={!!errors.email}
+                                helperText={errors.email?.message}
                             />
                             <TextField
                                 label="Password"
@@ -111,6 +169,9 @@ const Login: React.FC = () => {
                                     ),
                                 }}
                                 sx={{ mb: 1, width: '70%' }}
+                                {...register('password', { required: 'Password is required' })}
+                                error={!!errors.password}
+                                helperText={errors.password?.message}
                             />
                             <Box sx={{ width: '70%', mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
                                 <Link
@@ -131,8 +192,10 @@ const Login: React.FC = () => {
                                 color="primary"
                                 fullWidth
                                 sx={{ mt: 2, width: '70%' }}
+                                type="submit"
+                                disabled={isLoading}
                             >
-                                Next
+                                {isLoading ? <CircularProgress size={24} sx={{ color: 'whitesmoke' }} /> : 'Sign up'}
                             </Button>
 
                             <Box sx={{ width: '70%', mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
@@ -157,14 +220,11 @@ const Login: React.FC = () => {
                                     </Link>
                                 </Typography>
                             </Box>
-
                         </Box>
                     </ThemeProvider>
                 </Stack>
-
             </Stack>
         </Container>
-
     );
 };
 

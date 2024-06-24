@@ -138,6 +138,7 @@ const Connect: React.FC = () => {
                                     textDecoration: 'none',
                                 }}
                             >
+                                
                                 Add another social account :
                             </Typography>
                             <Grid container rowGap={2} sx={{ width: { xs: '100%', sm: '60%' }, margin: 'auto' }}>

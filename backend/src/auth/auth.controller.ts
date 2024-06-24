@@ -10,7 +10,7 @@ export class AuthController {
 
     @Post('signup')
     async signup(@Body() user: UserData) {
-        console.log(user)
+        console.log("Signupil ethi");
         return this.authService.signup(user)
     }
 
