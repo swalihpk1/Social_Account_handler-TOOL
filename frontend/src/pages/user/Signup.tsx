@@ -1,13 +1,15 @@
 import { Box, Button, Container, TextField, Stack, ThemeProvider, Typography, InputAdornment, IconButton, Link, CircularProgress, Snackbar, SnackbarContent } from "@mui/material";
 import theme from "./Theme";
 import { CheckCircleOutline, ErrorOutline, Visibility, VisibilityOff } from "@mui/icons-material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSignUpMutation } from "../../api/ApiSlice";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { signupSchema } from "../../utils/validationSchema";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { RootState } from "../../app/store";
 
 interface SignupFormData {
     email: string;
@@ -23,6 +25,14 @@ const Signup: React.FC = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [toastSeverity, setToastSeverity] = useState<'success' | 'error'>('success');
     const navigate = useNavigate()
+    const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+
+
+    useEffect(() => {
+        if (userInfo) {
+            navigate('/connect')
+        }
+    }, [])
 
     const { register, handleSubmit, formState: { errors } } = useForm<SignupFormData>({
         resolver: yupResolver(signupSchema)

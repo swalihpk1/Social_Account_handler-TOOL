@@ -1,25 +1,34 @@
 import { Box, Button, Container, TextField, Stack, ThemeProvider, Typography, InputAdornment, IconButton, Link, CircularProgress } from "@mui/material";
 import theme from "./Theme";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../../api/ApiSlice";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { useSelector } from "react-redux";
+import { RootState } from "../../app/store";
 
 interface LoginFormData {
     email: string;
     password: string;
 }
 
+
 const Login: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
-
     const [login] = useLoginMutation();
-
     const { register, handleSubmit, setError, formState: { errors } } = useForm<LoginFormData>();
+    const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+
+
+    useEffect(() => {
+        if (userInfo) {
+            navigate('/connect')
+        }
+    }, [])
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
@@ -28,7 +37,7 @@ const Login: React.FC = () => {
     const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
         setIsLoading(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 2000)); 
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             await login({ email: data.email, password: data.password }).unwrap();
             navigate('/connect');
         } catch (error) {
