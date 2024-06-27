@@ -17,13 +17,20 @@ export const apiSlice = createApi({
         }),
         login: builder.mutation<AuthResponse, UserData>({
             query: (data) => ({
-                
+
                 url: `${USER_URL}/login`,
                 method: 'POST',
                 body: data,
             }),
         }),
+        facebookLogin: builder.mutation<void, void>({
+            queryFn: () => {
+                window.location.href = 'http://localhost:3001/connect/facebook';
+                return { data: {} as unknown as void };
+            }
+        })
+
     }),
 });
 
-export const { useSignUpMutation, useLoginMutation } = apiSlice;
+export const { useSignUpMutation, useLoginMutation, useFacebookLoginMutation } = apiSlice;

@@ -8,12 +8,16 @@ export interface AuthResponse {
     token: string;
 }
 
-//UserInfo for Local Storage
 export interface UserInfo {
-    name: string;
+    name?: string;
     email: string;
 }
 
 export interface AuthState {
     userInfo: UserInfo | null;
+}
+
+export interface LoginFormData {
+    email: string;
+    password: string;
 }

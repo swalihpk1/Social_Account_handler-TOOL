@@ -1,22 +1,21 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Req, UseGuards } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { UserData } from "./dto/auth.dto";
 import { JwtAuthGuard } from "./guards/jwtAuth.guard";
-
+import { Request } from 'express'; // Correct import statement
 
 @Controller('user')
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
-    @Post('signup')
-    async signup(@Body() user: UserData) {
-        console.log("Signupil ethi");
-        return this.authService.signup(user)
+    @Post('login')
+    async login(@Body() userDto: UserData, @Req() req: Request) { 
+        return this.authService.login(userDto, req);
     }
 
-    @Post('login')
-    async login(@Body() user: UserData) {
-        return this.authService.login(user)
+    @Post('signup')
+    async signup(@Body() userDto: UserData) {
+        return this.authService.signup(userDto);
     }
 
     @UseGuards(JwtAuthGuard)

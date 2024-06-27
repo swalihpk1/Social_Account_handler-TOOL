@@ -32,7 +32,7 @@ const Signup: React.FC = () => {
         if (userInfo) {
             navigate('/connect')
         }
-    }, [])
+    }, [navigate, userInfo])
 
     const { register, handleSubmit, formState: { errors } } = useForm<SignupFormData>({
         resolver: yupResolver(signupSchema)

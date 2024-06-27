@@ -1,10 +1,10 @@
 import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { UserData } from "./dto/auth.dto";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from 'mongoose'
-import { User, UserDocument } from "./user.schema";
-import { error } from "console";
-import { JwtConfigService } from "./config/jwt.config";
+import { Model } from 'mongoose';
+import { User, UserDocument } from "../schemas/user.schema";
+import { JwtConfigService } from "../config/jwt.config";
+import { Request } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -13,35 +13,36 @@ export class AuthService {
         private jwtSecret: JwtConfigService,
     ) { }
 
-    //Signup
     async signup(userDto: UserData): Promise<User> {
-        const { email } = userDto
+        const { email } = userDto;
+        const existingUser = await this.userModel.findOne({ email });
 
-        const existingUser = await this.userModel.findOne({ email })
         if (existingUser) {
-            throw new ConflictException('User already exists')
+            throw new ConflictException('User already exists');
         }
-        const createdUser = new this.userModel(userDto);
-        await createdUser.save()
 
-        return (createdUser)
+        const createdUser = new this.userModel(userDto);
+        await createdUser.save();
+        return createdUser;
     }
 
-    //Login
-    async login(userDto: UserData): Promise<{ token: string }> {
-        const { email, password } = userDto
+    async login(userDto: UserData, req: Request): Promise<{ token: string }> {
+        const { email, password } = userDto;
+        const user = await this.userModel.findOne({ email });
 
-        const user = await this.userModel.findOne({ email })
         if (!user) {
-            throw new UnauthorizedException('email is not valid')
+            throw new UnauthorizedException('Email is not valid');
         }
 
-        const isMatch = await user.comparePassword(password)
+        const isMatch = await user.comparePassword(password);
         if (!isMatch) {
-            throw new UnauthorizedException('Incorrect password')
+            throw new UnauthorizedException('Incorrect password');
         }
 
-        const token = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id })
+        req.session.user = { email: user.email, id: user._id };
+        console.log('Session data:', req.session);
+
+        const token = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id });
         return { token };
     }
-}   
+}

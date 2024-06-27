@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from '../features/auth/CredSlice'
-import { apiSlice } from '../api/ApiSlice';
+import { apiSlice } from "../api/ApiSlice";
 
 export const store = configureStore({
     reducer: {
@@ -13,4 +13,4 @@ export const store = configureStore({
 });
 
 export type RootState = ReturnType<typeof store.getState>;
-
+export type AppDispatch = typeof store.dispatch;

@@ -6,13 +6,11 @@ import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../../api/ApiSlice";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../app/store";
+import { setCredentials } from "../../features/auth/CredSlice";
+import { UserInfo, LoginFormData, AuthResponse } from "../../types/Types";
 
-interface LoginFormData {
-    email: string;
-    password: string;
-}
 
 
 const Login: React.FC = () => {
@@ -22,13 +20,14 @@ const Login: React.FC = () => {
     const [login] = useLoginMutation();
     const { register, handleSubmit, setError, formState: { errors } } = useForm<LoginFormData>();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+    const dispatch = useDispatch()
 
 
     useEffect(() => {
         if (userInfo) {
             navigate('/connect')
         }
-    }, [])
+    }, [navigate, userInfo])
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
@@ -38,7 +37,14 @@ const Login: React.FC = () => {
         setIsLoading(true);
         try {
             await new Promise((resolve) => setTimeout(resolve, 1000));
-            await login({ email: data.email, password: data.password }).unwrap();
+            const response = await login({ email: data.email, password: data.password }).unwrap() as AuthResponse;
+            console.log("Login successful, user:", response);
+
+            const user: UserInfo = {
+                email: data.email,
+            };
+
+            dispatch(setCredentials(user));
             navigate('/connect');
         } catch (error) {
             console.error('Login failed:', error);
@@ -158,7 +164,11 @@ const Login: React.FC = () => {
                                 label="Email"
                                 variant="outlined"
                                 fullWidth
-                                sx={{ mb: 2, width: '70%' }}
+                                sx={{
+                                    mb: 2,
+                                    width: '70%',
+                                    backgroundColor: errors.password ? 'transparent' : 'rgba(217, 217, 217, 0.28)',
+                                }}
                                 {...register('email', { required: 'Email is required' })}
                                 error={!!errors.email}
                                 helperText={errors.email?.message}
@@ -177,7 +187,11 @@ const Login: React.FC = () => {
                                         </InputAdornment>
                                     ),
                                 }}
-                                sx={{ mb: 1, width: '70%' }}
+                                sx={{
+                                    mb: 2,
+                                    width: '70%',
+                                    backgroundColor: errors.password ? 'transparent' : 'rgba(217, 217, 217, 0.28)',
+                                }}
                                 {...register('password', { required: 'Password is required' })}
                                 error={!!errors.password}
                                 helperText={errors.password?.message}

@@ -1,7 +1,11 @@
-import { Logger, Module } from '@nestjs/common';
+import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ProvidersModule } from './connectProviders/provider.module';
+import { JwtConfigModule } from './config/jwt.module';
+import { UserModule } from './schemas/user.module';
+import * as session from 'express-session';
 
 @Module({
   imports: [
@@ -18,6 +22,20 @@ import { MongooseModule } from '@nestjs/mongoose';
       inject: [ConfigService],
     }),
     AuthModule,
+    ProvidersModule,
+    JwtConfigModule,
+    UserModule
   ],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(session({
+        secret: process.env.SESSION_SECRET, 
+        resave: false,
+        saveUninitialized: false,
+        cookie: { secure: false }, 
+      }))
+      .forRoutes('*');
+  }
+}

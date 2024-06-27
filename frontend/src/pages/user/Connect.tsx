@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Box, Container, Stack, Typography, Grid } from "@mui/material";
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -8,8 +8,38 @@ import XIcon from '@mui/icons-material/X';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { ConnectedBTN } from './Styles';
+// import { useFacebookLoginMutation } from '../../api/ApiSlice';
+import { useDispatch } from 'react-redux';
+import { updateUser } from '../../features/auth/CredSlice';
+
 
 const Connect: React.FC = () => {
+    const dispatch = useDispatch();
+
+    const handleFacebookLogin = () => {
+        // Example user object
+        const user = {
+            id: 123,
+            name: 'John Doe',
+            // Add other necessary user data
+        };
+
+        // Encode user data and redirect
+        const userData = encodeURIComponent(JSON.stringify(user));
+        window.location.href = `http://localhost:3001/connect/facebook?user=${userData}`;
+    };
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const userParam = params.get('user');
+        if (userParam) {
+            const user = JSON.parse(decodeURIComponent(userParam));
+            console.log('User data:', user);
+            dispatch(updateUser(user));
+        }
+    }, [dispatch]);
+
+
     return (
         <Container
             component="main"
@@ -138,7 +168,7 @@ const Connect: React.FC = () => {
                                     textDecoration: 'none',
                                 }}
                             >
-                                
+
                                 Add another social account :
                             </Typography>
                             <Grid container rowGap={2} sx={{ width: { xs: '100%', sm: '60%' }, margin: 'auto' }}>
@@ -146,6 +176,8 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<FacebookRoundedIcon sx={{ color: '#1877F2', fontSize: '30px!important' }} />}
+                                        onClick={handleFacebookLogin}
+                                    // disabled={isLoading}
                                     >
                                         Facebook
                                     </ConnectedBTN>
