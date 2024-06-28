@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Box, Container, Stack, Typography, Grid } from "@mui/material";
+import React, { useEffect, useState } from 'react';
+import { Box, Container, Stack, Typography, Grid, Snackbar, Alert } from "@mui/material";
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
@@ -14,11 +14,16 @@ import SocialAccountBox from '../../components/SocialAccountBox';
 const Connect: React.FC = () => {
     const dispatch = useDispatch();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
-    console.log(userInfo);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
 
-
-    const handleFacebookLogin = () => {
-        window.location.href = `http://localhost:3001/connect/facebook`;
+    const handleSocialLogin = (provider: string) => {
+        if (userInfo?.socialAccounts && userInfo.socialAccounts[provider]) {
+            setSnackbarMessage('Already connected');
+            setSnackbarOpen(true);
+        } else {
+            window.location.href = `http://localhost:3001/connect/${provider}`;
+        }
     };
 
     useEffect(() => {
@@ -32,7 +37,14 @@ const Connect: React.FC = () => {
                 profileName: userData.profileName
             }));
         }
-    }, [dispatch, userInfo]);
+    }, [dispatch]);
+
+    const handleCloseSnackbar = (event?: React.SyntheticEvent | Event, reason?: string) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setSnackbarOpen(false);
+    };
 
     return (
         <Container
@@ -154,7 +166,7 @@ const Connect: React.FC = () => {
                                 Choose a social network to add an account
                             </Typography>
 
-                            {Object.keys(userInfo?.socialAccounts || {}).length == 1  && (
+                            {Object.keys(userInfo?.socialAccounts || {}).length === 1 && (
                                 <Typography
                                     sx={{
                                         marginTop: 1,
@@ -172,7 +184,7 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<FacebookRoundedIcon sx={{ color: '#1877F2', fontSize: '30px!important' }} />}
-                                        onClick={handleFacebookLogin}
+                                        onClick={() => handleSocialLogin('facebook')}
                                     >
                                         Facebook
                                     </ConnectedBTN>
@@ -181,6 +193,7 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<InstagramIcon sx={{ color: '#EE1973', fontSize: '30px!important' }} />}
+                                        onClick={() => handleSocialLogin('instagram')}
                                     >
                                         Instagram
                                     </ConnectedBTN>
@@ -190,6 +203,7 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<LinkedInIcon sx={{ color: '#1877F2', fontSize: '30px!important' }} />}
+                                        onClick={() => handleSocialLogin('linkedin')}
                                     >
                                         LinkedIn
                                     </ConnectedBTN>
@@ -198,6 +212,7 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<XIcon sx={{ color: '#00000', fontSize: '30px!important' }} />}
+                                        onClick={() => handleSocialLogin('twitter')}
                                     >
                                         Twitter X
                                     </ConnectedBTN>
@@ -233,8 +248,19 @@ const Connect: React.FC = () => {
                     </Box>
                 </Stack>
             </Stack>
+
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            >
+                <Alert onClose={handleCloseSnackbar} severity="info" sx={{ width: '100%' }}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </Container>
-    )
+    );
 }
 
 export default Connect;

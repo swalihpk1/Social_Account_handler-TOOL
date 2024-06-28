@@ -28,9 +28,6 @@ const SocialAccountBox: React.FC<SocialAccountBoxProps> = ({ provider, profileNa
                 alignItems: 'center',
                 backgroundColor: 'rgba(217, 217, 217, 0.2)',
                 borderRadius: 2,
-                '&:hover': {
-                    backgroundColor: 'rgba(217, 217, 217, 0.3)',
-                },
             }}
         >
             <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
@@ -55,7 +52,12 @@ const SocialAccountBox: React.FC<SocialAccountBoxProps> = ({ provider, profileNa
                     {provider.charAt(0).toUpperCase() + provider.slice(1)}
                 </Typography>
             </Box>
-            <CancelIcon sx={{ color: '#B1B1B1', fontSize: '25px' }} />
+            <CancelIcon sx={{
+                color: '#B1B1B1', fontSize: '25px',
+                '&:hover': {
+                    color: 'aliceblue',
+                },
+            }} />
         </Stack>
     );
 };
