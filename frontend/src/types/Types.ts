@@ -1,6 +1,6 @@
 export interface UserData {
     name?: string;
-    email: string
+    email: string;
     password: string;
 }
 
@@ -11,6 +11,9 @@ export interface AuthResponse {
 export interface UserInfo {
     name?: string;
     email: string;
+    socialAccounts?: {
+        [provider: string]: string;
+    };
 }
 
 export interface AuthState {
@@ -20,4 +23,9 @@ export interface AuthState {
 export interface LoginFormData {
     email: string;
     password: string;
+}
+
+export interface SocialAccountBoxProps {
+    provider: string;
+    profileName: string;
 }

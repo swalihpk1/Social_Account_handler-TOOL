@@ -23,14 +23,8 @@ export const apiSlice = createApi({
                 body: data,
             }),
         }),
-        facebookLogin: builder.mutation<void, void>({
-            queryFn: () => {
-                window.location.href = 'http://localhost:3001/connect/facebook';
-                return { data: {} as unknown as void };
-            }
-        })
 
     }),
 });
 
-export const { useSignUpMutation, useLoginMutation, useFacebookLoginMutation } = apiSlice;
+export const { useSignUpMutation, useLoginMutation } = apiSlice;

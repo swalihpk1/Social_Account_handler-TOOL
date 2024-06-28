@@ -6,7 +6,7 @@
   "scripts": {
     "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
     "start:frontend": "cd frontend && npm run dev",
-    "start:backend": "cd backend && npm start"
+    "start:backend": "cd backend && npm run start:dev"
   },
   "repository": {
     "type": "git",
@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/swalihpk1/Social_Account_handler-TOOL/issues"
   },
-  "homepage": "https://github.com/swalihpk1/Social_Account_handler-TOOL#readme"
+  "homepage": "https://github.com/swalihpk1/Social_Account_handler-TOOL#readme",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
 }
