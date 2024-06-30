@@ -17,8 +17,5 @@
   "bugs": {
     "url": "https://github.com/swalihpk1/Social_Account_handler-TOOL/issues"
   },
-  "homepage": "https://github.com/swalihpk1/Social_Account_handler-TOOL#readme",
-  "devDependencies": {
-    "concurrently": "^8.2.2"
-  }
+  "homepage": "https://github.com/swalihpk1/Social_Account_handler-TOOL#readme"
 }

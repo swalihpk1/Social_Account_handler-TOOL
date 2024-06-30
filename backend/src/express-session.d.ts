@@ -1,18 +1,10 @@
-
+// express-session.d.ts
 import 'express-session';
-
-declare module 'express-session' {
-    interface Session {
-        user: { email: string, id: string }; // Adjust this according to your session structure
-    }
-
-    interface SessionData {
-        user?: { email: string, id: string }; // Adjust this according to your session structure
-    }
-}
+import { UserDocument } from './schemas/user.schema';
 
 declare module 'express' {
     interface Request {
         session: session.Session & Partial<session.SessionData>;
+        user?: any;
     }
 }

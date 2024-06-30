@@ -10,14 +10,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateUser } from '../../features/auth/CredSlice';
 import { RootState } from '../../app/store';
 import SocialAccountBox from '../../components/SocialAccountBox';
+import { useNavigate } from 'react-router-dom';
 
 const Connect: React.FC = () => {
     const dispatch = useDispatch();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
+    const navigate=useNavigate()
 
-    const handleSocialLogin = (provider: string) => {
+    const handleFacebookLogin = (provider: string) => {
         if (userInfo?.socialAccounts && userInfo.socialAccounts[provider]) {
             setSnackbarMessage('Already connected');
             setSnackbarOpen(true);
@@ -36,6 +38,7 @@ const Connect: React.FC = () => {
                 provider: userData.provider,
                 profileName: userData.profileName
             }));
+            navigate('/connect')
         }
     }, [dispatch]);
 
@@ -184,7 +187,7 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<FacebookRoundedIcon sx={{ color: '#1877F2', fontSize: '30px!important' }} />}
-                                        onClick={() => handleSocialLogin('facebook')}
+                                        onClick={() => handleFacebookLogin('facebook')}
                                     >
                                         Facebook
                                     </ConnectedBTN>
@@ -193,7 +196,7 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<InstagramIcon sx={{ color: '#EE1973', fontSize: '30px!important' }} />}
-                                        onClick={() => handleSocialLogin('instagram')}
+                                        // onClick={() => handleSocialLogin('instagram')}
                                     >
                                         Instagram
                                     </ConnectedBTN>
@@ -203,7 +206,7 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<LinkedInIcon sx={{ color: '#1877F2', fontSize: '30px!important' }} />}
-                                        onClick={() => handleSocialLogin('linkedin')}
+                                        // onClick={() => handleSocialLogin('linkedin')}
                                     >
                                         LinkedIn
                                     </ConnectedBTN>
@@ -212,7 +215,7 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<XIcon sx={{ color: '#00000', fontSize: '30px!important' }} />}
-                                        onClick={() => handleSocialLogin('twitter')}
+                                        // onClick={() => handleSocialLogin('twitter')}
                                     >
                                         Twitter X
                                     </ConnectedBTN>
