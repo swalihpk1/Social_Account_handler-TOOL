@@ -1,69 +1,68 @@
-import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-custom';
-import { ProviderService } from '../provider.service';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
-export class LinkedInStrategy extends PassportStrategy(Strategy, 'linkedin') {
-    private readonly clientID = '868u1vas0au9xq';
-    private readonly clientSecret = 'WPL_AP0.dc96DrB5KgrBocon.ODE3NDk3NDIw';
-    private readonly redirectURI = 'http://localhost:3001/connect/linkedin/callback';
-    private readonly tokenEndpoint = 'https://www.linkedin.com/oauth/v2/accessToken';
-    private readonly userinfoEndpoint = 'https://api.linkedin.com/v2/me';
-    private readonly scopes = ['openid', 'profile', 'email']; // Example scopes
+export class LinkedInStrategy {
+    private readonly clientId: string;
+    private readonly clientSecret: string;
+    private readonly redirectUri: string;
 
     constructor(
-        private readonly providerService: ProviderService,
-        private readonly httpService: HttpService,
+        private configService: ConfigService,
+        private httpService: HttpService,
     ) {
-        super();
-
-        this.clientID = '868u1vas0au9xq';
-        this.clientSecret = 'WPL_AP0.dc96DrB5KgrBocon.ODE3NDk3NDIw';
-        this.redirectURI = 'http://localhost:3001/connect/linkedin/callback';
-        this.tokenEndpoint = 'https://www.linkedin.com/oauth/v2/accessToken';
-        this.userinfoEndpoint = 'https://api.linkedin.com/v2/me';
-        this.scopes = ['openid', 'profile', 'email']
+        this.clientId = this.configService.get<string>('LINKEDIN_CLIENT_ID');
+        this.clientSecret = this.configService.get<string>('LINKEDIN_CLIENT_SECRET');
+        this.redirectUri = this.configService.get<string>('LINKEDIN_REDIRECT_URI');
     }
 
-    async validate(req: any, done: Function): Promise<any> {
-        console.log("Inside LinkedIn validate function");
-        console.log("Queary", req.query);
-        const { code } = req.query;
+    async getAccessToken(code: string): Promise<string> {
+        const url = 'https://www.linkedin.com/oauth/v2/accessToken';
+        const params = {
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: this.redirectUri,
+            client_id: this.clientId,
+            client_secret: this.clientSecret,
+        };
 
-        if (!code) {
-            return done(null, false);
-        }
+        const response = await firstValueFrom(this.httpService.post(url, null, { params }));
+        return response.data.access_token;
+    }
 
-        try {
-            const tokenResponse = await this.httpService.post(this.tokenEndpoint, null, {
-                params: {
-                    grant_type: 'authorization_code',
-                    code,
-                    redirect_uri: this.redirectURI,
-                    client_id: this.clientID,
-                    client_secret: this.clientSecret,
-                },
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-            }).toPromise();
+    async getUserProfile(accessToken: string) {
+        const url = 'https://api.linkedin.com/v2/userinfo';
+        const headers = {
+            Authorization: `Bearer ${accessToken}`,
+        };
 
-            const accessToken = tokenResponse.data.access_token;
-            console.log('Access Token:', accessToken);
+        const response = await firstValueFrom(this.httpService.get(url, { headers }));
+        return response.data;
+    }
 
-            const userResponse = await this.httpService.get(this.userinfoEndpoint, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            }).toPromise();
+    verifyIdToken(idToken: string): any {
+        const { JwksClient } = require('jwks-rsa');
+        const client = new JwksClient({
+            jwksUri: 'https://www.linkedin.com/oauth/openid/jwks',
+        });
 
-            const profile = userResponse.data;
-            done(null, { profile, accessToken });
-        } catch (error) {
-            console.error("Error in LinkedIn validate:", error);
-            done(error, null);
-        }
+        const getKey = (header, callback) => {
+            client.getSigningKey(header.kid, (err, key) => {
+                const signingKey = key.getPublicKey();
+                callback(null, signingKey);
+            });
+        };
+
+        return new Promise((resolve, reject) => {
+            jwt.verify(idToken, getKey, { issuer: 'https://www.linkedin.com' }, (err, decoded) => {
+                if (err) {
+                    return reject(new UnauthorizedException('Invalid ID Token'));
+                }
+                resolve(decoded);
+            });
+        });
     }
 }

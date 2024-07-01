@@ -6,14 +6,14 @@ import { UserDocument, User } from 'src/schemas/user.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { ProviderService } from './provider.service';
-import { LinkedinOauthService } from './ linkedin-oauth.service';
+import { LinkedInStrategy } from './providerStrategys/linkedIn.strategy';
 
 @Controller('connect')
 export class ProviderController {
     constructor(
         private readonly jwtConfigService: JwtConfigService,
         private readonly providerService: ProviderService,
-        private readonly linkedInOAuthService: LinkedinOauthService,
+        private readonly LinkedInStrategy: LinkedInStrategy,
         @InjectModel(User.name) private userModel: Model<UserDocument>
     ) { }
 
@@ -63,7 +63,6 @@ export class ProviderController {
         console.log("Inside instagramCallback");
         const instaUser = req.user;
         console.log("User", instaUser);
-        // Further logic to handle the callback data
     }
 
 
@@ -76,7 +75,7 @@ export class ProviderController {
         const clientId = process.env.LINKEDIN_CLIENT_ID;
         const redirectUri = process.env.LINKEDIN_REDIRECT_URI;
         const scope = 'openid profile email';
-        const state = '12345'; // You should generate a secure random state
+        const state = '12345';
 
         const linkedinAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${state}`;
 
@@ -90,29 +89,25 @@ export class ProviderController {
         }
 
         try {
-            const accessToken = await this.linkedInOAuthService.getAccessToken(code);
-            const userProfile = await this.linkedInOAuthService.getUserProfile(accessToken);
+            const accessToken = await this.LinkedInStrategy.getAccessToken(code);
+            const linkedinUser = await this.LinkedInStrategy.getUserProfile(accessToken);
+            // console.log(linkedinUser);þ
 
-            console.log("UserPrfofile", userProfile);
-            // Handle user login or registration here using userProfile data
-            // Example:
-            let user = await this.userModel.findOne({ linkedinId: userProfile.sub });
+            if (!linkedinUser || !accessToken) {
+                return res.status(400).json({
+                    message: 'LinkedIn user data or accessToken not found'
+                });
+            }
 
-            // if (!user) {
-            //     user = new this.userModel({
-            //         linkedinId: userProfile.sub,
-            //         name: userProfile.name,
-            //         email: userProfile.email,
-            //         profilePicture: userProfile.picture,
-            //     });
-            //     await user.save();
-            // }
+            const userId = req.session?.user?.id;
+            if (!userId) {
+                return res.status(400).json({ message: 'User ID not found in session' });
+            }
 
-            // // Create a session or JWT token for the authenticated user
-            // res.cookie('jwt', jwtToken, { httpOnly: true });
+            const linkedInData = await this.providerService.handleLinkedInLoginCallback(userId, linkedinUser, accessToken);
+            console.log(linkedInData);
 
-            // // Redirect to the frontend with the user's profile information
-            // res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(user))}`);
+            res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(linkedInData))}`);
         } catch (error) {
             console.error("Error in LinkedIn Callback:", error);
             res.status(500).json({ message: 'Internal server error' });
@@ -120,51 +115,4 @@ export class ProviderController {
     }
 
 
-
-
-    // @Get('linkedin')
-    // @UseGuards(AuthGuard('linkedin'))
-    // async linkedinLogin(): Promise<void> {
-    //     console.log("Redirecting to LinkedIn for login");
-    // }
-
-    // @Get('linkedin/callback')
-    // @UseGuards(AuthGuard('linkedin'))
-    // async linkedinLoginCallback(@Req() req: Request, @Res() res: Response): Promise<any> {
-    //     console.log("Inside LinkedInCallback");
-    //     // const linkedinUser = req.user;
-
-    //     // if (!linkedinUser) {
-    //     //     return res.status(400).json({ message: 'LinkedIn user data not found' });
-    //     // }
-
-    //     // const userId = req.session?.user?.id;
-    //     // if (!userId) {
-    //     //     return res.status(400).json({ message: 'User ID not found in session' });
-    //     // }
-
-    //     // try {
-    //     //     const linkedInData = await this.providerService.handleLinkedInLoginCallback(userId, linkedinUser);
-    //     //     res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(linkedInData))}`);
-    //     // } catch (error) {
-    //     //     console.error("Error in linkedinLoginCallback:", error);
-    //     //     return res.status(500).json({ message: 'Internal server error' });
-    //     // }
-    // }
-
-
-    // ----------Passport.strategy--------
-    // @Get('linkedin')
-    // @UseGuards(AuthGuard('linkedin'))
-    // async linkedinLogin(): Promise<void> {
-    //     console.log("Redirecting to LinkedIn for login");
-    // }
-
-    // @Get('linkedin/callback')
-    // @UseGuards(AuthGuard('linkedin'))
-    // async linkedinLoginCallback(@Req() req, @Res() res): Promise<any> {
-    //     console.log("Inside LinkedInCallback");
-    //     const linkedinUser = req.user;
-    //     console.log("User", linkedinUser);
-    // }
 }

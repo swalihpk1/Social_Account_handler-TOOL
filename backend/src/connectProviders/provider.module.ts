@@ -6,9 +6,9 @@ import { InstagramStrategy } from './providerStrategys/instagram.strategy';
 import { ProviderController } from './provider.controller';
 import { JwtConfigModule } from 'src/config/jwt.module';
 import { UserModule } from 'src/schemas/user.module';
-import { LinkedInStrategy } from './providerStrategys/linkedIn.strategy';
 import { HttpModule } from '@nestjs/axios';
-import { LinkedinOauthService } from './ linkedin-oauth.service';
+import { LinkedInStrategy } from './providerStrategys/linkedIn.strategy';
+
 
 @Module({
   imports: [
@@ -18,6 +18,6 @@ import { LinkedinOauthService } from './ linkedin-oauth.service';
     HttpModule
   ],
   controllers: [ProviderController],
-  providers: [ProviderService, FacebookStrategy, InstagramStrategy, LinkedInStrategy, LinkedinOauthService]
+  providers: [ProviderService, FacebookStrategy, InstagramStrategy, LinkedInStrategy]
 })
 export class ProvidersModule { }

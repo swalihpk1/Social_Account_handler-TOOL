@@ -18,14 +18,17 @@ const credSlice = createSlice({
             state.userInfo = action.payload;
             localStorage.setItem('userInfo', JSON.stringify(action.payload));
         },
-        updateUser: (state, action: PayloadAction<{ provider: string, profileName: string }>) => {
-            console.log();
+        updateUser: (state, action: PayloadAction<{ provider: string; profileName: string; profilePicture?: string }>) => {
             if (state.userInfo) {
                 state.userInfo.socialAccounts = state.userInfo.socialAccounts || {};
-                state.userInfo.socialAccounts[action.payload.provider] = action.payload.profileName;
+                state.userInfo.socialAccounts[action.payload.provider] = {
+                    profileName: action.payload.profileName,
+                    profilePicture: action.payload.profilePicture
+                };
                 localStorage.setItem('userInfo', JSON.stringify(state.userInfo));
             }
         },
+
         logout: (state) => {
             state.userInfo = null;
             localStorage.removeItem('userInfo');

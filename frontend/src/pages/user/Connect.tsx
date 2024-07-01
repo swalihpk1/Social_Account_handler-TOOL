@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Container, Stack, Typography, Grid, Snackbar, Alert } from "@mui/material";
+import { Box, Container, Stack, Typography, Grid, Snackbar, Alert, Button } from "@mui/material";
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
@@ -11,15 +11,25 @@ import { updateUser } from '../../features/auth/CredSlice';
 import { RootState } from '../../app/store';
 import SocialAccountBox from '../../components/SocialAccountBox';
 import { useNavigate } from 'react-router-dom';
+import { SocialAccount } from '../../types/Types';
 
 const Connect: React.FC = () => {
     const dispatch = useDispatch();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
-    const navigate=useNavigate()
+    const navigate = useNavigate();
 
     const handleFacebookLogin = (provider: string) => {
+        if (userInfo?.socialAccounts && userInfo.socialAccounts[provider]) {
+            setSnackbarMessage('Already connected');
+            setSnackbarOpen(true);
+        } else {
+            window.location.href = `http://localhost:3001/connect/${provider}`;
+        }
+    };
+
+    const handleLinkedinLogin = (provider: string) => {
         if (userInfo?.socialAccounts && userInfo.socialAccounts[provider]) {
             setSnackbarMessage('Already connected');
             setSnackbarOpen(true);
@@ -33,21 +43,20 @@ const Connect: React.FC = () => {
         const userParam = params.get('user');
         if (userParam) {
             const userData = JSON.parse(decodeURIComponent(userParam));
-            console.log('User data:', userData);
             dispatch(updateUser({
                 provider: userData.provider,
-                profileName: userData.profileName
+                profileName: userData.profileName,
+                profilePicture: userData.profilePicture
             }));
-            navigate('/connect')
+            navigate('/connect');
         }
-    }, [dispatch]);
+    }, [dispatch, navigate]);
 
-    const handleCloseSnackbar = (event?: React.SyntheticEvent | Event, reason?: string) => {
-        if (reason === 'clickaway') {
-            return;
-        }
+    const handleCloseSnackbar = () => {
         setSnackbarOpen(false);
     };
+
+    const isNextButtonEnabled = Object.keys(userInfo?.socialAccounts || {}).length >= 2;
 
     return (
         <Container
@@ -95,6 +104,7 @@ const Connect: React.FC = () => {
                         alignItems: 'center',
                         textAlign: 'center',
                         padding: '20px',
+                        position: 'relative', // Ensure Stack is positioned relatively for absolute children
                     }}
                 >
                     <Box>
@@ -196,7 +206,7 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<InstagramIcon sx={{ color: '#EE1973', fontSize: '30px!important' }} />}
-                                        // onClick={() => handleSocialLogin('instagram')}
+                                    // onClick={() => handleSocialLogin('instagram')}
                                     >
                                         Instagram
                                     </ConnectedBTN>
@@ -206,7 +216,7 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<LinkedInIcon sx={{ color: '#1877F2', fontSize: '30px!important' }} />}
-                                        // onClick={() => handleSocialLogin('linkedin')}
+                                        onClick={() => handleLinkedinLogin('linkedin')}
                                     >
                                         LinkedIn
                                     </ConnectedBTN>
@@ -215,7 +225,7 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<XIcon sx={{ color: '#00000', fontSize: '30px!important' }} />}
-                                        // onClick={() => handleSocialLogin('twitter')}
+                                    // onClick={() => handleSocialLogin('twitter')}
                                     >
                                         Twitter X
                                     </ConnectedBTN>
@@ -237,18 +247,42 @@ const Connect: React.FC = () => {
                                     </Typography>
                                 </Box>
                             )}
-
                             <Stack direction='row' spacing={2} sx={{ width: '100%' }}>
-                                {Object.entries(userInfo?.socialAccounts || {}).map(([provider, profileName]) => (
-                                    <SocialAccountBox
-                                        key={provider}
-                                        provider={provider}
-                                        profileName={profileName}
-                                    />
-                                ))}
+                                {Object.entries(userInfo?.socialAccounts || {}).map(([provider, accountData]) => {
+                                    const { profileName, profilePicture } = accountData as SocialAccount;
+                                    return (
+                                        <SocialAccountBox
+                                            key={provider}
+                                            provider={provider}
+                                            profileName={profileName}
+                                            profilePicture={profilePicture}
+                                        />
+                                    );
+                                })}
                             </Stack>
+
                         </Stack>
                     </Box>
+
+                    <Button
+                        variant="contained"
+                        fullWidth
+                        sx={{
+                            position: 'absolute',
+                            bottom: '20px',
+                            right: '20px',
+                            color: 'white',
+                            width: '70px',
+                            border: isNextButtonEnabled ? '1px solid white' : '1px solid grey', 
+                            backgroundColor: isNextButtonEnabled ? 'rgba(217, 217, 217, 0.2)' : 'rgba(217, 217, 217, 0.9)', 
+                            pointerEvents: isNextButtonEnabled ? 'auto' : 'none',
+                        }}
+                        disabled={!isNextButtonEnabled}
+                    >
+                        Next
+                    </Button>
+
+
                 </Stack>
             </Stack>
 
@@ -262,7 +296,8 @@ const Connect: React.FC = () => {
                     {snackbarMessage}
                 </Alert>
             </Snackbar>
-        </Container>
+        </Container >
+
     );
 }
 

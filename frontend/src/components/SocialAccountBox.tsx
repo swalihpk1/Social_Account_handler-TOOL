@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography, Stack } from "@mui/material";
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded'; // Ensure this import is correct
+import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import XIcon from '@mui/icons-material/X';
@@ -15,7 +15,7 @@ const icons: Record<string, JSX.Element> = {
     twitter: <XIcon sx={{ color: '#000000', fontSize: '12px', background: 'white', borderRadius: '20px' }} />,
 };
 
-const SocialAccountBox: React.FC<SocialAccountBoxProps> = ({ provider, profileName }) => {
+const SocialAccountBox: React.FC<SocialAccountBoxProps> = ({ provider, profileName, profilePicture }) => {
     const icon = icons[provider as keyof typeof icons] || <AccountCircleIcon sx={{ color: 'grey', fontSize: '30px', background: 'white', borderRadius: '20px' }} />;
 
     return (
@@ -31,7 +31,11 @@ const SocialAccountBox: React.FC<SocialAccountBoxProps> = ({ provider, profileNa
             }}
         >
             <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                <AccountCircleIcon sx={{ color: 'grey', fontSize: '30px', background: 'white', borderRadius: '20px' }} />
+                {profilePicture ? (
+                    <img src={profilePicture} alt={`${provider} profile`} style={{ width: 30, height: 30, borderRadius: '50%' }} />
+                ) : (
+                    <AccountCircleIcon sx={{ color: 'grey', fontSize: '30px', background: 'white', borderRadius: '20px' }} />
+                )}
                 <Box
                     sx={{
                         position: 'absolute',

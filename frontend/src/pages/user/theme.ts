@@ -44,7 +44,7 @@ const theme = createTheme({
                     width: '70%',
                     '&:hover': {
                         backgroundColor: 'white',
-                        color:'black'
+                        color: 'black'
                     },
                 },
             },

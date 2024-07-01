@@ -26,4 +26,22 @@ export class ProviderService {
             provider: 'facebook',
         };
     }
+
+    async handleLinkedInLoginCallback(userId: string, linkedinUser: any, accessToken: string): Promise<{ profileName: string, provider: string, profilePicture: string } | null> {
+        const { name, picture } = linkedinUser;
+
+        let foundUser = await this.userModel.findById(userId);
+        if (!foundUser) {
+            throw new Error('User not found');
+        }
+        foundUser.socialAccessTokens.set('linkedin', accessToken);
+        await foundUser.save();
+
+        return {
+            profileName: name,
+            profilePicture: picture,
+            provider: 'linkedin'
+        }
+
+    }
 }
