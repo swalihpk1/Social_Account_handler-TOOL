@@ -44,4 +44,15 @@ export class ProviderService {
         }
 
     }
+
+    async handleTwitterLoginCallback(userId: string, accessToken: string): Promise<void> {
+
+        let foundUser = await this.userModel.findById(userId);
+        if (!foundUser) {
+            throw new Error('User not found');
+        }
+
+        foundUser.socialAccessTokens.set('twitter', accessToken);
+        await foundUser.save();
+    }
 }

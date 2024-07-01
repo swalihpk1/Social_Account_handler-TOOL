@@ -8,6 +8,7 @@ import { JwtConfigModule } from 'src/config/jwt.module';
 import { UserModule } from 'src/schemas/user.module';
 import { HttpModule } from '@nestjs/axios';
 import { LinkedInStrategy } from './providerStrategys/linkedIn.strategy';
+import { TwitterStrategy } from './providerStrategys/twitter.strategy';
 
 
 @Module({
@@ -18,6 +19,6 @@ import { LinkedInStrategy } from './providerStrategys/linkedIn.strategy';
     HttpModule
   ],
   controllers: [ProviderController],
-  providers: [ProviderService, FacebookStrategy, InstagramStrategy, LinkedInStrategy]
+  providers: [ProviderService, FacebookStrategy, InstagramStrategy, LinkedInStrategy, TwitterStrategy]
 })
 export class ProvidersModule { }

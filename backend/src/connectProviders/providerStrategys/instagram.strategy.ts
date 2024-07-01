@@ -5,7 +5,7 @@ import { ProviderService } from "../provider.service";
 
 @Injectable()
 export class InstagramStrategy extends PassportStrategy(Strategy, 'instagram') {
-    constructor(private readonly providerService: ProviderService) {
+    constructor() {
         super({
             clientID: process.env.INSTAGRAM_CLIENT_ID,
             clientSecret: process.env.INSTAGRAM_CLIENT_SECRET,

@@ -20,16 +20,7 @@ const Connect: React.FC = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const navigate = useNavigate();
 
-    const handleFacebookLogin = (provider: string) => {
-        if (userInfo?.socialAccounts && userInfo.socialAccounts[provider]) {
-            setSnackbarMessage('Already connected');
-            setSnackbarOpen(true);
-        } else {
-            window.location.href = `http://localhost:3001/connect/${provider}`;
-        }
-    };
-
-    const handleLinkedinLogin = (provider: string) => {
+    const handleSocialLogin = (provider: string) => {
         if (userInfo?.socialAccounts && userInfo.socialAccounts[provider]) {
             setSnackbarMessage('Already connected');
             setSnackbarOpen(true);
@@ -196,8 +187,8 @@ const Connect: React.FC = () => {
                                 <Grid item xs={6}>
                                     <ConnectedBTN
                                         variant="contained"
-                                        startIcon={<FacebookRoundedIcon sx={{ color: '#1877F2', fontSize: '30px!important' }} />}
-                                        onClick={() => handleFacebookLogin('facebook')}
+                                        startIcon={<FacebookRoundedIcon sx={{ fontSize: { xs: '24px', sm: '30px' }, color: '#1877F2' }} />}
+                                        onClick={() => handleSocialLogin('facebook')}
                                     >
                                         Facebook
                                     </ConnectedBTN>
@@ -205,7 +196,7 @@ const Connect: React.FC = () => {
                                 <Grid item xs={6}>
                                     <ConnectedBTN
                                         variant="contained"
-                                        startIcon={<InstagramIcon sx={{ color: '#EE1973', fontSize: '30px!important' }} />}
+                                        startIcon={<InstagramIcon sx={{ fontSize: { xs: '24px', sm: '30px' }, color: '#EE1973' }} />}
                                     // onClick={() => handleSocialLogin('instagram')}
                                     >
                                         Instagram
@@ -215,8 +206,8 @@ const Connect: React.FC = () => {
                                 <Grid item xs={6}>
                                     <ConnectedBTN
                                         variant="contained"
-                                        startIcon={<LinkedInIcon sx={{ color: '#1877F2', fontSize: '30px!important' }} />}
-                                        onClick={() => handleLinkedinLogin('linkedin')}
+                                        startIcon={<LinkedInIcon sx={{ fontSize: { xs: '24px', sm: '30px' }, color: '#1877F2' }} />}
+                                        onClick={() => handleSocialLogin('linkedin')}
                                     >
                                         LinkedIn
                                     </ConnectedBTN>
@@ -224,8 +215,8 @@ const Connect: React.FC = () => {
                                 <Grid item xs={6}>
                                     <ConnectedBTN
                                         variant="contained"
-                                        startIcon={<XIcon sx={{ color: '#00000', fontSize: '30px!important' }} />}
-                                    // onClick={() => handleSocialLogin('twitter')}
+                                        startIcon={<XIcon sx={{ fontSize: { xs: '24px', sm: '30px' }, color: '#00000' }} />}
+                                        onClick={() => handleSocialLogin('twitter')}
                                     >
                                         Twitter X
                                     </ConnectedBTN>
@@ -273,8 +264,8 @@ const Connect: React.FC = () => {
                             right: '20px',
                             color: 'white',
                             width: '70px',
-                            border: isNextButtonEnabled ? '1px solid white' : '1px solid grey', 
-                            backgroundColor: isNextButtonEnabled ? 'rgba(217, 217, 217, 0.2)' : 'rgba(217, 217, 217, 0.9)', 
+                            border: isNextButtonEnabled ? '1px solid white' : '1px solid grey',
+                            backgroundColor: isNextButtonEnabled ? 'rgba(217, 217, 217, 0.2)' : 'rgba(217, 217, 217, 0.9)',
                             pointerEvents: isNextButtonEnabled ? 'auto' : 'none',
                         }}
                         disabled={!isNextButtonEnabled}

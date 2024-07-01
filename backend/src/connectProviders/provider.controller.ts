@@ -7,6 +7,7 @@ import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { ProviderService } from './provider.service';
 import { LinkedInStrategy } from './providerStrategys/linkedIn.strategy';
+import { UserData } from 'src/auth/dto/auth.dto';
 
 @Controller('connect')
 export class ProviderController {
@@ -115,4 +116,43 @@ export class ProviderController {
     }
 
 
+
+    // ==================== Twitter-X ======================
+    @Get('twitter')
+    @UseGuards(AuthGuard('twitter'))
+    async twitterLogin(): Promise<void> {
+        console.log("Redirecting to twitter for login");
+    }
+
+
+    @Get('twitter/callback')
+    @UseGuards(AuthGuard('twitter'))
+    async twitterLoginCallback(@Req() req, @Res() res): Promise<any> {
+        console.log("Inside twitterLoginCallback");
+        try {
+            const twitterUser = req.user;
+            const accessToken = twitterUser.accessToken;
+
+            console.log("user", twitterUser);
+            console.log("accessToken", accessToken);
+
+            if (!twitterUser || !accessToken) {
+                return res.status(400).json({
+                    message: 'twitterUser data or accessToken not found'
+                });
+            }
+
+            const userId = req.session?.user?.id;
+            if (!userId) {
+                return res.status(400).json({ message: 'User ID not found in session' });
+            }
+
+
+            await this.providerService.handleTwitterLoginCallback(userId, accessToken)
+
+            res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(twitterUser.user))}`);
+        } catch (error) {
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    }
 }

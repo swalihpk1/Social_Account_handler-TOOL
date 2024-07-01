@@ -23,16 +23,17 @@ const SocialAccountBox: React.FC<SocialAccountBoxProps> = ({ provider, profileNa
             direction='row'
             spacing={1}
             sx={{
-                width: { xs: '45%', sm: '27%' },
+                width: { xs: '100%', sm: '45%' }, 
                 padding: '5px',
                 alignItems: 'center',
                 backgroundColor: 'rgba(217, 217, 217, 0.2)',
                 borderRadius: 2,
+                marginBottom: 1, 
             }}
         >
             <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
                 {profilePicture ? (
-                    <img src={profilePicture} alt={`${provider} profile`} style={{ width: 30, height: 30, borderRadius: '50%' }} />
+                    <img src={profilePicture} alt={`${provider} profile`} style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
                 ) : (
                     <AccountCircleIcon sx={{ color: 'grey', fontSize: '30px', background: 'white', borderRadius: '20px' }} />
                 )}
@@ -49,15 +50,15 @@ const SocialAccountBox: React.FC<SocialAccountBoxProps> = ({ provider, profileNa
             </Box>
 
             <Box sx={{ flexGrow: 1 }}>
-                <Typography sx={{ color: 'white', textTransform: 'none', fontSize: '12px' }}>
+                <Typography sx={{ color: 'white', textTransform: 'none', fontSize: 'small' }}>
                     {profileName}
                 </Typography>
-                <Typography sx={{ color: 'white', textTransform: 'none', fontSize: '7px' }}>
+                <Typography sx={{ color: 'white', textTransform: 'none', fontSize:'xx-small' }}>
                     {provider.charAt(0).toUpperCase() + provider.slice(1)}
                 </Typography>
             </Box>
             <CancelIcon sx={{
-                color: '#B1B1B1', fontSize: '25px',
+                color: '#B1B1B1', fontSize: { xs: '20px', sm: '25px' },
                 '&:hover': {
                     color: 'aliceblue',
                 },
