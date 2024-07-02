@@ -1,31 +1,31 @@
-import { Injectable } from "@nestjs/common";
-import { PassportStrategy } from "@nestjs/passport";
-import { Profile, Strategy } from 'passport-facebook';
+import { Injectable, Logger } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
-export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
-    constructor() {
-        super({
-            clientID: process.env.FACEBOOK_CLIENT_ID,
-            clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-            callbackURL: 'http://localhost:3001/connect/facebook/callback',
-            profileFields: ['id', 'email', 'name']
-        });
+export class FacebookStrategy {
+    private readonly logger = new Logger(FacebookStrategy.name);
+
+    constructor(private readonly httpService: HttpService) { }
+
+    async getAccessToken(code: string): Promise<any> {
+        const url = `https://graph.facebook.com/v12.0/oauth/access_token?client_id=${process.env.FACEBOOK_CLIENT_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&client_secret=${process.env.FACEBOOK_CLIENT_SECRET}&code=${code}`;
+        try {
+            const response = await lastValueFrom(this.httpService.get(url));
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     }
 
-    async validate(accessToken: string, refreshToken: string, profile: Profile, cb: Function) {
-        const { id, emails, name } = profile;
-        const user = {
-            facebookId: id,
-            email: emails && emails.length > 0 ? emails[0].value : null,
-            firstName: name.givenName,
-            lastName: name.familyName,
-        };
-        const payload = {
-            user,
-            accessToken,
+    async getUserData(accessToken: string): Promise<any> {
+        const url = `https://graph.facebook.com/v12.0/me?fields=id,name,email,picture&access_token=${accessToken}`;
+        try {
+            const response = await lastValueFrom(this.httpService.get(url));
+            return response.data;
+        } catch (error) {
+            this.logger.error('Error fetching user data:', error.response?.data || error.message);
+            throw error;
         }
-        cb(null, payload);
     }
-    
 }

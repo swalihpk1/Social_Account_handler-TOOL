@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req, Res, UnauthorizedException, UseGuards, Redirect } from '@nestjs/common';
+import { Controller, Get, Query, Req, Res, UnauthorizedException, UseGuards, Redirect, Logger, Session } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtConfigService } from 'src/config/jwt.config';
@@ -8,63 +8,89 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ProviderService } from './provider.service';
 import { LinkedInStrategy } from './providerStrategys/linkedIn.strategy';
 import { UserData } from 'src/auth/dto/auth.dto';
+import { InstagramStrategy } from './providerStrategys/instagram.strategy';
+import { FacebookStrategy } from './providerStrategys/facebook.strategy';
 
 @Controller('connect')
 export class ProviderController {
+    private readonly logger = new Logger(ProviderController.name);
     constructor(
-        private readonly jwtConfigService: JwtConfigService,
         private readonly providerService: ProviderService,
-        private readonly LinkedInStrategy: LinkedInStrategy,
+        private readonly linkedInStrategy: LinkedInStrategy,
+        private readonly instagramStretegy: InstagramStrategy,
+        private readonly facebookStrategy: FacebookStrategy,
         @InjectModel(User.name) private userModel: Model<UserDocument>
     ) { }
 
     // ====================Facebook======================
+
     @Get('facebook')
-    @UseGuards(AuthGuard('facebook'))
-    async facebookLogin(): Promise<void> {
-        console.log("Redirecting to Facebook for login");
+    @Redirect()
+    login() {
+        const facebookLoginUrl = `https://www.facebook.com/v12.0/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&scope=email`;
+        return { url: facebookLoginUrl };
     }
 
     @Get('facebook/callback')
-    @UseGuards(AuthGuard('facebook'))
-    async facebookLoginCallback(@Req() req, @Res() res): Promise<any> {
-        console.log("Inside facebookLoginCallback");
-        const facebookUser = req.user;
-        if (!facebookUser) {
-            return res.status(400).json({ message: 'Facebook user data not found' });
-        }
+    async facebookCallback(@Query('code') code: string, @Req() req, @Res() res): Promise<any> {
+        if (code) {
+            try {
+                const data = await this.facebookStrategy.getAccessToken(code);
+                const accessToken = data.access_token
 
-        const userId = req.session?.user?.id;
-        if (!userId) {
-            return res.status(400).json({ message: 'User ID not found in session' });
-        }
+                if (!accessToken) return res.status(400).json({ message: 'Facebook accessToken not found' });
 
-        try {
-            const facebookData = await this.providerService.handleFacebookLoginCallback(userId, facebookUser);
-            res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(facebookData))}`);
-        } catch (error) {
-            console.error("Error in facebookLoginCallback:", error);
-            return res.status(500).json({ message: 'Internal server error' });
+                const facebookProfile = await this.facebookStrategy.getUserData(data.access_token);
+                const userId = req.session?.user?.id;
+
+                console.log('facebok', facebookProfile);
+
+                if (!userId) {
+                    return res.status(400).json({ message: 'User ID not found in session' });
+                }
+
+                if (!facebookProfile) return res.status(400).json({ message: 'Facebook userData not found' });
+
+                const facebookData = await this.providerService.handleFacebookLoginCallback(userId, facebookProfile, accessToken);
+                res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(facebookData))}`);
+
+            } catch (error) {
+                console.error('Error during Facebook callback', error);
+            }
+        } else {
+            return res.status(400).send('Authorization code is missing');
         }
     }
-
 
 
     // ====================Instagram======================
-    @Get('instagram')
-    @UseGuards(AuthGuard('instagram'))
-    async instagramLogin(): Promise<void> {
-        console.log("Redirecting to Instagram for login");
+
+    @Get('facebook/pages')
+    async getUserPages() {
+        this.logger.debug('Fetching user pages');
+        return this.instagramStretegy.getUserPages();
+    }
+
+    @Get('facebook/instagram-account')
+    async getInstagramBusinessAccount(@Query('pageId') pageId: string) {
+        this.logger.debug(`Fetching Instagram Business Account for Page ID: ${pageId}`);
+        return this.instagramStretegy.getInstagramBusinessAccount(pageId);
+    }
+
+    @Get('instagram/media')
+    async getInstagramMedia(@Query('igUserId') igUserId: string) {
+        this.logger.debug(`Fetching Instagram Media for IG User ID: ${igUserId}`);
+        return this.instagramStretegy.getInstagramMedia(igUserId);
+    }
+
+    @Get('instagram/profile')
+    async getInstagramUserProfile(@Query('igUserId') igUserId: string) {
+        this.logger.debug(`Fetching Instagram User Profile for IG User ID: ${igUserId}`);
+        return this.instagramStretegy.getInstagramUserProfile(igUserId);
     }
 
 
-    @Get('instagram/callback')
-    @UseGuards(AuthGuard('instagram'))
-    async instagramLoginCallback(@Req() req, @Res() res): Promise<any> {
-        console.log("Inside instagramCallback");
-        const instaUser = req.user;
-        console.log("User", instaUser);
-    }
+
 
 
 
@@ -90,8 +116,8 @@ export class ProviderController {
         }
 
         try {
-            const accessToken = await this.LinkedInStrategy.getAccessToken(code);
-            const linkedinUser = await this.LinkedInStrategy.getUserProfile(accessToken);
+            const accessToken = await this.linkedInStrategy.getAccessToken(code);
+            const linkedinUser = await this.linkedInStrategy.getUserProfile(accessToken);
             // console.log(linkedinUser);þ
 
             if (!linkedinUser || !accessToken) {
