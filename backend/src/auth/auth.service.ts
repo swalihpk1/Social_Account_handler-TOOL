@@ -26,7 +26,7 @@ export class AuthService {
         return createdUser;
     }
 
-    async login(userDto: UserData, req: Request): Promise<{ token: string }> {
+    async login(userDto: UserData, req: Request): Promise<{ accessToken: string, refreshToken: string }> {
         const { email, password } = userDto;
         const user = await this.userModel.findOne({ email });
 
@@ -42,7 +42,20 @@ export class AuthService {
         req.session.user = { email: user.email, id: user._id };
         console.log('Session data:', req.session);
 
-        const token = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id });
-        return { token };
+        const accessToken = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id });
+        const refreshToken = this.jwtSecret.generateRefreshToken({ email: user.email, sub: user._id });
+
+        return { accessToken, refreshToken };
+    }
+
+
+    async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
+        const decoded = this.jwtSecret.verifyRefreshToken(refreshToken);
+        if (!decoded) {
+            throw new UnauthorizedException('Invalid refresh token');
+        }
+
+        const accessToken = this.jwtSecret.generateJwtToken({ email: decoded.email, sub: decoded.sub });
+        return { accessToken };
     }
 }

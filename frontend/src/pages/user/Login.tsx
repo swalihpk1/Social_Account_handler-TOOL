@@ -10,8 +10,7 @@ import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../app/store";
 import { setCredentials } from "../../features/auth/CredSlice";
-import { UserInfo, LoginFormData, AuthResponse } from "../../types/Types";
-
+import { LoginFormData, UserInfo } from "../../types/Types";
 
 
 const Login: React.FC = () => {
@@ -37,15 +36,11 @@ const Login: React.FC = () => {
     const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
         setIsLoading(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            const response = await login({ email: data.email, password: data.password }).unwrap() as AuthResponse;
-            console.log("Login successful, user:", response);
+            const response = await login(data).unwrap();
+            const user: UserInfo = { email: data.email };
 
-            const user: UserInfo = {
-                email: data.email,
-            };
-
-            dispatch(setCredentials(user));
+            dispatch(setCredentials({ userInfo: user, accessToken: response.accessToken, refreshToken: response.refreshToken }));
+            setIsLoading(false);
             navigate('/connect');
         } catch (error) {
             console.error('Login failed:', error);

@@ -212,6 +212,7 @@ const Connect: React.FC = () => {
                                         LinkedIn
                                     </ConnectedBTN>
                                 </Grid>
+                                
                                 <Grid item xs={6}>
                                     <ConnectedBTN
                                         variant="contained"

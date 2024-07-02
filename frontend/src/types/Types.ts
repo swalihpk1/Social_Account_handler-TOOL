@@ -5,8 +5,11 @@ export interface UserData {
 }
 
 export interface AuthResponse {
-    token: string;
+    accessToken: string;
+    refreshToken: string;
 }
+
+
 
 export interface SocialAccount {
     profileName: string;
@@ -26,9 +29,14 @@ export interface LoginFormData {
     password: string;
 }
 
+
+
 export interface AuthState {
     userInfo: UserInfo | null;
+    accessToken: string | null;
+    refreshToken: string | null;
 }
+
 
 export interface SocialAccountBoxProps {
     provider: string;

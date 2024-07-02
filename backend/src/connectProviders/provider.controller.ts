@@ -1,13 +1,11 @@
 import { Controller, Get, Query, Req, Res, UnauthorizedException, UseGuards, Redirect, Logger, Session } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
-import { JwtConfigService } from 'src/config/jwt.config';
 import { UserDocument, User } from 'src/schemas/user.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { ProviderService } from './provider.service';
 import { LinkedInStrategy } from './providerStrategys/linkedIn.strategy';
-import { UserData } from 'src/auth/dto/auth.dto';
 import { InstagramStrategy } from './providerStrategys/instagram.strategy';
 import { FacebookStrategy } from './providerStrategys/facebook.strategy';
 
@@ -52,6 +50,7 @@ export class ProviderController {
                 if (!facebookProfile) return res.status(400).json({ message: 'Facebook userData not found' });
 
                 const facebookData = await this.providerService.handleFacebookLoginCallback(userId, facebookProfile, accessToken);
+
                 res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(facebookData))}`);
 
             } catch (error) {
@@ -88,9 +87,6 @@ export class ProviderController {
         this.logger.debug(`Fetching Instagram User Profile for IG User ID: ${igUserId}`);
         return this.instagramStretegy.getInstagramUserProfile(igUserId);
     }
-
-
-
 
 
 
