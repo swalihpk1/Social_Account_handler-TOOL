@@ -58,4 +58,21 @@ export class AuthService {
         const accessToken = this.jwtSecret.generateJwtToken({ email: decoded.email, sub: decoded.sub });
         return { accessToken };
     }
+
+
+    async removeSocialAccount(userId: string, provider: string) {
+        const user = await this.userModel.findById(userId)
+
+        if (!user) {
+            throw new UnauthorizedException('User not found');
+        }
+
+        if (user.socialAccessTokens && user.socialAccessTokens[provider]) {
+            delete user.socialAccessTokens[provider]
+        }
+
+        await user.save()
+        return user;
+
+    }
 }

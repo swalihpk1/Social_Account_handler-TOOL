@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req, Res, UnauthorizedException, UseGuards, Redirect, Logger, Session } from '@nestjs/common';
+import { Controller, Get, Query, Req, Res, UnauthorizedException, UseGuards, Redirect } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { UserDocument, User } from 'src/schemas/user.schema';
@@ -8,12 +8,13 @@ import { ProviderService } from './provider.service';
 import { LinkedInStrategy } from './providerStrategys/linkedIn.strategy';
 import { InstagramStrategy } from './providerStrategys/instagram.strategy';
 import { FacebookStrategy } from './providerStrategys/facebook.strategy';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('connect')
 export class ProviderController {
-    private readonly logger = new Logger(ProviderController.name);
     constructor(
         private readonly providerService: ProviderService,
+        private readonly configService: ConfigService,
         private readonly linkedInStrategy: LinkedInStrategy,
         private readonly instagramStretegy: InstagramStrategy,
         private readonly facebookStrategy: FacebookStrategy,
@@ -63,32 +64,35 @@ export class ProviderController {
 
 
     // ====================Instagram======================
+    @Get('instagram')
+    async instagramLogin(@Res() res: Response): Promise<void> {
+        const instagramAuthUrl = `https://api.instagram.com/oauth/authorize
+      ?client_id=${this.configService.get('INSTAGRAM_CLIENT_ID')}
+      &redirect_uri=${this.configService.get('INSTAGRAM_REDIRECT_URI')}
+      &scope=user_profile,user_media
+      &response_type=code`;
 
-    @Get('facebook/pages')
-    async getUserPages() {
-        this.logger.debug('Fetching user pages');
-        return this.instagramStretegy.getUserPages();
+        res.redirect(instagramAuthUrl);
     }
 
-    @Get('facebook/instagram-account')
-    async getInstagramBusinessAccount(@Query('pageId') pageId: string) {
-        this.logger.debug(`Fetching Instagram Business Account for Page ID: ${pageId}`);
-        return this.instagramStretegy.getInstagramBusinessAccount(pageId);
-    }
-
-    @Get('instagram/media')
-    async getInstagramMedia(@Query('igUserId') igUserId: string) {
-        this.logger.debug(`Fetching Instagram Media for IG User ID: ${igUserId}`);
-        return this.instagramStretegy.getInstagramMedia(igUserId);
+    @Get('instagram/callback')
+    async instagramCallback(@Query('code') code: string, @Res() res: Response): Promise<void> {
+        const accessToken = await this.instagramStretegy.getAccessToken(code);
+        const user = await this.instagramStretegy.getUserProfile(accessToken)
+        console.log("AccessTokem", accessToken);
+        console.log("USerData", user);
+        // res.redirect('/profile');
     }
 
     @Get('instagram/profile')
-    async getInstagramUserProfile(@Query('igUserId') igUserId: string) {
-        this.logger.debug(`Fetching Instagram User Profile for IG User ID: ${igUserId}`);
-        return this.instagramStretegy.getInstagramUserProfile(igUserId);
+    async getInstagramProfile(@Req() req: Request): Promise<any> {
+        const accessToken = req.session.accessToken;
+        if (!accessToken) {
+            throw new Error('User not authenticated');
+        }
+        const profile = await this.instagramStretegy.getUserProfile(accessToken);
+        console.log("PRofi", profile);
     }
-
-
 
 
     // ====================LinkedIn======================
@@ -177,4 +181,9 @@ export class ProviderController {
             res.status(500).json({ message: 'Internal server error' });
         }
     }
+
+    
 }
+
+
+

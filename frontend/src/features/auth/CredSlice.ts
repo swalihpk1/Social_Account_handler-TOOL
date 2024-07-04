@@ -31,6 +31,12 @@ const credSlice = createSlice({
                 localStorage.setItem('userInfo', JSON.stringify(state.userInfo));
             }
         },
+        removeSocialAccount: (state, action: PayloadAction<string>) => {
+            if (state.userInfo && state.userInfo.socialAccounts) {
+                delete state.userInfo.socialAccounts[action.payload];
+                localStorage.setItem('userInfo', JSON.stringify(state.userInfo));
+            }
+        },
         logout: (state) => {
             state.userInfo = null;
             state.accessToken = null;
@@ -43,6 +49,6 @@ const credSlice = createSlice({
 });
 
 
-export const { setCredentials, updateUser, logout } = credSlice.actions;
+export const { setCredentials, updateUser, removeSocialAccount, logout } = credSlice.actions;
 
 export default credSlice.reducer;

@@ -16,6 +16,13 @@ export const apiSlice = createApi({
                 body: data,
             }),
         }),
+        removeSocialAccount: builder.mutation<UserData, { provider: string }>({
+            query: (data) => ({
+                url: `${USER_URL}/remove-social-account`,
+                method: 'DELETE',
+                body: data,
+            }),
+        }),
         login: builder.mutation<AuthResponse, UserData>({
             query: (data) => ({
                 url: `${USER_URL}/login`,
@@ -26,4 +33,4 @@ export const apiSlice = createApi({
     }),
 });
 
-export const { useSignUpMutation, useLoginMutation } = apiSlice;
+export const { useSignUpMutation, useLoginMutation, useRemoveSocialAccountMutation } = apiSlice;

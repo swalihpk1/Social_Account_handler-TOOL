@@ -1,3 +1,5 @@
+import React from "react";
+
 export interface UserData {
     name?: string;
     email: string;
@@ -8,8 +10,6 @@ export interface AuthResponse {
     accessToken: string;
     refreshToken: string;
 }
-
-
 
 export interface SocialAccount {
     profileName: string;
@@ -30,7 +30,6 @@ export interface LoginFormData {
 }
 
 
-
 export interface AuthState {
     userInfo: UserInfo | null;
     accessToken: string | null;
@@ -42,4 +41,11 @@ export interface SocialAccountBoxProps {
     provider: string;
     profileName: string;
     profilePicture?: string;
+}
+
+
+export interface RedirectContextProps {
+    isRedirected: boolean;
+    setIsRedirected: React.Dispatch<React.SetStateAction<boolean>>
+
 }

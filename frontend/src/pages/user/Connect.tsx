@@ -12,6 +12,7 @@ import { RootState } from '../../app/store';
 import SocialAccountBox from '../../components/SocialAccountBox';
 import { useNavigate } from 'react-router-dom';
 import { SocialAccount } from '../../types/Types';
+import { useRedirect } from '../../components/RedirectProvider';
 
 const Connect: React.FC = () => {
     const dispatch = useDispatch();
@@ -19,6 +20,7 @@ const Connect: React.FC = () => {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const navigate = useNavigate();
+    const { isRedirected, setIsRedirected } = useRedirect();
 
     const handleSocialLogin = (provider: string) => {
         if (userInfo?.socialAccounts && userInfo.socialAccounts[provider]) {
@@ -30,18 +32,23 @@ const Connect: React.FC = () => {
     };
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const userParam = params.get('user');
-        if (userParam) {
-            const userData = JSON.parse(decodeURIComponent(userParam));
-            dispatch(updateUser({
-                provider: userData.provider,
-                profileName: userData.profileName,
-                profilePicture: userData.profilePicture
-            }));
-            navigate('/connect');
+        if (!isRedirected) {
+            navigate('/');
+        } else {
+            const params = new URLSearchParams(window.location.search);
+            const userParam = params.get('user');
+            if (userParam) {
+                const userData = JSON.parse(decodeURIComponent(userParam));
+                dispatch(updateUser({
+                    provider: userData.provider,
+                    profileName: userData.profileName,
+                    profilePicture: userData.profilePicture
+                }));
+                setIsRedirected(false);
+                navigate('/connect');
+            }
         }
-    }, [dispatch, navigate]);
+    }, [isRedirected, dispatch, navigate, setIsRedirected]);
 
     const handleCloseSnackbar = () => {
         setSnackbarOpen(false);
@@ -197,7 +204,7 @@ const Connect: React.FC = () => {
                                     <ConnectedBTN
                                         variant="contained"
                                         startIcon={<InstagramIcon sx={{ fontSize: { xs: '24px', sm: '30px' }, color: '#EE1973' }} />}
-                                    // onClick={() => handleSocialLogin('instagram')}
+                                        onClick={() => handleSocialLogin('instagram')}
                                     >
                                         Instagram
                                     </ConnectedBTN>
@@ -212,7 +219,7 @@ const Connect: React.FC = () => {
                                         LinkedIn
                                     </ConnectedBTN>
                                 </Grid>
-                                
+
                                 <Grid item xs={6}>
                                     <ConnectedBTN
                                         variant="contained"

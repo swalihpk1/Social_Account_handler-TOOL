@@ -50,7 +50,8 @@ export class LinkedInStrategy {
         });
 
         const getKey = (header, callback) => {
-            client.getSigningKey(header.kid, (err, key) => {
+            client.getSigningKey(header.kid,
+                (err, key) => {
                 const signingKey = key.getPublicKey();
                 callback(null, signingKey);
             });

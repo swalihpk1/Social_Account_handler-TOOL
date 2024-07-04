@@ -1,5 +1,5 @@
 // auth.controller.ts
-import { Controller, Post, Body, Req, Res, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Req, Res, HttpCode, Delete } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserData } from './dto/auth.dto';
 import { Request, Response } from 'express';
@@ -25,5 +25,13 @@ export class AuthController {
     async refreshToken(@Body('refreshToken') refreshToken: string) {
         const newAccessToken = await this.authService.refreshToken(refreshToken);
         return newAccessToken;
+    }
+
+    @Delete('remove-social-account')
+    @HttpCode(200)
+    async removeSocialAccount(@Req() req, @Body('provider') provider: string) {
+        const userId = req.session?.user?.id;
+        const user = await this.authService.removeSocialAccount(userId, provider)
+        return user;
     }
 }
