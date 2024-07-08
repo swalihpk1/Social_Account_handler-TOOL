@@ -12,7 +12,7 @@ import { RootState } from '../../app/store';
 import SocialAccountBox from '../../components/SocialAccountBox';
 import { useNavigate } from 'react-router-dom';
 import { SocialAccount } from '../../types/Types';
-import { useRedirect } from '../../components/RedirectProvider';
+// import { useRedirect } from '../../components/RedirectProvider';
 
 const Connect: React.FC = () => {
     const dispatch = useDispatch();
@@ -20,7 +20,6 @@ const Connect: React.FC = () => {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const navigate = useNavigate();
-    const { isRedirected, setIsRedirected } = useRedirect();
 
     const handleSocialLogin = (provider: string) => {
         if (userInfo?.socialAccounts && userInfo.socialAccounts[provider]) {
@@ -32,23 +31,18 @@ const Connect: React.FC = () => {
     };
 
     useEffect(() => {
-        if (!isRedirected) {
-            navigate('/');
-        } else {
-            const params = new URLSearchParams(window.location.search);
-            const userParam = params.get('user');
-            if (userParam) {
-                const userData = JSON.parse(decodeURIComponent(userParam));
-                dispatch(updateUser({
-                    provider: userData.provider,
-                    profileName: userData.profileName,
-                    profilePicture: userData.profilePicture
-                }));
-                setIsRedirected(false);
-                navigate('/connect');
-            }
+        const params = new URLSearchParams(window.location.search);
+        const userParam = params.get('user');
+        if (userParam) {
+            const userData = JSON.parse(decodeURIComponent(userParam));
+            dispatch(updateUser({
+                provider: userData.provider,
+                profileName: userData.profileName,
+                profilePicture: userData.profilePicture
+            }));
+            navigate('/connect');
         }
-    }, [isRedirected, dispatch, navigate, setIsRedirected]);
+    }, [dispatch, navigate]);
 
     const handleCloseSnackbar = () => {
         setSnackbarOpen(false);
@@ -277,6 +271,7 @@ const Connect: React.FC = () => {
                             pointerEvents: isNextButtonEnabled ? 'auto' : 'none',
                         }}
                         disabled={!isNextButtonEnabled}
+                        href='/success'
                     >
                         Next
                     </Button>

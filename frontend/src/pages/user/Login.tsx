@@ -1,17 +1,15 @@
-
+import React, { useEffect, useState } from 'react';
 import { Box, Button, Container, TextField, Stack, ThemeProvider, Typography, InputAdornment, IconButton, Link, CircularProgress } from "@mui/material";
-import theme from "./Theme";
+import TextFieldsTheme from './Themes/TextFieldsTheme';
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useLoginMutation } from "../../api/ApiSlice";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../app/store";
 import { setCredentials } from "../../features/auth/CredSlice";
 import { LoginFormData, UserInfo } from "../../types/Types";
-
+import { useNavigate } from "react-router-dom";
+import { useLoginMutation } from "../../api/ApiSlice";
 
 const Login: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -20,14 +18,13 @@ const Login: React.FC = () => {
     const [login] = useLoginMutation();
     const { register, handleSubmit, setError, formState: { errors } } = useForm<LoginFormData>();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
-    const dispatch = useDispatch()
-
+    const dispatch = useDispatch();
 
     useEffect(() => {
         if (userInfo) {
-            navigate('/connect')
+            navigate('/connect');
         }
-    }, [navigate, userInfo])
+    }, [navigate, userInfo]);
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
@@ -40,8 +37,6 @@ const Login: React.FC = () => {
             const user: UserInfo = { email: data.email };
 
             dispatch(setCredentials({ userInfo: user, accessToken: response.accessToken, refreshToken: response.refreshToken }));
-            setIsLoading(false);
-            navigate('/connect');
         } catch (error) {
             console.error('Login failed:', error);
             if (isFetchBaseQueryError(error)) {
@@ -64,7 +59,6 @@ const Login: React.FC = () => {
             setIsLoading(false);
         }
     };
-
 
     const isFetchBaseQueryError = (error: any): error is FetchBaseQueryError => {
         return error && typeof error === 'object' && 'data' in error;
@@ -143,7 +137,7 @@ const Login: React.FC = () => {
                         </Typography>
                     </Box>
 
-                    <ThemeProvider theme={theme}>
+                    <ThemeProvider theme={TextFieldsTheme}>
                         <Box
                             sx={{
                                 width: '100%',

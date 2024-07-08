@@ -1,6 +1,6 @@
 import { Box, Button, Container, TextField, Stack, ThemeProvider, Typography, InputAdornment, IconButton, Link, CircularProgress, Snackbar, SnackbarContent } from "@mui/material";
-import theme from "./Theme";
 import { CheckCircleOutline, ErrorOutline, Visibility, VisibilityOff } from "@mui/icons-material";
+import TextFieldsTheme from "./Themes/TextFieldsTheme";
 import { useEffect, useState } from "react";
 import { useSignUpMutation } from "../../api/ApiSlice";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -141,7 +141,7 @@ const Signup: React.FC = () => {
                         </Typography>
                     </Box>
 
-                    <ThemeProvider theme={theme}>
+                    <ThemeProvider theme={TextFieldsTheme}>
                         <Box
                             sx={{
                                 width: '100%',

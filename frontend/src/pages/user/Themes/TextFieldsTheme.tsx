@@ -1,6 +1,6 @@
 import { createTheme } from "@mui/material";
 
-const theme = createTheme({
+const TextFieldsTheme = createTheme({
     components: {
         MuiTextField: {
             styleOverrides: {
@@ -52,4 +52,4 @@ const theme = createTheme({
     },
 });
 
-export default theme;
+export default TextFieldsTheme;
