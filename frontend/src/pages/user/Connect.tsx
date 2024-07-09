@@ -22,6 +22,8 @@ const Connect: React.FC = () => {
     const navigate = useNavigate();
 
     const handleSocialLogin = (provider: string) => {
+        console.log("asdfadsf");
+        
         if (userInfo?.socialAccounts && userInfo.socialAccounts[provider]) {
             setSnackbarMessage('Already connected');
             setSnackbarOpen(true);
@@ -33,6 +35,9 @@ const Connect: React.FC = () => {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const userParam = params.get('user');
+        console.log("Sdf", userParam);
+        console.log("Inof", userInfo);
+
         if (userParam) {
             const userData = JSON.parse(decodeURIComponent(userParam));
             dispatch(updateUser({
@@ -40,6 +45,8 @@ const Connect: React.FC = () => {
                 profileName: userData.profileName,
                 profilePicture: userData.profilePicture
             }));
+
+
             navigate('/connect');
         }
     }, [dispatch, navigate]);
