@@ -68,4 +68,6 @@ export interface StyledListItemProps {
     icon: React.ReactElement;
     text: string;
     open: boolean;
+    to: string;
+    iconStyles?: React.CSSProperties;
 }

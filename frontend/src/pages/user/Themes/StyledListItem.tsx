@@ -1,14 +1,9 @@
 import React from 'react';
 import { ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import { Link } from 'react-router-dom';
+import { StyledListItemProps } from '../../../types/Types';
 
-interface StyledListItemProps {
-    icon: React.ReactElement;
-    text: string;
-    open: boolean;
-    to: string;
-    iconStyles?: React.CSSProperties;
-}
+
 
 const StyledListItem: React.FC<StyledListItemProps> = ({ icon, text, open, to, iconStyles }) => (
     <ListItem
