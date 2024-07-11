@@ -17,6 +17,7 @@ import {
     ToggleButtonGroup,
     ToggleButton,
     ThemeProvider,
+    Modal,
 
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -28,28 +29,83 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import EmojiEmotionsOutlinedIcon from '@mui/icons-material/EmojiEmotionsOutlined';
 import TagOutlinedIcon from '@mui/icons-material/TagOutlined';
+import RefreshTwoToneIcon from '@mui/icons-material/RefreshTwoTone';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../app/store';
 import ToggleButtonTheme from './Themes/ToggleButton';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import XIcon from '@mui/icons-material/X';
 import Picker from 'emoji-picker-react';
+import ClearIcon from '@mui/icons-material/Clear';
+import ImageModal from './ImageModal';
 
 
 
 const CreatePost: React.FC = () => {
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [selectedToggle, setSelectedToggle] = useState<string | null>('Initial content');
-    const [isFocused, setIsFocused] = useState(false);
-    const [text, setText] = useState('');
-    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [isFocused, setIsFocused] = useState<boolean>(false);
+    const [text, setText] = useState<string>('');
+    const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+    const [selectedLocalImage, setSelectedLocalImage] = useState<File | null>(null);
+    const [selectedLibraryImage, setSelectedLibraryImage] = useState<{ src: string, alt: string } | null>(null);
+    const [isLocalImageHover, setIsLocalImageHover] = useState<boolean>(false);
+    const [isLibraryImageHover, setIsLibraryImageHover] = useState<boolean>(false);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-    useEffect(() => {
-        console.log("Component Mounted");
-        console.log("sadfasdfasd");
-        console.log("asdfasdf", userInfo);
-    }, []);
+    const handleOpenImageModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseImageModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleLibraryImageSelect = (image: any) => {
+        setSelectedLibraryImage({ src: image.src.medium, alt: image.alt });
+        setSelectedLocalImage(null);
+        handleCloseImageModal();
+    };
+
+    const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files && event.target.files[0];
+        if (file) {
+            setSelectedLocalImage(file);
+            setSelectedLibraryImage(null);
+        }
+    };
+
+    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+    };
+
+    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        const file = event.dataTransfer.files && event.dataTransfer.files[0];
+        if (file) {
+            setSelectedLocalImage(file);
+            setSelectedLibraryImage(null);
+        }
+    };
+
+    const handleRemoveLocalImage = (event: React.MouseEvent<SVGSVGElement>) => {
+        event.stopPropagation();
+        setSelectedLocalImage(null);
+    };
+
+    const handleRemoveLibraryImage = (event: React.MouseEvent<SVGSVGElement>) => {
+        event.stopPropagation();
+        setSelectedLibraryImage(null);
+    };
+
+    const handleInputFileClick = (event: React.MouseEvent<HTMLDivElement>) => {
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput) {
+            fileInput.click();
+        }
+    };
+
 
     const userSocialAccounts = Object.entries(userInfo?.socialAccounts || {}).map(([provider, { profileName, profilePicture }]) => ({
         provider,
@@ -122,7 +178,7 @@ const CreatePost: React.FC = () => {
                     padding: { xs: '1rem', md: '1.5rem' },
                     width: { xs: '100%', md: '65%' }
                 }}>
-                    <Stack>
+                    <Stack component='form'>
                         <Typography>Publish to</Typography>
                         <TextField
                             select
@@ -276,14 +332,14 @@ const CreatePost: React.FC = () => {
                                 placeholder="Enter your text and links"
                                 fullWidth
                                 value={text}
-                                
+
                                 onChange={(e) => setText(e.target.value)}
                                 InputProps={{
                                     disableUnderline: true,
                                     sx: {
                                         padding: 0,
                                         border: 'none',
-                                        letterSpacing:'.5px',
+                                        letterSpacing: '.5px',
                                         outline: 'none',
                                         boxShadow: 'none',
                                         minHeight: '250px',
@@ -317,52 +373,158 @@ const CreatePost: React.FC = () => {
                             />
 
                             <Box >
-                                <Box display='flex' sx={{ justifyContent: 'space-between' }} >
-                                    <Typography sx={{ color: 'grey' }} >0</Typography>
-                                    <Stack direction="row" spacing={1} marginBottom='.5rem'>
+                                <Box display='flex' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Stack direction="row" spacing={1} justifyContent='center' alignItems='center'>
+                                        <Typography sx={{ color: 'grey' }}>0</Typography>
+                                        <Box
+                                            sx={{
+                                                width: '1.4rem', height: '1.4rem', backgroundColor: '#203170', borderRadius: '12px',
+                                                display: 'flex', justifyContent: 'center', alignItems: 'center'
+                                            }}>
+                                            <RefreshTwoToneIcon sx={{ width: '1rem', height: '1rem', color: '#fff' }} />
+                                        </Box>
+
+                                    </Stack>
+                                    <Stack direction="row" spacing={1} alignItems='center' marginBottom='.5rem'>
                                         <EmojiEmotionsOutlinedIcon
                                             sx={{ background: 'lightgrey', borderRadius: '15px', padding: '2px', color: 'grey', cursor: 'pointer' }}
                                             onClick={toggleEmojiPicker}
                                         />
-                                        <TagOutlinedIcon sx={{ background: 'lightgrey', borderRadius: '15px', padding: '2px', color: 'grey' }} />
+                                        <TagOutlinedIcon
+                                            sx={{ background: 'lightgrey', borderRadius: '15px', padding: '2px', color: 'grey' }}
+                                        />
                                     </Stack>
-
                                 </Box>
                                 <Divider style={{ height: '2.5px', backgroundColor: '#e5e5e5' }} />
 
                             </Box>
-                            <Box sx={{
-                                display: 'flex',
-                                flexDirection: { xs: 'column', sm: 'row' },
-                                gap: '1rem',
-                                marginTop: '1rem',
-                                width: '40%',
-                                color: '#cecece'
-                            }}>
-                                <Box sx={{
-                                    border: '2px dashed #cecece',
-                                    width: { xs: '100%', sm: '50%' },
-                                    height: '100px',
+
+
+
+                            <Box
+                                sx={{
                                     display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center'
-                                }}>
-                                    <AddPhotoAlternateIcon sx={{ fontSize: '4rem', width: '4rem', height: '4rem' }} />
+                                    flexDirection: { xs: 'column', sm: 'row' },
+                                    gap: '1rem',
+                                    marginTop: '1rem',
+                                    width: '40%',
+                                    color: '#cecece'
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        position: 'relative',
+                                        border: '2px dashed #cecece',
+                                        width: { xs: '100%', sm: '50%' },
+                                        height: '100px',
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        overflow: 'hidden',
+                                        cursor: selectedLibraryImage ? 'not-allowed' : 'pointer',
+                                    }}
+                                    onDragOver={handleDragOver}
+                                    onDrop={handleDrop}
+                                    onClick={!selectedLibraryImage && !selectedLocalImage ? handleInputFileClick : undefined}
+                                    onMouseEnter={() => setIsLocalImageHover(true)}
+                                    onMouseLeave={() => setIsLocalImageHover(false)}
+                                >
+                                    {selectedLocalImage ? (
+                                        <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+                                            <img
+                                                src={URL.createObjectURL(selectedLocalImage)}
+                                                alt="Uploaded"
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                            {isLocalImageHover && (
+                                                <ClearIcon
+                                                    onClick={handleRemoveLocalImage}
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: '5px',
+                                                        right: '5px',
+                                                        cursor: 'pointer',
+                                                        background: '#88A1FF',
+                                                        borderRadius: '1rem',
+                                                        color: 'white'
+                                                    }}
+                                                />
+                                            )}
+                                        </Box>
+                                    ) : (
+                                        <AddPhotoAlternateIcon sx={{ fontSize: '4rem', width: '4rem', height: '4rem' }} />
+                                    )}
+                                    <input
+                                        type="file"
+                                        id="fileInput"
+                                        accept="image/*"
+                                        style={{ display: 'none' }}
+                                        onChange={handleFileInputChange}
+                                    />
                                 </Box>
-                                <Box sx={{
-                                    border: '2px dashed #cecece',
-                                    width: { xs: '100%', sm: '50%' },
-                                    height: '100px',
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center'
-                                }}>
-                                    <AutoStoriesOutlinedIcon sx={{ fontSize: '4rem', width: '4rem', height: '4rem' }} />
+                                <Box
+                                    sx={{
+                                        border: '2px dashed #cecece',
+                                        width: { xs: '100%', sm: '50%' },
+                                        height: '100px',
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        cursor: selectedLocalImage ? 'not-allowed' : 'pointer',
+                                        // opacity: selectedLibraryImage || selectedLocalImage ? 0.5 : 1
+                                    }}
+                                    onClick={!selectedLibraryImage && !selectedLocalImage ? handleOpenImageModal : undefined}
+                                    onMouseEnter={() => setIsLibraryImageHover(true)}
+                                    onMouseLeave={() => setIsLibraryImageHover(false)}
+                                >
+                                    {selectedLibraryImage ? (
+                                        <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+                                            <img
+                                                src={selectedLibraryImage.src}
+                                                alt={selectedLibraryImage.alt}
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                            {isLibraryImageHover && (
+                                                <ClearIcon
+                                                    onClick={handleRemoveLibraryImage}
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: '5px',
+                                                        right: '5px',
+                                                        cursor: 'pointer',
+                                                        background: '#88A1FF',
+                                                        borderRadius: '1rem',
+                                                        color: 'white'
+                                                    }}
+                                                />
+                                            )}
+                                        </Box>
+                                    ) : (
+                                        <AutoStoriesOutlinedIcon sx={{ fontSize: '4rem', width: '4rem', height: '4rem' }} />
+                                    )}
                                 </Box>
+                                <Modal component="div" open={isModalOpen} onClose={handleCloseImageModal}>
+                                    <Box
+                                        sx={{
+                                            width: '40%',
+                                            height: '70%',
+                                            margin: 'auto',
+                                            marginTop: '10%',
+                                            backgroundColor: 'white',
+                                            padding: '1rem',
+                                            borderRadius: '5px',
+                                            overflow: 'scroll'
+                                        }}
+                                    >
+                                        <ImageModal onSelectImage={handleLibraryImageSelect} />
+                                    </Box>
+                                </Modal>
                             </Box>
+
+
                         </Box>
                     </Box>
-                </Box>
+                </Box >
 
                 <Box component="form" sx={{
                     display: 'flex',
@@ -413,7 +575,7 @@ const CreatePost: React.FC = () => {
                     Post now
                 </Button>
             </Stack>
-        </Box>
+        </Box >
     );
 };
 

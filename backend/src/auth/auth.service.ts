@@ -48,7 +48,6 @@ export class AuthService {
         return { accessToken, refreshToken };
     }
 
-
     async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
         const decoded = this.jwtSecret.verifyRefreshToken(refreshToken);
         if (!decoded) {

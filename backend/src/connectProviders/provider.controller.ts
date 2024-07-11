@@ -9,6 +9,7 @@ import { LinkedInStrategy } from './providerStrategys/linkedIn.strategy';
 import { InstagramStrategy } from './providerStrategys/instagram.strategy';
 import { FacebookStrategy } from './providerStrategys/facebook.strategy';
 import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 
 @Controller('connect')
 export class ProviderController {
@@ -26,9 +27,81 @@ export class ProviderController {
     @Get('facebook')
     @Redirect()
     login() {
-        const facebookLoginUrl = `https://www.facebook.com/v12.0/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&scope=email`;
+        const facebookLoginUrl = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&response_type=code&scope=email,public_profile,instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights,pages_show_list,pages_read_engagement,pages_manage_posts`;
         return { url: facebookLoginUrl };
     }
+
+    // @Get('facebook/callback')
+    // async facebookCallback(@Query('code') code: string, @Req() req, @Res() res): Promise<any> {
+    //     if (!code) {
+    //         return res.status(400).send('Authorization code not provided');
+    //     }
+
+    //     const clientId = this.configService.get<string>('FACEBOOK_CLIENT_ID');
+    //     const clientSecret = this.configService.get<string>('FACEBOOK_CLIENT_SECRET');
+    //     const redirectUri = 'http://localhost:3001/connect/facebook/callback';
+
+    //     try {
+    //         const tokenResponse = await axios.get(
+    //             `https://graph.facebook.com/v20.0/oauth/access_token`, {
+    //             params: {
+    //                 client_id: clientId,
+    //                 redirect_uri: redirectUri,
+    //                 client_secret: clientSecret,
+    //                 code: code
+    //             }
+    //         }
+    //         );
+
+    //         const accessToken = tokenResponse.data.access_token;
+
+    //         // Fetch the user's basic profile information
+    //         const userResponse = await axios.get(`https://graph.facebook.com/me`, {
+    //             params: {
+    //                 access_token: accessToken,
+    //                 fields: 'id,name,email'
+    //             }
+    //         });
+
+    //         const user = userResponse.data;
+
+    //         console.log("User", user);
+
+    //         // Fetch the pages the user has access to
+    //         const pagesResponse = await axios.get(`https://graph.facebook.com/me/accounts`, {
+    //             params: {
+    //                 access_token: accessToken
+    //             }
+    //         });
+
+    //         const pages = pagesResponse.data.data;
+    //         console.log("Pages", pagesResponse);
+
+    //         // Example: Post a message to the first page
+    //         if (pages.length > 0) {
+    //             // const pageAccessToken = pages[0].access_token;
+    //             const pageAccessToken = pages[0].access_token;
+    //             const pageId = pages[0].id;
+    //             const postResponse = await axios.post(`https://graph.facebook.com/${pageId}/feed`, null, {
+    //                 params: {
+    //                     message: 'Hello, this is a test post!',
+    //                     access_token: pageAccessToken
+    //                 }
+    //             });
+
+    //             console.log('Post ID:', postResponse.data.id);
+    //         }
+
+    //         // Respond with user, pages, and access token
+    //         res.json({ user, pages, accessToken });
+
+    //     } catch (error) {
+    //         console.error('Error during Facebook callback:', error);
+    //         res.status(500).send('Error during authentication');
+    //     }
+    // }
+
+
 
     @Get('facebook/callback')
     async facebookCallback(@Query('code') code: string, @Req() req, @Res() res): Promise<any> {
@@ -182,7 +255,7 @@ export class ProviderController {
         }
     }
 
-    
+
 }
 
 

@@ -20,6 +20,7 @@
     "concurrently": "^8.2.2",
     "emoji-picker-react": "^4.11.1",
     "fs": "^0.0.1-security",
+    "node-hashtagify": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.52.0",
