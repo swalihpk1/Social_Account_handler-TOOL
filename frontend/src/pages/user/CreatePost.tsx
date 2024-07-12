@@ -18,6 +18,8 @@ import {
     ToggleButton,
     ThemeProvider,
     Modal,
+    Snackbar,
+    Alert,
 
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -29,16 +31,23 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import EmojiEmotionsOutlinedIcon from '@mui/icons-material/EmojiEmotionsOutlined';
 import TagOutlinedIcon from '@mui/icons-material/TagOutlined';
-import RefreshTwoToneIcon from '@mui/icons-material/RefreshTwoTone';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../app/store';
 import ToggleButtonTheme from './Themes/ToggleButton';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import XIcon from '@mui/icons-material/X';
 import Picker from 'emoji-picker-react';
-import ClearIcon from '@mui/icons-material/Clear';
-import ImageModal from './ImageModal';
+import ImageModal from '../../components/ImageModal';
+import HttpIcon from '../../components/icons/HttpIcon';
+import shortenUrl from '../../components/LinkShortner';
+import RefreshIcon from '../../components/icons/RefreshIcon';
 
+const characterLimits = {
+    facebook: 6306,
+    instagram: 2200,
+    twitter: 300,
+    linkedin: 960,
+};
 
 
 const CreatePost: React.FC = () => {
@@ -53,6 +62,56 @@ const CreatePost: React.FC = () => {
     const [isLocalImageHover, setIsLocalImageHover] = useState<boolean>(false);
     const [isLibraryImageHover, setIsLibraryImageHover] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [shortenedLinks, setShortenedLinks] = useState([]);
+    const [Linkloading, setLinkloading] = useState<boolean>(false);
+    const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'info' | 'warning' | 'error'>('success');
+    const [TypeLoading, setTypeLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+        const urls = text.match(/https?:\/\/[^\s]+/g);
+        if (urls) {
+            setShortenedLinks(urls);
+        } else {
+            setShortenedLinks([]);
+        }
+    }, [text]);
+
+    useEffect(() => {
+        if (text && selectedToggle !== 'Initial content') {
+            setTypeLoading(true);
+            const timer = setTimeout(() => {
+                setTypeLoading(false);
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [text, selectedToggle]);
+
+    
+
+    const getCharacterLimit = () => {
+        return characterLimits[selectedToggle as keyof typeof characterLimits] || 0;
+    };
+
+    const characterLimit = getCharacterLimit();
+
+    const handleShortenLinks = async () => {
+        setLinkloading(true);
+        const shortened = await Promise.all(shortenedLinks.map(shortenUrl));
+        await new Promise((resolve) => setTimeout(resolve, 2300));
+        setShortenedLinks(shortened);
+        setLinkloading(false);
+        setSnackbarMessage('Links successfully shortened');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+    };
+
+    const handleCloseSnackbar = () => {
+        setSnackbarOpen(false);
+    };
+
+
 
     const handleOpenImageModal = () => {
         setIsModalOpen(true);
@@ -99,7 +158,7 @@ const CreatePost: React.FC = () => {
         setSelectedLibraryImage(null);
     };
 
-    const handleInputFileClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const handleInputFileClick = () => {
         const fileInput = document.getElementById('fileInput');
         if (fileInput) {
             fileInput.click();
@@ -198,9 +257,10 @@ const CreatePost: React.FC = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         gap: '0.5rem',
-                                                        backgroundColor: '#e0f7fa',
-                                                        padding: '4px 8px',
-                                                        borderRadius: '4px',
+                                                        backgroundColor: '#ffe5b2',
+                                                        padding: '1px',
+                                                        borderRadius: '2rem',
+
                                                     }}
                                                 >
                                                     <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
@@ -208,8 +268,8 @@ const CreatePost: React.FC = () => {
                                                         <Box
                                                             sx={{
                                                                 position: 'absolute',
-                                                                right: -2,
-                                                                bottom: -5,
+                                                                right: -5,
+                                                                bottom: -8,
                                                                 padding: '0',
                                                             }}
                                                         >
@@ -277,7 +337,14 @@ const CreatePost: React.FC = () => {
                                                 {smallProviderIcons[option.provider]}
                                             </Box>
                                         </Box>
-                                        <Typography>{option.name}</Typography>
+                                        <Stack>
+                                            <Typography>{option.name} </Typography>
+                                            <Typography sx={{ fontSize: 'xx-small', lineHeight: 1 }}>
+                                                {option.provider}
+                                            </Typography>
+                                        </Stack>
+
+
                                     </Stack>
                                 </MenuItem>
                             ))}
@@ -299,21 +366,30 @@ const CreatePost: React.FC = () => {
                                 onChange={handleToggle}
                                 aria-label="Platform"
                             >
-                                <ToggleButton disabled={selectedToggle === 'Initial content'} value="Initial content">
+                                <ToggleButton
+                                    disabled={selectedToggle === 'Initial content'}
+                                    value="Initial content"
+                                >
                                     Initial Content
                                 </ToggleButton>
-                                {userSocialAccounts.map((account) => (
-                                    <ToggleButton key={account.provider} disabled={selectedToggle === account.provider} value={account.provider}>
-                                        {normalProviderIcons[account.provider]}
-                                    </ToggleButton>
-                                ))}
+                                {userSocialAccounts
+                                    .filter((account) => selectedOptions.includes(account.provider))
+                                    .map((account) => (
+                                        <ToggleButton
+                                            key={account.provider}
+                                            disabled={selectedToggle === account.provider}
+                                            value={account.provider}
+                                        >
+                                            {normalProviderIcons[account.provider]}
+                                        </ToggleButton>
+                                    ))}
                             </ToggleButtonGroup>
-
                         </ThemeProvider>
+
                         <Box
                             sx={{
                                 border: isFocused ? '1px solid black' : '1px solid #c5c5c5',
-                                height: { xs: 'auto', md: '93.5%' },
+                                maxHeight: { xs: 'auto', md: '93.5%' },
                                 borderRadius: '5px',
                                 padding: '1rem',
                                 '&:focus-within': {
@@ -332,7 +408,6 @@ const CreatePost: React.FC = () => {
                                 placeholder="Enter your text and links"
                                 fullWidth
                                 value={text}
-
                                 onChange={(e) => setText(e.target.value)}
                                 InputProps={{
                                     disableUnderline: true,
@@ -375,16 +450,39 @@ const CreatePost: React.FC = () => {
                             <Box >
                                 <Box display='flex' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
                                     <Stack direction="row" spacing={1} justifyContent='center' alignItems='center'>
-                                        <Typography sx={{ color: 'grey' }}>0</Typography>
+
+                                        {selectedToggle !== 'Initial content' && (
+                                            <Typography sx={{ color: 'grey' }}>
+                                                {text.length} / {characterLimit}
+                                            </Typography>
+                                        )}
+
                                         <Box
                                             sx={{
                                                 width: '1.4rem', height: '1.4rem', backgroundColor: '#203170', borderRadius: '12px',
                                                 display: 'flex', justifyContent: 'center', alignItems: 'center'
                                             }}>
-                                            <RefreshTwoToneIcon sx={{ width: '1rem', height: '1rem', color: '#fff' }} />
+                                            <RefreshIcon loading={TypeLoading} />
                                         </Box>
 
                                     </Stack>
+
+                                    {shortenedLinks.length > 0 && (
+                                        <Stack direction="row" spacing={1} justifyContent='center' alignItems='center'>
+                                            <Link onClick={handleShortenLinks} gap={1} sx={{
+                                                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                                                fontSize: '14px', cursor: 'pointer', textDecoration: 'none',
+                                                color: '#000'
+                                            }}> {shortenedLinks.length}.<HttpIcon loading={Linkloading} />Shortened with bit.ly</Link>
+                                        </Stack>
+                                    )}
+
+                                    <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+                                        <Alert severity={snackbarSeverity} sx={{ width: '100%' }}>
+                                            {snackbarMessage}
+                                        </Alert>
+                                    </Snackbar>
+
                                     <Stack direction="row" spacing={1} alignItems='center' marginBottom='.5rem'>
                                         <EmojiEmotionsOutlinedIcon
                                             sx={{ background: 'lightgrey', borderRadius: '15px', padding: '2px', color: 'grey', cursor: 'pointer' }}
@@ -394,13 +492,11 @@ const CreatePost: React.FC = () => {
                                             sx={{ background: 'lightgrey', borderRadius: '15px', padding: '2px', color: 'grey' }}
                                         />
                                     </Stack>
+
                                 </Box>
                                 <Divider style={{ height: '2.5px', backgroundColor: '#e5e5e5' }} />
 
                             </Box>
-
-
-
                             <Box
                                 sx={{
                                     display: 'flex',
@@ -437,7 +533,7 @@ const CreatePost: React.FC = () => {
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                             />
                                             {isLocalImageHover && (
-                                                <ClearIcon
+                                                <CloseIcon
                                                     onClick={handleRemoveLocalImage}
                                                     sx={{
                                                         position: 'absolute',
@@ -462,6 +558,7 @@ const CreatePost: React.FC = () => {
                                         onChange={handleFileInputChange}
                                     />
                                 </Box>
+
                                 <Box
                                     sx={{
                                         border: '2px dashed #cecece',
@@ -471,7 +568,6 @@ const CreatePost: React.FC = () => {
                                         justifyContent: 'center',
                                         alignItems: 'center',
                                         cursor: selectedLocalImage ? 'not-allowed' : 'pointer',
-                                        // opacity: selectedLibraryImage || selectedLocalImage ? 0.5 : 1
                                     }}
                                     onClick={!selectedLibraryImage && !selectedLocalImage ? handleOpenImageModal : undefined}
                                     onMouseEnter={() => setIsLibraryImageHover(true)}
@@ -485,14 +581,14 @@ const CreatePost: React.FC = () => {
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                             />
                                             {isLibraryImageHover && (
-                                                <ClearIcon
+                                                <CloseIcon
                                                     onClick={handleRemoveLibraryImage}
                                                     sx={{
                                                         position: 'absolute',
-                                                        top: '5px',
-                                                        right: '5px',
+                                                        top: '-10px',
+                                                        right: '-10px',
                                                         cursor: 'pointer',
-                                                        background: '#88A1FF',
+                                                        background: '#828282',
                                                         borderRadius: '1rem',
                                                         color: 'white'
                                                     }}
@@ -503,6 +599,7 @@ const CreatePost: React.FC = () => {
                                         <AutoStoriesOutlinedIcon sx={{ fontSize: '4rem', width: '4rem', height: '4rem' }} />
                                     )}
                                 </Box>
+
                                 <Modal component="div" open={isModalOpen} onClose={handleCloseImageModal}>
                                     <Box
                                         sx={{
@@ -538,12 +635,19 @@ const CreatePost: React.FC = () => {
                     {showEmojiPicker &&
                         <Box position='absolute' left='67%' top='29%' transform='translate(-50%, -50%)'>
                             <Picker
-                                skinTonePickerLocation='false'
+                                skinTonePickerLocation={'false'}
                                 width='300'
                                 onEmojiClick={handleEmojiClick}
                             />
                         </Box>
                     }
+                    <Box sx={{ mt: 2, p: 3 }}>
+                        {shortenedLinks.map((link, index) => (
+                            <Typography key={index} variant="body1" sx={{ mt: 1 }}>
+                                {link}
+                            </Typography>
+                        ))}
+                    </Box>
 
                 </Box>
             </Stack >

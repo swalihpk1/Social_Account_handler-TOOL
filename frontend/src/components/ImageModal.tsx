@@ -3,9 +3,9 @@ import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import axios from 'axios';
 import { Button } from '@mui/material';
-import SearchIcon from '../../components/icons/SearchIcon';
+import SearchIcon from './icons/SearchIcon';
 
-const API_KEY = 'gGhCpc4Oii68YIPLkPajRFjpOKzAM5uNjqntbgmnmX84K27bXq3XSkVR';
+const PEXEL_API_KEY = 'gGhCpc4Oii68YIPLkPajRFjpOKzAM5uNjqntbgmnmX84K27bXq3XSkVR';
 
 const ImageModal: React.FC<any> = ({ onSelectImage }) => {
     const [query, setQuery] = useState('');
@@ -21,7 +21,7 @@ const ImageModal: React.FC<any> = ({ onSelectImage }) => {
         try {
             const response = await axios.get('https://api.pexels.com/v1/search', {
                 headers: {
-                    Authorization: API_KEY
+                    Authorization: PEXEL_API_KEY
                 },
                 params: {
                     query: searchQuery,

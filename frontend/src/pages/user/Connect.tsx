@@ -103,7 +103,7 @@ const Connect: React.FC = () => {
                         alignItems: 'center',
                         textAlign: 'center',
                         padding: '20px',
-                        position: 'relative', // Ensure Stack is positioned relatively for absolute children
+                        position: 'relative', 
                     }}
                 >
                     <Box>

@@ -71,3 +71,7 @@ export interface StyledListItemProps {
     to: string;
     iconStyles?: React.CSSProperties;
 }
+
+export interface LoadingIconProps {
+    loading: boolean;
+}
