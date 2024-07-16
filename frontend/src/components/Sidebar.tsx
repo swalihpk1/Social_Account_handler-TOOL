@@ -3,7 +3,7 @@ import { Drawer, List, IconButton, Divider, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
-import SearchIcon from '@mui/icons-material/Search';
+import SearchIcon from './icons/SearchIcon';
 import CalendarIcon from './icons/CalendarIcon';
 import AnalyticIcon from './icons/AnalyticIcon';
 import ProfileIcon from './icons/ProfileIcon';

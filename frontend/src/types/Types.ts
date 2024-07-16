@@ -75,3 +75,11 @@ export interface StyledListItemProps {
 export interface LoadingIconProps {
     loading: boolean;
 }
+
+export interface FacebookPreviewProps {
+    text: string;
+    facebookAccount: { name: string, profilePicture: string };
+    selectedLocalImage?: File | null;
+    selectedLibraryImage?: { src: string, alt: string } | null;
+    shortenedLinks: string[];
+}

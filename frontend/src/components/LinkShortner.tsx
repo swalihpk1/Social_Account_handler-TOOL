@@ -1,7 +1,7 @@
 
 import axios from 'axios';
 
-const API_KEY = '7c1ee9b67d78d2cf153ca95629ee06198b32b06a'
+const API_KEY = 'a0fbb49d0708cc6deb7b0025d496cd48e791556e'
 
 const shortenUrl = async (url: string) => {
     try {
@@ -20,8 +20,6 @@ const shortenUrl = async (url: string) => {
         return response.data.link;
     } catch (error) {
         console.error('Error shortening URL:', error);
-        return url;
     }
 };
-
 export default shortenUrl

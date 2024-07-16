@@ -20,6 +20,7 @@ import {
     Modal,
     Snackbar,
     Alert,
+    Skeleton,
 
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -41,6 +42,8 @@ import ImageModal from '../../components/ImageModal';
 import HttpIcon from '../../components/icons/HttpIcon';
 import shortenUrl from '../../components/LinkShortner';
 import RefreshIcon from '../../components/icons/RefreshIcon';
+import FacebookPreview from './FacebookPreview';
+import LinkedInPreview from './LinkedInPreview';
 
 const characterLimits = {
     facebook: 6306,
@@ -69,6 +72,8 @@ const CreatePost: React.FC = () => {
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'info' | 'warning' | 'error'>('success');
     const [TypeLoading, setTypeLoading] = useState<boolean>(false);
 
+
+
     useEffect(() => {
         const urls = text.match(/https?:\/\/[^\s]+/g);
         if (urls) {
@@ -88,7 +93,14 @@ const CreatePost: React.FC = () => {
         }
     }, [text, selectedToggle]);
 
-    
+
+
+    const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newText = e.target.value;
+        if (newText.length <= characterLimit || selectedToggle === 'Initial content') {
+            setText(newText);
+        }
+    };
 
     const getCharacterLimit = () => {
         return characterLimits[selectedToggle as keyof typeof characterLimits] || 0;
@@ -110,7 +122,6 @@ const CreatePost: React.FC = () => {
     const handleCloseSnackbar = () => {
         setSnackbarOpen(false);
     };
-
 
 
     const handleOpenImageModal = () => {
@@ -235,7 +246,7 @@ const CreatePost: React.FC = () => {
                     flexDirection: 'column',
                     gap: '1rem',
                     padding: { xs: '1rem', md: '1.5rem' },
-                    width: { xs: '100%', md: '65%' }
+                    width: { xs: '100%', md: '63%' }
                 }}>
                     <Stack component='form'>
                         <Typography>Publish to</Typography>
@@ -408,7 +419,7 @@ const CreatePost: React.FC = () => {
                                 placeholder="Enter your text and links"
                                 fullWidth
                                 value={text}
-                                onChange={(e) => setText(e.target.value)}
+                                onChange={handleTextChange}
                                 InputProps={{
                                     disableUnderline: true,
                                     sx: {
@@ -452,11 +463,10 @@ const CreatePost: React.FC = () => {
                                     <Stack direction="row" spacing={1} justifyContent='center' alignItems='center'>
 
                                         {selectedToggle !== 'Initial content' && (
-                                            <Typography sx={{ color: 'grey' }}>
+                                            <Typography sx={{ color: text.length >= characterLimit ? 'red' : 'grey', fontSize: '14px', fontWeight: '100' }}>
                                                 {text.length} / {characterLimit}
                                             </Typography>
                                         )}
-
                                         <Box
                                             sx={{
                                                 width: '1.4rem', height: '1.4rem', backgroundColor: '#203170', borderRadius: '12px',
@@ -516,7 +526,6 @@ const CreatePost: React.FC = () => {
                                         display: 'flex',
                                         justifyContent: 'center',
                                         alignItems: 'center',
-                                        overflow: 'hidden',
                                         cursor: selectedLibraryImage ? 'not-allowed' : 'pointer',
                                     }}
                                     onDragOver={handleDragOver}
@@ -537,10 +546,10 @@ const CreatePost: React.FC = () => {
                                                     onClick={handleRemoveLocalImage}
                                                     sx={{
                                                         position: 'absolute',
-                                                        top: '5px',
-                                                        right: '5px',
+                                                        top: '-10px',
+                                                        right: '-10px',
                                                         cursor: 'pointer',
-                                                        background: '#88A1FF',
+                                                        background: '#828282',
                                                         borderRadius: '1rem',
                                                         color: 'white'
                                                     }}
@@ -623,15 +632,18 @@ const CreatePost: React.FC = () => {
                     </Box>
                 </Box >
 
-                <Box component="form" sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: { xs: '100%', md: '35%' },
-                    backgroundColor: '#d8d8d8',
-                    height: { xs: 'auto', md: '100%' },
-                    padding: { xs: '1rem', md: 0 }
-                }}>
+                <Box component="form"
+                    gap={1}
+                    overflow='scroll'
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        width: { xs: '100%', md: '37%' },
+                        backgroundColor: '#d8d8d8',
+                        height: { xs: 'auto', md: '100%' },
+                        padding: { xs: '1rem', md: '1rem' },
 
+                    }}>
                     {showEmojiPicker &&
                         <Box position='absolute' left='67%' top='29%' transform='translate(-50%, -50%)'>
                             <Picker
@@ -641,15 +653,157 @@ const CreatePost: React.FC = () => {
                             />
                         </Box>
                     }
-                    <Box sx={{ mt: 2, p: 3 }}>
-                        {shortenedLinks.map((link, index) => (
+                    {/* {shortenedLinks.map((link, index) => (
+                        <Box sx={{ mt: 2, p: 3 }}>
                             <Typography key={index} variant="body1" sx={{ mt: 1 }}>
                                 {link}
                             </Typography>
-                        ))}
-                    </Box>
+                        </Box>
+                    ))} */}
 
+
+                    {selectedToggle === 'Initial content' && (
+                        <>
+                            <Stack direction='row' gap='.5rem' sx={{ mt: '2rem', mx: '1.5rem', mb: '.5rem' }}>
+                                <Skeleton variant="rectangular" animation='wave' sx={{ borderRadius: '3px', width: '1rem', height: '1rem' }}>
+                                </Skeleton>
+                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                            </Stack>
+
+
+                            <Stack gap='3px' sx={{ background: 'white', mx: '1.5rem', borderRadius: '6px', p: 1 }}>
+                                <Stack direction='row' gap={1} sx={{ alignItems: 'center', }}>
+                                    <Skeleton variant='rectangular' animation='wave' sx={{ borderRadius: '5px', width: '2rem', height: '2rem' }}>
+                                        <Avatar />
+                                    </Skeleton>
+                                    <Typography>
+                                        <Skeleton animation='wave' width='6rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                    </Typography>
+                                </Stack>
+
+                                {!text ? (
+                                    <Box>
+                                        <Typography>
+                                            <Skeleton animation='wave' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                        </Typography>
+                                        <Typography>
+                                            <Skeleton animation='wave' width='6rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                        </Typography>
+                                    </Box>
+                                ) : (
+                                    <Box sx={{ width: '100%', overflow: 'hidden', }}>
+                                        <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 'small' }}>
+                                            {text}
+                                        </Typography>
+                                    </Box>
+                                )}
+
+                                <Stack direction='row' gap={1} sx={{ alignItems: 'center', mt: '1rem', }} >
+                                    <Typography>
+                                        <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                    </Typography>
+                                    <Typography>
+                                        <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                    </Typography>
+                                    <Typography>
+                                        <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                    </Typography>
+                                </Stack>
+                            </Stack>
+                        </>
+                    )}
+                    {selectedToggle === 'facebook' && (
+                        <FacebookPreview
+                            text={text}
+                            facebookAccount={userSocialAccounts.find(account => account.provider === 'facebook')}
+                            selectedLocalImage={selectedLocalImage}
+                            selectedLibraryImage={selectedLibraryImage}
+                            shortenedLinks={shortenedLinks}
+                        />
+                    )}
+                    {selectedToggle === 'linkedin' && (
+                        <LinkedInPreview
+                            text={text}
+                            facebookAccount={userSocialAccounts.find(account => account.provider === 'linkedin')}
+                            selectedLocalImage={selectedLocalImage}
+                            selectedLibraryImage={selectedLibraryImage}
+                            shortenedLinks={shortenedLinks}
+                        />
+                    )}
+
+
+
+                    {/* <Stack direction='row' gap='.5rem' sx={{ mt: '2rem', mx: '1.5rem', mb: '.5rem' }}>
+
+                        {selectedToggle !== 'Initial content' ? (
+                            <Stack direction='row' gap={1} sx={{ alignItems: 'center' }}>
+                                {getProviderIcon()}
+                                {/* <FacebookRoundedIcon sx={{ fontSize: { xs: '24px', sm: '30px' }, color: '#1877F2' }} /> */}
+                    {/* <h2>{selectedToggle}</h2> */}
+                    {/* </Stack> */}
+                    {/* ) : ( */}
+                    {/* <> */}
+                    {/* <Skeleton variant="rectangular" animation='wave' sx={{ borderRadius: '3px', width: '1rem', height: '1rem' }}>
+                                </Skeleton>
+                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                            </> */}
+
+                    {/* )} */}
+                    {/* 
+                    </Stack>
+
+                    <Stack gap='3px' sx={{ background: 'white', mx: '1.5rem', borderRadius: '6px' }}>
+
+                        if (selectedToggle === 'Initial content){
+                            <Stack direction='row' gap={1} sx={{ alignItems: 'center', p: 1 }}>
+                                <Skeleton variant="rectangular" animation='wave' sx={{ borderRadius: '5px', width: '2rem', height: '2rem' }}> */}
+                    {/* <Avatar /> */}
+                    {/* </Skeleton>
+                                <Typography>
+                                    <Skeleton animation='wave' width='6rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                </Typography>
+                            </Stack>
+                        }else if(selectedToggle === 'facebook'){
+                            <FacebookPreview selectedToggle={selectedToggle} userInfo={userSocialAccounts} />
+                        }else if(selectedToggle === 'linkedin'){
+
+                        }else if(selectedToggle === 'twitter'){
+                            
+                        }
+ */}
+
+                    {/* {!text ? ( */}
+                    {/* <Box sx={{ px: 1 }}>
+                                <Typography>
+                                    <Skeleton animation='wave' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                </Typography>
+                                <Typography>
+                                    <Skeleton animation='wave' width='6rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                </Typography>
+                            </Box>
+                        // ) : (
+                            <Box sx={{ width: '100%', overflow: 'hidden', px: 1 }}>
+                                <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 'small' }}>
+                                    {text}
+                                </Typography>
+                            </Box>
+                        // )} */}
+
+                    {/* <Stack direction='row' gap={1} sx={{ alignItems: 'center', mt: '1rem', p: 1 }}>
+                            <Typography>
+                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                            </Typography>
+                            <Typography>
+                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                            </Typography>
+                            <Typography>
+                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                            </Typography>
+                        </Stack>
+                    </Stack>  */}
+                    <Typography sx={{ fontSize: 'small', textAlign: 'center', fontWeight: '100', color: 'gray', mx: '2rem', mt: 1 }}>Social networks regularly make updates to formatting, so your post may appear slightly different when published.</Typography>
                 </Box>
+
             </Stack >
             <Divider style={{ height: '2.5px', backgroundColor: '#e5e5e5' }} />
             <Stack direction='row' display='flex' gap={2} justifyContent='end' sx={{ alignItems: 'center', padding: '13px' }}>
