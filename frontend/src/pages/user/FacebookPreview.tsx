@@ -40,7 +40,7 @@ const FacebookPreview: React.FC<SocialPreviewProps> = ({ text, account, selected
                     </Box>
                 ) : (
                     <Box sx={{ width: '100%', overflow: 'hidden', px: 1, mb: '2px' }}>
-                        <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 'small' }}>
+                            <Typography sx={{ whiteSpace: 'pre-line', wordBreak: 'break-word', fontSize: 'small' }}>
                             {ReplaceLinksAndHashtags(text, shortenedLinks)}
                         </Typography>
                     </Box>

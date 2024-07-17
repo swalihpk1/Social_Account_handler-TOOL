@@ -2,7 +2,7 @@ import { Avatar, Box, Divider, Skeleton, Stack, Typography } from '@mui/material
 import LinkedIn from '@mui/icons-material/LinkedIn';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp as faRegularThumbsUp } from '@fortawesome/free-regular-svg-icons';
-import { faRepeat as faSolidRepeat } from '@fortawesome/free-solid-svg-icons';
+import { faRetweet } from '@fortawesome/free-solid-svg-icons';
 import { faShare } from '@fortawesome/free-solid-svg-icons';
 import React from 'react';
 import { SocialPreviewProps } from '../../types/Types';
@@ -49,7 +49,7 @@ const LinkedInPreview: React.FC<SocialPreviewProps> = ({ text, account, selected
                     </Box>
                 ) : (
                     <Box sx={{ width: '100%', overflow: 'hidden', px: 1, mb: '2px' }}>
-                        <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 'small' }}>
+                        <Typography sx={{ whiteSpace: 'pre-line', wordBreak: 'break-word', fontSize: 'small' }}>
                             {ReplaceLinksAndHashtags(text, shortenedLinks)}
                         </Typography>
                     </Box>
@@ -83,7 +83,7 @@ const LinkedInPreview: React.FC<SocialPreviewProps> = ({ text, account, selected
                         <Typography variant="body2" fontSize='x-small' color="textSecondary" sx={{ marginLeft: '0' }}>Comment</Typography>
                     </Stack>
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                        <FontAwesomeIcon icon={faSolidRepeat} style={{ fontSize: '1rem', color: 'grey' }} />
+                        <FontAwesomeIcon icon={faRetweet} style={{ fontSize: '1rem', color: 'grey' }} />
                         <Typography variant="body2" fontSize='x-small' color="textSecondary" sx={{ marginLeft: '0' }}>Repost</Typography>
                     </Stack>
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>

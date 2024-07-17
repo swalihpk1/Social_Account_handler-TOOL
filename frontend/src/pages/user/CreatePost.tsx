@@ -45,6 +45,7 @@ import RefreshIcon from '../../components/icons/RefreshIcon';
 import FacebookPreview from './FacebookPreview';
 import LinkedInPreview from './LinkedInPreview';
 import XPreview from './XPreview';
+import InstagramPreview from './InstagramPreview';
 
 
 const characterLimits = {

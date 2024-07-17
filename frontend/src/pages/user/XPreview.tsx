@@ -1,11 +1,11 @@
-import { Stack, Box, Skeleton, Typography, Avatar, Divider } from '@mui/material';
+import { Stack, Box, Skeleton, Typography, Avatar } from '@mui/material';
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BarChartTwoToneIcon from '@mui/icons-material/BarChartTwoTone';
 import { SocialPreviewProps } from '../../types/Types';
 import ReplaceLinksAndHashtags from '../../components/ReplaceLinkAndHashtags';
 import { faComment } from '@fortawesome/free-regular-svg-icons';
-import { faRepeat as faSolidRepeat } from '@fortawesome/free-solid-svg-icons';
+import { faRetweet } from '@fortawesome/free-solid-svg-icons';
 import { faHeart } from '@fortawesome/free-regular-svg-icons';
 import BookmarkBorderTwoToneIcon from '@mui/icons-material/BookmarkBorderTwoTone';
 import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons';
@@ -77,7 +77,7 @@ const XPreview: React.FC<SocialPreviewProps> = ({ text, account, selectedLocalIm
                         <FontAwesomeIcon icon={faComment} style={{ fontSize: '1rem', color: 'grey' }} />
                     </Stack>
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                        <FontAwesomeIcon icon={faSolidRepeat} style={{ fontSize: '1rem', color: 'grey' }} />
+                        <FontAwesomeIcon icon={faRetweet} style={{ fontSize: '1rem', color: 'grey' }} />
                     </Stack>
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         <FontAwesomeIcon icon={faHeart} style={{ fontSize: '1rem', color: 'grey' }} />
