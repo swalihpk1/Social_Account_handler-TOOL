@@ -76,9 +76,9 @@ export interface LoadingIconProps {
     loading: boolean;
 }
 
-export interface FacebookPreviewProps {
+export interface SocialPreviewProps {
     text: string;
-    facebookAccount: { name: string, profilePicture: string };
+    account: SocialAccount
     selectedLocalImage?: File | null;
     selectedLibraryImage?: { src: string, alt: string } | null;
     shortenedLinks: string[];

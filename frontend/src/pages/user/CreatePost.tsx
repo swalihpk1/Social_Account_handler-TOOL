@@ -44,6 +44,8 @@ import shortenUrl from '../../components/LinkShortner';
 import RefreshIcon from '../../components/icons/RefreshIcon';
 import FacebookPreview from './FacebookPreview';
 import LinkedInPreview from './LinkedInPreview';
+import XPreview from './XPreview';
+
 
 const characterLimits = {
     facebook: 6306,
@@ -179,7 +181,7 @@ const CreatePost: React.FC = () => {
 
     const userSocialAccounts = Object.entries(userInfo?.socialAccounts || {}).map(([provider, { profileName, profilePicture }]) => ({
         provider,
-        name: profileName,
+        profileName,
         profilePicture,
     }))
 
@@ -275,7 +277,7 @@ const CreatePost: React.FC = () => {
                                                     }}
                                                 >
                                                     <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                                                        <Avatar alt={option.name} src={option.profilePicture} sx={{ width: 24, height: 24 }} />
+                                                        <Avatar alt={option.profileName} src={option.profilePicture} sx={{ width: 24, height: 24 }} />
                                                         <Box
                                                             sx={{
                                                                 position: 'absolute',
@@ -287,7 +289,7 @@ const CreatePost: React.FC = () => {
                                                             {smallProviderIcons[option.provider]}
                                                         </Box>
                                                     </Box>
-                                                    {option.name}
+                                                    {option.profileName}
                                                     <IconButton
                                                         size="small"
                                                         onClick={(event) => {
@@ -336,7 +338,7 @@ const CreatePost: React.FC = () => {
                                             }}
                                         />
                                         <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                                            <Avatar src={option.profilePicture} alt={option.name} sx={{ width: 35, height: 35, borderRadius: '20px' }} />
+                                            <Avatar src={option.profilePicture} alt={option.profileName} sx={{ width: 35, height: 35, borderRadius: '20px' }} />
                                             <Box
                                                 sx={{
                                                     position: 'absolute',
@@ -349,7 +351,7 @@ const CreatePost: React.FC = () => {
                                             </Box>
                                         </Box>
                                         <Stack>
-                                            <Typography>{option.name} </Typography>
+                                            <Typography>{option.profileName} </Typography>
                                             <Typography sx={{ fontSize: 'xx-small', lineHeight: 1 }}>
                                                 {option.provider}
                                             </Typography>
@@ -645,7 +647,7 @@ const CreatePost: React.FC = () => {
 
                     }}>
                     {showEmojiPicker &&
-                        <Box position='absolute' left='67%' top='29%' transform='translate(-50%, -50%)'>
+                        <Box position='absolute' left='67%' top='29%' transform='translate(-50%, -50%)' sx={{ zIndex: '1' }}>
                             <Picker
                                 skinTonePickerLocation={'false'}
                                 width='300'
@@ -715,7 +717,7 @@ const CreatePost: React.FC = () => {
                     {selectedToggle === 'facebook' && (
                         <FacebookPreview
                             text={text}
-                            facebookAccount={userSocialAccounts.find(account => account.provider === 'facebook')}
+                            account={userSocialAccounts.find(account => account.provider === 'facebook')}
                             selectedLocalImage={selectedLocalImage}
                             selectedLibraryImage={selectedLibraryImage}
                             shortenedLinks={shortenedLinks}
@@ -724,7 +726,17 @@ const CreatePost: React.FC = () => {
                     {selectedToggle === 'linkedin' && (
                         <LinkedInPreview
                             text={text}
-                            facebookAccount={userSocialAccounts.find(account => account.provider === 'linkedin')}
+                            account={userSocialAccounts.find(account => account.provider === 'linkedin')}
+                            selectedLocalImage={selectedLocalImage}
+                            selectedLibraryImage={selectedLibraryImage}
+                            shortenedLinks={shortenedLinks}
+                        />
+                    )}
+                    {selectedToggle === 'twitter' && (
+
+                        <XPreview
+                            text={text}
+                            account={userSocialAccounts.find(account => account.provider === 'twitter')}
                             selectedLocalImage={selectedLocalImage}
                             selectedLibraryImage={selectedLibraryImage}
                             shortenedLinks={shortenedLinks}
@@ -732,75 +744,6 @@ const CreatePost: React.FC = () => {
                     )}
 
 
-
-                    {/* <Stack direction='row' gap='.5rem' sx={{ mt: '2rem', mx: '1.5rem', mb: '.5rem' }}>
-
-                        {selectedToggle !== 'Initial content' ? (
-                            <Stack direction='row' gap={1} sx={{ alignItems: 'center' }}>
-                                {getProviderIcon()}
-                                {/* <FacebookRoundedIcon sx={{ fontSize: { xs: '24px', sm: '30px' }, color: '#1877F2' }} /> */}
-                    {/* <h2>{selectedToggle}</h2> */}
-                    {/* </Stack> */}
-                    {/* ) : ( */}
-                    {/* <> */}
-                    {/* <Skeleton variant="rectangular" animation='wave' sx={{ borderRadius: '3px', width: '1rem', height: '1rem' }}>
-                                </Skeleton>
-                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
-                            </> */}
-
-                    {/* )} */}
-                    {/* 
-                    </Stack>
-
-                    <Stack gap='3px' sx={{ background: 'white', mx: '1.5rem', borderRadius: '6px' }}>
-
-                        if (selectedToggle === 'Initial content){
-                            <Stack direction='row' gap={1} sx={{ alignItems: 'center', p: 1 }}>
-                                <Skeleton variant="rectangular" animation='wave' sx={{ borderRadius: '5px', width: '2rem', height: '2rem' }}> */}
-                    {/* <Avatar /> */}
-                    {/* </Skeleton>
-                                <Typography>
-                                    <Skeleton animation='wave' width='6rem' sx={{ borderRadius: '7px', height: '1rem' }} />
-                                </Typography>
-                            </Stack>
-                        }else if(selectedToggle === 'facebook'){
-                            <FacebookPreview selectedToggle={selectedToggle} userInfo={userSocialAccounts} />
-                        }else if(selectedToggle === 'linkedin'){
-
-                        }else if(selectedToggle === 'twitter'){
-                            
-                        }
- */}
-
-                    {/* {!text ? ( */}
-                    {/* <Box sx={{ px: 1 }}>
-                                <Typography>
-                                    <Skeleton animation='wave' sx={{ borderRadius: '7px', height: '1rem' }} />
-                                </Typography>
-                                <Typography>
-                                    <Skeleton animation='wave' width='6rem' sx={{ borderRadius: '7px', height: '1rem' }} />
-                                </Typography>
-                            </Box>
-                        // ) : (
-                            <Box sx={{ width: '100%', overflow: 'hidden', px: 1 }}>
-                                <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 'small' }}>
-                                    {text}
-                                </Typography>
-                            </Box>
-                        // )} */}
-
-                    {/* <Stack direction='row' gap={1} sx={{ alignItems: 'center', mt: '1rem', p: 1 }}>
-                            <Typography>
-                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
-                            </Typography>
-                            <Typography>
-                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
-                            </Typography>
-                            <Typography>
-                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
-                            </Typography>
-                        </Stack>
-                    </Stack>  */}
                     <Typography sx={{ fontSize: 'small', textAlign: 'center', fontWeight: '100', color: 'gray', mx: '2rem', mt: 1 }}>Social networks regularly make updates to formatting, so your post may appear slightly different when published.</Typography>
                 </Box>
 
