@@ -6,8 +6,8 @@ import { Profile, Strategy } from 'passport-twitter';
 export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
     constructor() {
         super({
-            consumerKey: 'Bv3oDuqMrH4oFgMW4KtBLhATk',
-            consumerSecret: 'UKpR7WO8f245oo89YCUBe5QP0zvium8KrYBwMbNAa9lqNgZ8Yb',
+            consumerKey: process.env.TWITTER_CLIENT_ID,
+            consumerSecret: process.env.TWITTER_CLIENT_SECRET,
             callbackURL: "http://localhost:3001/connect/twitter/callback",
             includeEmail: true,
         });
@@ -24,6 +24,6 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
             user,
             accessToken,
         };
-        done(null, payload); 
+        done(null, payload);
     }
 }

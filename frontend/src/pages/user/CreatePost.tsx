@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Box,
     TextField,
@@ -46,21 +46,14 @@ import FacebookPreview from './FacebookPreview';
 import LinkedInPreview from './LinkedInPreview';
 import XPreview from './XPreview';
 import InstagramPreview from './InstagramPreview';
-
-
-const characterLimits = {
-    facebook: 6306,
-    instagram: 2200,
-    twitter: 300,
-    linkedin: 960,
-};
+import { useGetCharacterLimitsQuery } from '../../api/ApiSlice';
+import { debounce } from 'lodash';
 
 
 const CreatePost: React.FC = () => {
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [selectedToggle, setSelectedToggle] = useState<string | null>('Initial content');
     const [isFocused, setIsFocused] = useState<boolean>(false);
-    const [text, setText] = useState<string>('');
     const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
     const [selectedLocalImage, setSelectedLocalImage] = useState<File | null>(null);
@@ -74,42 +67,59 @@ const CreatePost: React.FC = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'info' | 'warning' | 'error'>('success');
     const [TypeLoading, setTypeLoading] = useState<boolean>(false);
+    const [cursorPosition, setCursorPosition] = useState<number>(0);
+    const textFieldRef = useRef<HTMLInputElement>(null);
+    const [characterLimit, setCharacterLimit] = useState(0);
+    const [initialContent, setInitialContent] = useState('');
+    const [text, setText] = useState({
+        facebook: '',
+        twitter: '',
+        linkedin: '',
+        instagram: '',
+    });
+    const { data: characterLimits, isLoading } = useGetCharacterLimitsQuery();
 
 
 
     useEffect(() => {
-        const urls = text.match(/https?:\/\/[^\s]+/g);
+        const currentText = text[selectedToggle] || '';
+        const urls = currentText.match(/https?:\/\/[^\s]+/g);
         if (urls) {
             setShortenedLinks(urls);
         } else {
             setShortenedLinks([]);
         }
-    }, [text]);
-
-    useEffect(() => {
-        if (text && selectedToggle !== 'Initial content') {
-            setTypeLoading(true);
-            const timer = setTimeout(() => {
-                setTypeLoading(false);
-            }, 500);
-            return () => clearTimeout(timer);
-        }
     }, [text, selectedToggle]);
 
 
 
-    const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    useEffect(() => {
+        if (characterLimits && selectedToggle !== 'Initial content') {
+            setCharacterLimit(characterLimits[selectedToggle]);
+        }
+    }, [characterLimits, selectedToggle]);
+
+
+    const handleTextChange = (e) => {
         const newText = e.target.value;
-        if (newText.length <= characterLimit || selectedToggle === 'Initial content') {
-            setText(newText);
+        setCursorPosition(e.target.selectionStart);
+
+        if (selectedToggle === 'Initial content') {
+            setInitialContent(newText);
+            setText({
+                facebook: newText,
+                twitter: newText,
+                linkedin: newText,
+                instagram: newText,
+            });
+        } else {
+            setText(prevState => ({
+                ...prevState,
+                [selectedToggle]: newText,
+            }));
         }
     };
 
-    const getCharacterLimit = () => {
-        return characterLimits[selectedToggle as keyof typeof characterLimits] || 0;
-    };
-
-    const characterLimit = getCharacterLimit();
 
     const handleShortenLinks = async () => {
         setLinkloading(true);
@@ -179,7 +189,6 @@ const CreatePost: React.FC = () => {
         }
     };
 
-
     const userSocialAccounts = Object.entries(userInfo?.socialAccounts || {}).map(([provider, { profileName, profilePicture }]) => ({
         provider,
         profileName,
@@ -200,8 +209,39 @@ const CreatePost: React.FC = () => {
         linkedin: <LinkedInIcon />,
     };
 
-    const handleEmojiClick = (emojiObject: any) => {
-        setText((prevText) => prevText + emojiObject.emoji);
+    const handleEmojiClick = (emojiObject) => {
+        // Check if emojiObject is valid and contains an emoji
+        if (!emojiObject || !emojiObject.emoji || typeof emojiObject.emoji !== 'string') {
+            console.error("Invalid emoji object:", emojiObject);
+            return;
+        }
+
+        const emoji = emojiObject.emoji;
+        const updatedText = { ...text };
+        let newText;
+
+        if (selectedToggle === 'Initial content') {
+            // Update initialContent and propagate the changes to all platforms' text fields
+            const initialNewText = initialContent.slice(0, cursorPosition) + emoji + initialContent.slice(cursorPosition);
+            setInitialContent(initialNewText);
+            newText = initialNewText;
+            updatedText.facebook = initialNewText;
+            updatedText.twitter = initialNewText;
+            updatedText.linkedin = initialNewText;
+            updatedText.instagram = initialNewText;
+        } else {
+            // Update only the selected platform's text
+            const selectedText = updatedText[selectedToggle] || '';
+            newText = selectedText.slice(0, cursorPosition) + emoji + selectedText.slice(cursorPosition);
+            updatedText[selectedToggle] = newText;
+        }
+
+        setText(updatedText);
+        setCursorPosition(cursorPosition + emoji.length);
+    };
+
+    const handleCursorPosition = (e) => {
+        setCursorPosition(e.target.selectionStart || 0);
     };
 
     const toggleEmojiPicker = () => {
@@ -219,7 +259,6 @@ const CreatePost: React.FC = () => {
     const handleToggle = (event: React.MouseEvent<HTMLElement>, newAlignment: string | null) => {
         setSelectedToggle(newAlignment);
     };
-
 
     return (
         <Box sx={{
@@ -377,7 +416,11 @@ const CreatePost: React.FC = () => {
                                 color="primary"
                                 value={selectedToggle}
                                 exclusive
-                                onChange={handleToggle}
+                                onChange={(event, newToggle) => {
+                                    if (newToggle !== null) {
+                                        setSelectedToggle(newToggle);
+                                    }
+                                }}
                                 aria-label="Platform"
                             >
                                 <ToggleButton
@@ -387,14 +430,17 @@ const CreatePost: React.FC = () => {
                                     Initial Content
                                 </ToggleButton>
                                 {userSocialAccounts
-                                    .filter((account) => selectedOptions.includes(account.provider))
-                                    .map((account) => (
+                                    .filter(account => selectedOptions.includes(account.provider))
+                                    .map(account => (
                                         <ToggleButton
                                             key={account.provider}
                                             disabled={selectedToggle === account.provider}
                                             value={account.provider}
                                         >
-                                            {normalProviderIcons[account.provider]}
+                                            {account.provider === 'facebook' && <FacebookRoundedIcon />}
+                                            {account.provider === 'twitter' && <XIcon />}
+                                            {account.provider === 'linkedin' && <LinkedInIcon />}
+                                            {account.provider === 'instagram' && <InstagramIcon />}
                                         </ToggleButton>
                                     ))}
                             </ToggleButtonGroup>
@@ -421,8 +467,10 @@ const CreatePost: React.FC = () => {
                                 rows={8}
                                 placeholder="Enter your text and links"
                                 fullWidth
-                                value={text}
+                                value={selectedToggle === 'Initial content' ? initialContent : text[selectedToggle] || ''}
                                 onChange={handleTextChange}
+                                onClick={handleCursorPosition}
+                                onKeyUp={handleCursorPosition}
                                 InputProps={{
                                     disableUnderline: true,
                                     sx: {
@@ -466,8 +514,8 @@ const CreatePost: React.FC = () => {
                                     <Stack direction="row" spacing={1} justifyContent='center' alignItems='center'>
 
                                         {selectedToggle !== 'Initial content' && (
-                                            <Typography sx={{ color: text.length >= characterLimit ? 'red' : 'grey', fontSize: '14px', fontWeight: '100' }}>
-                                                {text.length} / {characterLimit}
+                                            <Typography sx={{ color: text[selectedToggle].length >= characterLimit ? 'red' : 'grey', fontSize: '14px', fontWeight: '100' }}>
+                                                {text[selectedToggle].length} / {characterLimit}
                                             </Typography>
                                         )}
                                         <Box
@@ -475,7 +523,7 @@ const CreatePost: React.FC = () => {
                                                 width: '1.4rem', height: '1.4rem', backgroundColor: '#203170', borderRadius: '12px',
                                                 display: 'flex', justifyContent: 'center', alignItems: 'center'
                                             }}>
-                                            <RefreshIcon loading={TypeLoading} />
+                                            <RefreshIcon loading={isLoading} />
                                         </Box>
 
                                     </Stack>
@@ -486,7 +534,7 @@ const CreatePost: React.FC = () => {
                                                 display: 'flex', justifyContent: 'center', alignItems: 'center',
                                                 fontSize: '14px', cursor: 'pointer', textDecoration: 'none',
                                                 color: '#000'
-                                            }}> {shortenedLinks.length}.<HttpIcon loading={Linkloading} />Shortened with bit.ly</Link>
+                                            }}> {shortenedLinks.length}.<HttpIcon loading={TypeLoading} />Shortened with bit.ly</Link>
                                         </Stack>
                                     )}
 
@@ -505,6 +553,7 @@ const CreatePost: React.FC = () => {
                                             sx={{ background: 'lightgrey', borderRadius: '15px', padding: '2px', color: 'grey' }}
                                         />
                                     </Stack>
+
 
                                 </Box>
                                 <Divider style={{ height: '2.5px', backgroundColor: '#e5e5e5' }} />
@@ -647,7 +696,7 @@ const CreatePost: React.FC = () => {
                         padding: { xs: '1rem', md: '1rem' },
 
                     }}>
-                    {showEmojiPicker &&
+                    {showEmojiPicker && (
                         <Box position='absolute' left='67%' top='29%' transform='translate(-50%, -50%)' sx={{ zIndex: '1' }}>
                             <Picker
                                 skinTonePickerLocation={'false'}
@@ -655,7 +704,8 @@ const CreatePost: React.FC = () => {
                                 onEmojiClick={handleEmojiClick}
                             />
                         </Box>
-                    }
+                    )}
+
                     {/* {shortenedLinks.map((link, index) => (
                         <Box sx={{ mt: 2, p: 3 }}>
                             <Typography key={index} variant="body1" sx={{ mt: 1 }}>
@@ -668,14 +718,12 @@ const CreatePost: React.FC = () => {
                     {selectedToggle === 'Initial content' && (
                         <>
                             <Stack direction='row' gap='.5rem' sx={{ mt: '2rem', mx: '1.5rem', mb: '.5rem' }}>
-                                <Skeleton variant="rectangular" animation='wave' sx={{ borderRadius: '3px', width: '1rem', height: '1rem' }}>
-                                </Skeleton>
+                                <Skeleton variant="rectangular" animation='wave' sx={{ borderRadius: '3px', width: '1rem', height: '1rem' }} />
                                 <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
                             </Stack>
 
-
                             <Stack gap='3px' sx={{ background: 'white', mx: '1.5rem', borderRadius: '6px', p: 1 }}>
-                                <Stack direction='row' gap={1} sx={{ alignItems: 'center', }}>
+                                <Stack direction='row' gap={1} sx={{ alignItems: 'center' }}>
                                     <Skeleton variant='rectangular' animation='wave' sx={{ borderRadius: '5px', width: '2rem', height: '2rem' }}>
                                         <Avatar />
                                     </Skeleton>
@@ -684,7 +732,7 @@ const CreatePost: React.FC = () => {
                                     </Typography>
                                 </Stack>
 
-                                {!text ? (
+                                {!initialContent ? (
                                     <Box>
                                         <Typography>
                                             <Skeleton animation='wave' sx={{ borderRadius: '7px', height: '1rem' }} />
@@ -694,14 +742,31 @@ const CreatePost: React.FC = () => {
                                         </Typography>
                                     </Box>
                                 ) : (
-                                    <Box sx={{ width: '100%', overflow: 'hidden', }}>
+                                    <Box sx={{ width: '100%', overflow: 'hidden' }}>
                                         <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 'small' }}>
-                                            {text}
+                                            {initialContent}
                                         </Typography>
                                     </Box>
                                 )}
 
-                                <Stack direction='row' gap={1} sx={{ alignItems: 'center', mt: '1rem', }} >
+                                <Stack>
+                                    {selectedLibraryImage && (
+                                        <img
+                                            src={selectedLibraryImage.src}
+                                            alt={selectedLibraryImage.alt}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        />
+                                    )}
+                                    {selectedLocalImage && (
+                                        <img
+                                            src={URL.createObjectURL(selectedLocalImage)}
+                                            alt="Uploaded"
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        />
+                                    )}
+                                </Stack>
+
+                                <Stack direction='row' gap={1} sx={{ alignItems: 'center', mt: '1rem' }}>
                                     <Typography>
                                         <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
                                     </Typography>
@@ -715,9 +780,10 @@ const CreatePost: React.FC = () => {
                             </Stack>
                         </>
                     )}
+
                     {selectedToggle === 'facebook' && (
                         <FacebookPreview
-                            text={text}
+                            text={text.facebook}
                             account={userSocialAccounts.find(account => account.provider === 'facebook')}
                             selectedLocalImage={selectedLocalImage}
                             selectedLibraryImage={selectedLibraryImage}
@@ -726,7 +792,7 @@ const CreatePost: React.FC = () => {
                     )}
                     {selectedToggle === 'linkedin' && (
                         <LinkedInPreview
-                            text={text}
+                            text={text.linkedin}
                             account={userSocialAccounts.find(account => account.provider === 'linkedin')}
                             selectedLocalImage={selectedLocalImage}
                             selectedLibraryImage={selectedLibraryImage}
@@ -734,10 +800,18 @@ const CreatePost: React.FC = () => {
                         />
                     )}
                     {selectedToggle === 'twitter' && (
-
                         <XPreview
-                            text={text}
+                            text={text.twitter}
                             account={userSocialAccounts.find(account => account.provider === 'twitter')}
+                            selectedLocalImage={selectedLocalImage}
+                            selectedLibraryImage={selectedLibraryImage}
+                            shortenedLinks={shortenedLinks}
+                        />
+                    )}
+                    {selectedToggle === 'instagram' && (
+                        <InstagramPreview
+                            text={text.instagram}
+                            account={userSocialAccounts.find(account => account.provider === 'instagram')}
                             selectedLocalImage={selectedLocalImage}
                             selectedLibraryImage={selectedLibraryImage}
                             shortenedLinks={shortenedLinks}

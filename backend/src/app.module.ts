@@ -6,6 +6,7 @@ import { ProvidersModule } from './connectProviders/provider.module';
 import { JwtConfigModule } from './config/jwt.module';
 import { UserModule } from './schemas/user.module';
 import * as session from 'express-session';
+import { PostModule } from './postProviders/post.module';
 
 @Module({
   imports: [
@@ -24,17 +25,18 @@ import * as session from 'express-session';
     AuthModule,
     ProvidersModule,
     JwtConfigModule,
-    UserModule
+    UserModule,
+    PostModule
   ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(session({
-        secret: process.env.SESSION_SECRET, 
+        secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
-        cookie: { secure: false }, 
+        cookie: { secure: false },
       }))
       .forRoutes('*');
   }

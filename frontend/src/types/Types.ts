@@ -83,3 +83,10 @@ export interface SocialPreviewProps {
     selectedLibraryImage?: { src: string, alt: string } | null;
     shortenedLinks: string[];
 }
+
+export interface CharacterLimits {
+    facebook: number;
+    instagram: number;
+    twitter: number;
+    linkedin: number;
+}

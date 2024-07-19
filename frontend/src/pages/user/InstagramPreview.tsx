@@ -1,7 +1,7 @@
 import { Avatar, Box, Skeleton, Stack, Typography } from '@mui/material';
 import { Instagram } from '@mui/icons-material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart, faComment } from '@fortawesome/free-regular-svg-icons';
+import { faHeart } from '@fortawesome/free-regular-svg-icons';
 import BookmarkBorderTwoToneIcon from '@mui/icons-material/BookmarkBorderTwoTone';
 import MoreVertTwoToneIcon from '@mui/icons-material/MoreVertTwoTone';
 import React from 'react';
@@ -113,8 +113,6 @@ const InstagramPreview: React.FC<SocialPreviewProps> = ({ text, account, selecte
                         <BookmarkBorderTwoToneIcon style={{ fontSize: '1.5rem', color: 'grey' }} />
                     </Stack>
                 )}
-
-
             </Stack >
         </>
     );

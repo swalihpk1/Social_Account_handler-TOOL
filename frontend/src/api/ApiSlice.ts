@@ -1,8 +1,9 @@
 // api/apiSlice.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { AuthResponse, UserData } from '../types/Types';
+import { AuthResponse, CharacterLimits, UserData } from '../types/Types';
 
 const USER_URL = 'api/user';
+const POST_URL = 'api/post';
 
 const baseQuery = fetchBaseQuery({ baseUrl: '' });
 
@@ -30,7 +31,13 @@ export const apiSlice = createApi({
                 body: data,
             }),
         }),
+        getCharacterLimits: builder.query<CharacterLimits, void>({
+            query: () => ({
+                url: `${POST_URL}/charLimits`,
+                method: 'GET',
+            }),
+        }),
     }),
 });
 
-export const { useSignUpMutation, useLoginMutation, useRemoveSocialAccountMutation } = apiSlice;
+export const { useSignUpMutation, useLoginMutation, useRemoveSocialAccountMutation, useGetCharacterLimitsQuery } = apiSlice;

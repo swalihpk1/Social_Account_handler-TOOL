@@ -191,7 +191,7 @@ export class ProviderController {
         try {
             const accessToken = await this.linkedInStrategy.getAccessToken(code);
             const linkedinUser = await this.linkedInStrategy.getUserProfile(accessToken);
-            // console.log(linkedinUser);þ
+            // console.log(linkedinUser);
 
             if (!linkedinUser || !accessToken) {
                 return res.status(400).json({
@@ -213,8 +213,6 @@ export class ProviderController {
             res.status(500).json({ message: 'Internal server error' });
         }
     }
-
-
 
     // ==================== Twitter-X ======================
     @Get('twitter')
@@ -246,7 +244,6 @@ export class ProviderController {
                 return res.status(400).json({ message: 'User ID not found in session' });
             }
 
-
             await this.providerService.handleTwitterLoginCallback(userId, accessToken)
 
             res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(twitterUser.user))}`);
@@ -254,8 +251,6 @@ export class ProviderController {
             res.status(500).json({ message: 'Internal server error' });
         }
     }
-
-
 }
 
 
