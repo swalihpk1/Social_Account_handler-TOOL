@@ -10,6 +10,7 @@ import { ProviderController } from './provider.controller';
 import { JwtConfigModule } from 'src/config/jwt.module';
 import { UserModule } from 'src/schemas/user.module';
 import { HttpModule } from '@nestjs/axios';
+import { GlobalStateModule } from 'src/utils/global-state.module';
 
 
 @Module({
@@ -17,7 +18,8 @@ import { HttpModule } from '@nestjs/axios';
     PassportModule.register({}),
     JwtConfigModule,
     UserModule,
-    HttpModule
+    HttpModule,
+    GlobalStateModule
   ],
   controllers: [ProviderController],
   providers: [ProviderService, FacebookStrategy, InstagramStrategy, LinkedInStrategy, TwitterStrategy]

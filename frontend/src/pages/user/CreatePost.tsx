@@ -47,7 +47,8 @@ import LinkedInPreview from './LinkedInPreview';
 import XPreview from './XPreview';
 import InstagramPreview from './InstagramPreview';
 import { useGetCharacterLimitsQuery } from '../../api/ApiSlice';
-import { debounce } from 'lodash';
+import { useCreatePostMutation } from '../../api/ApiSlice';
+import { PostData } from '../../types/Types';
 
 
 const CreatePost: React.FC = () => {
@@ -68,7 +69,7 @@ const CreatePost: React.FC = () => {
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'info' | 'warning' | 'error'>('success');
     const [TypeLoading, setTypeLoading] = useState<boolean>(false);
     const [cursorPosition, setCursorPosition] = useState<number>(0);
-    const textFieldRef = useRef<HTMLInputElement>(null);
+    // const textFieldRef = useRef<HTMLInputElement>(null);
     const [characterLimit, setCharacterLimit] = useState(0);
     const [initialContent, setInitialContent] = useState('');
     const [text, setText] = useState({
@@ -78,7 +79,7 @@ const CreatePost: React.FC = () => {
         instagram: '',
     });
     const { data: characterLimits, isLoading } = useGetCharacterLimitsQuery();
-
+    const [createPost] = useCreatePostMutation();
 
 
     useEffect(() => {
@@ -98,6 +99,34 @@ const CreatePost: React.FC = () => {
             setCharacterLimit(characterLimits[selectedToggle]);
         }
     }, [characterLimits, selectedToggle]);
+
+    const handleSubmit = async () => {
+        const filteredContent = Object.keys(text)
+            .filter(key => selectedOptions.includes(key))
+            .reduce((obj, key) => {
+                obj[key] = text[key];
+                return obj;
+            }, {});
+
+        const formData = new FormData();
+        formData.append('content', JSON.stringify(filteredContent));
+
+        if (selectedLocalImage) {
+            formData.append('image', selectedLocalImage);
+        } else if (selectedLibraryImage) {
+            formData.append('libraryImage', JSON.stringify(selectedLibraryImage));
+        }
+
+        console.log([...formData.entries()]);
+        try {
+            await createPost(formData).unwrap();
+            console.log('Post created successfully');
+        } catch (error) {
+            console.error('Failed to create post:', error);
+        }
+    };
+
+
 
 
     const handleTextChange = (e) => {
@@ -151,7 +180,7 @@ const CreatePost: React.FC = () => {
         handleCloseImageModal();
     };
 
-    const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileInputChange = (event) => {
         const file = event.target.files && event.target.files[0];
         if (file) {
             setSelectedLocalImage(file);
@@ -159,11 +188,12 @@ const CreatePost: React.FC = () => {
         }
     };
 
-    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+
+    const handleDragOver = (event) => {
         event.preventDefault();
     };
 
-    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    const handleDrop = (event) => {
         event.preventDefault();
         const file = event.dataTransfer.files && event.dataTransfer.files[0];
         if (file) {
@@ -183,10 +213,7 @@ const CreatePost: React.FC = () => {
     };
 
     const handleInputFileClick = () => {
-        const fileInput = document.getElementById('fileInput');
-        if (fileInput) {
-            fileInput.click();
-        }
+        document.getElementById('fileInput').click();
     };
 
     const userSocialAccounts = Object.entries(userInfo?.socialAccounts || {}).map(([provider, { profileName, profilePicture }]) => ({
@@ -202,15 +229,14 @@ const CreatePost: React.FC = () => {
         linkedin: <LinkedInIcon sx={{ fontSize: '13px', background: 'white', borderRadius: '10px' }} />,
     };
 
-    const normalProviderIcons: { [key: string]: React.ReactNode } = {
-        facebook: <FacebookRoundedIcon />,
-        twitter: <XIcon />,
-        instagram: <InstagramIcon />,
-        linkedin: <LinkedInIcon />,
-    };
+    // const normalProviderIcons: { [key: string]: React.ReactNode } = {
+    //     facebook: <FacebookRoundedIcon />,
+    //     twitter: <XIcon />,
+    //     instagram: <InstagramIcon />,
+    //     linkedin: <LinkedInIcon />,
+    // };
 
     const handleEmojiClick = (emojiObject) => {
-        // Check if emojiObject is valid and contains an emoji
         if (!emojiObject || !emojiObject.emoji || typeof emojiObject.emoji !== 'string') {
             console.error("Invalid emoji object:", emojiObject);
             return;
@@ -221,7 +247,6 @@ const CreatePost: React.FC = () => {
         let newText;
 
         if (selectedToggle === 'Initial content') {
-            // Update initialContent and propagate the changes to all platforms' text fields
             const initialNewText = initialContent.slice(0, cursorPosition) + emoji + initialContent.slice(cursorPosition);
             setInitialContent(initialNewText);
             newText = initialNewText;
@@ -230,7 +255,6 @@ const CreatePost: React.FC = () => {
             updatedText.linkedin = initialNewText;
             updatedText.instagram = initialNewText;
         } else {
-            // Update only the selected platform's text
             const selectedText = updatedText[selectedToggle] || '';
             newText = selectedText.slice(0, cursorPosition) + emoji + selectedText.slice(cursorPosition);
             updatedText[selectedToggle] = newText;
@@ -256,9 +280,9 @@ const CreatePost: React.FC = () => {
         setSelectedOptions((prevSelected) => prevSelected.filter((value) => value !== valueToRemove));
     };
 
-    const handleToggle = (event: React.MouseEvent<HTMLElement>, newAlignment: string | null) => {
-        setSelectedToggle(newAlignment);
-    };
+    // const handleToggle = (event: React.MouseEvent<HTMLElement>, newAlignment: string | null) => {
+    //     setSelectedToggle(newAlignment);
+    // };
 
     return (
         <Box sx={{
@@ -603,7 +627,7 @@ const CreatePost: React.FC = () => {
                                                         cursor: 'pointer',
                                                         background: '#828282',
                                                         borderRadius: '1rem',
-                                                        color: 'white'
+                                                        color: 'white',
                                                     }}
                                                 />
                                             )}
@@ -847,6 +871,7 @@ const CreatePost: React.FC = () => {
                             backgroundColor: '#e5a500'
                         }
                     }}
+                    onClick={handleSubmit}
                 >
                     Post now
                 </Button>

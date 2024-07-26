@@ -12,6 +12,7 @@ import { RootState } from '../../app/store';
 import SocialAccountBox from '../../components/SocialAccountBox';
 import { useNavigate } from 'react-router-dom';
 import { SocialAccount } from '../../types/Types';
+import axios from 'axios';
 // import { useRedirect } from '../../components/RedirectProvider';
 
 const Connect: React.FC = () => {
@@ -23,7 +24,7 @@ const Connect: React.FC = () => {
 
     const handleSocialLogin = (provider: string) => {
         console.log("asdfadsf");
-        
+
         if (userInfo?.socialAccounts && userInfo.socialAccounts[provider]) {
             setSnackbarMessage('Already connected');
             setSnackbarOpen(true);
@@ -35,8 +36,6 @@ const Connect: React.FC = () => {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const userParam = params.get('user');
-        console.log("Sdf", userParam);
-        console.log("Inof", userInfo);
 
         if (userParam) {
             const userData = JSON.parse(decodeURIComponent(userParam));
@@ -46,10 +45,32 @@ const Connect: React.FC = () => {
                 profilePicture: userData.profilePicture
             }));
 
-
             navigate('/connect');
         }
     }, [dispatch, navigate]);
+
+    useEffect(() => {
+
+        const hash = window.location.hash;
+        const params = new URLSearchParams(hash.substring(1)); 
+        const accessToken = params.get('access_token');
+
+        console.log('accessToken', accessToken);
+
+        if (accessToken) {
+            axios.get('http://localhost:3001/connect/instagram/token', {
+                params: { access_token: accessToken }
+            })
+                .then(response => {
+                    console.log('Response from backend:', response.data);
+                })
+                .catch(error => {
+                    console.error('Error sending access token to backend:', error);
+                });
+        } else {
+            console.error('Access token not found in URL fragment');
+        }
+    }, [navigate]);
 
     const handleCloseSnackbar = () => {
         setSnackbarOpen(false);
@@ -103,7 +124,7 @@ const Connect: React.FC = () => {
                         alignItems: 'center',
                         textAlign: 'center',
                         padding: '20px',
-                        position: 'relative', 
+                        position: 'relative',
                     }}
                 >
                     <Box>

@@ -90,3 +90,14 @@ export interface CharacterLimits {
     twitter: number;
     linkedin: number;
 }
+
+export interface PostData {
+    content: {
+        facebook?: string;
+        twitter?: string;
+        linkedin?: string;
+        instagram?: string;
+    };
+    image?: string;
+}
+

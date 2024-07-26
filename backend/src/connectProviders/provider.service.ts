@@ -29,6 +29,28 @@ export class ProviderService {
         };
     }
 
+
+    async handleInstagramLoginCallback(userId: string, instagramUser: any, accessToken: string): Promise<{ profileName: string, provider: string, profilePicture: string } | null> {
+        const [user] = instagramUser;
+        const { username, profile_picture_url } = user;
+
+        let foundUser = await this.userModel.findById(userId);
+        if (!foundUser) {
+            throw new Error('User not found');
+        }
+
+        foundUser.socialAccessTokens.set('instagram', accessToken);
+        await foundUser.save();
+
+        return {
+            profileName: username,
+            profilePicture: profile_picture_url,
+            provider: 'instagram',
+
+        };
+    }
+
+
     async handleLinkedInLoginCallback(userId: string, linkedinUser: any, accessToken: string): Promise<{ profileName: string, provider: string, profilePicture: string } | null> {
         const { name, picture } = linkedinUser;
 
@@ -44,7 +66,6 @@ export class ProviderService {
             profilePicture: picture,
             provider: 'linkedin'
         }
-
     }
 
     async handleTwitterLoginCallback(userId: string, accessToken: string): Promise<void> {
@@ -57,6 +78,8 @@ export class ProviderService {
         foundUser.socialAccessTokens.set('twitter', accessToken);
         await foundUser.save();
     }
+
+
 
 
 }

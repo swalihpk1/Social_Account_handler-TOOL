@@ -7,6 +7,7 @@ import { JwtConfigModule } from './config/jwt.module';
 import { UserModule } from './schemas/user.module';
 import * as session from 'express-session';
 import { PostModule } from './postProviders/post.module';
+import { GlobalStateModule } from './utils/global-state.module';
 
 @Module({
   imports: [
@@ -26,7 +27,8 @@ import { PostModule } from './postProviders/post.module';
     ProvidersModule,
     JwtConfigModule,
     UserModule,
-    PostModule
+    PostModule,
+    GlobalStateModule
   ],
 })
 export class AppModule implements NestModule {

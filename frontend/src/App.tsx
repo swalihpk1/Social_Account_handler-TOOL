@@ -12,6 +12,7 @@ import Dashboard from './pages/user/Dashboard';
 import Planner from './pages/user/Planner';
 import Analytics from './pages/user/Analytics';
 import Search from './pages/user/Search';
+import InstagramCallback from './components/InstagramCallback';
 
 
 // import { RedirectProvider } from './components/RedirectProvider';
@@ -25,6 +26,7 @@ const App: React.FC = () => (
             <Route path="/signup" element={<Signup />} />
             <Route element={<PrivateRoute />}>
                 <Route path="/connect" element={<Connect />} />
+                <Route path="/connect/instagram/callback" element={<InstagramCallback />} />
                 <Route path="/success" element={< SuccessPage />} />
                 <Route element={< SidebarLayout />} >
                     <Route path='/create' element={< CreatePost />} />

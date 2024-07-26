@@ -5,12 +5,14 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from "../schemas/user.schema";
 import { JwtConfigService } from "../config/jwt.config";
 import { Request } from 'express';
+import { GlobalStateService } from '../utils/global-state.service';
 
 @Injectable()
 export class AuthService {
     constructor(
         @InjectModel(User.name) private userModel: Model<UserDocument>,
         private jwtSecret: JwtConfigService,
+        private globalStateService: GlobalStateService // Inject GlobalStateService
     ) { }
 
     async signup(userDto: UserData): Promise<User> {
@@ -42,6 +44,9 @@ export class AuthService {
         req.session.user = { email: user.email, id: user._id };
         console.log('Session data:', req.session);
 
+        // Set userId in GlobalStateService
+        this.globalStateService.setUserId(user._id.toString());
+
         const accessToken = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id });
         const refreshToken = this.jwtSecret.generateRefreshToken({ email: user.email, sub: user._id });
 
@@ -58,20 +63,18 @@ export class AuthService {
         return { accessToken };
     }
 
-
     async removeSocialAccount(userId: string, provider: string) {
-        const user = await this.userModel.findById(userId)
+        const user = await this.userModel.findById(userId);
 
         if (!user) {
             throw new UnauthorizedException('User not found');
         }
 
         if (user.socialAccessTokens && user.socialAccessTokens[provider]) {
-            delete user.socialAccessTokens[provider]
+            delete user.socialAccessTokens[provider];
         }
 
-        await user.save()
+        await user.save();
         return user;
-
     }
 }

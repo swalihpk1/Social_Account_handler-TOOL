@@ -37,7 +37,22 @@ export const apiSlice = createApi({
                 method: 'GET',
             }),
         }),
+        createPost: builder.mutation<void, FormData>({
+            query: (data) => ({
+                url: `${POST_URL}/create`,
+                method: 'POST',
+                body: data,
+            }),
+        }),
+        getInstagramAccessToken: builder.query({
+            query: (accessToken) => ({
+                url: `connect/instagram/getUser`,
+                method: 'GET',
+                params: { access_token: accessToken },
+            }),
+        }),
+
     }),
 });
 
-export const { useSignUpMutation, useLoginMutation, useRemoveSocialAccountMutation, useGetCharacterLimitsQuery } = apiSlice;
+export const { useSignUpMutation, useLoginMutation, useRemoveSocialAccountMutation, useGetCharacterLimitsQuery, useCreatePostMutation, useGetInstagramAccessTokenQuery } = apiSlice;

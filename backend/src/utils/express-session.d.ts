@@ -1,4 +1,4 @@
-// express-session.d.ts
+
 import 'express-session';
 import { UserDocument } from './schemas/user.schema';
 

@@ -3,6 +3,8 @@ import { User, UserDocument } from "src/schemas/user.schema";
 import { Model } from 'mongoose';
 import { InjectModel } from "@nestjs/mongoose";
 import { PostConfiguration, PostConfigurationDocument } from "src/schemas/postConfiguration.schema";
+import { CreatePostDto } from "./dto/createPost.dto";
+import { create } from "domain";
 
 @Injectable()
 export class PostService {
@@ -21,5 +23,10 @@ export class PostService {
         } catch (error) {
             throw new Error(`Error fetching character limits: ${error.message}`);
         }
+    }
+
+    async createPost(post: CreatePostDto) {
+        console.log("vann");
+        console.log("new", post);
     }
 }

@@ -8,16 +8,16 @@ import { ProviderService } from './provider.service';
 import { LinkedInStrategy } from './providerStrategys/linkedIn.strategy';
 import { InstagramStrategy } from './providerStrategys/instagram.strategy';
 import { FacebookStrategy } from './providerStrategys/facebook.strategy';
-import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import { GlobalStateService } from 'src/utils/global-state.service';
+
 
 @Controller('connect')
 export class ProviderController {
     constructor(
         private readonly providerService: ProviderService,
-        private readonly configService: ConfigService,
+        private readonly globalStateService: GlobalStateService,
         private readonly linkedInStrategy: LinkedInStrategy,
-        private readonly instagramStretegy: InstagramStrategy,
+        private readonly instagramStrategy: InstagramStrategy,
         private readonly facebookStrategy: FacebookStrategy,
         @InjectModel(User.name) private userModel: Model<UserDocument>
     ) { }
@@ -31,77 +31,6 @@ export class ProviderController {
         return { url: facebookLoginUrl };
     }
 
-    // @Get('facebook/callback')
-    // async facebookCallback(@Query('code') code: string, @Req() req, @Res() res): Promise<any> {
-    //     if (!code) {
-    //         return res.status(400).send('Authorization code not provided');
-    //     }
-
-    //     const clientId = this.configService.get<string>('FACEBOOK_CLIENT_ID');
-    //     const clientSecret = this.configService.get<string>('FACEBOOK_CLIENT_SECRET');
-    //     const redirectUri = 'http://localhost:3001/connect/facebook/callback';
-
-    //     try {
-    //         const tokenResponse = await axios.get(
-    //             `https://graph.facebook.com/v20.0/oauth/access_token`, {
-    //             params: {
-    //                 client_id: clientId,
-    //                 redirect_uri: redirectUri,
-    //                 client_secret: clientSecret,
-    //                 code: code
-    //             }
-    //         }
-    //         );
-
-    //         const accessToken = tokenResponse.data.access_token;
-
-    //         // Fetch the user's basic profile information
-    //         const userResponse = await axios.get(`https://graph.facebook.com/me`, {
-    //             params: {
-    //                 access_token: accessToken,
-    //                 fields: 'id,name,email'
-    //             }
-    //         });
-
-    //         const user = userResponse.data;
-
-    //         console.log("User", user);
-
-    //         // Fetch the pages the user has access to
-    //         const pagesResponse = await axios.get(`https://graph.facebook.com/me/accounts`, {
-    //             params: {
-    //                 access_token: accessToken
-    //             }
-    //         });
-
-    //         const pages = pagesResponse.data.data;
-    //         console.log("Pages", pagesResponse);
-
-    //         // Example: Post a message to the first page
-    //         if (pages.length > 0) {
-    //             // const pageAccessToken = pages[0].access_token;
-    //             const pageAccessToken = pages[0].access_token;
-    //             const pageId = pages[0].id;
-    //             const postResponse = await axios.post(`https://graph.facebook.com/${pageId}/feed`, null, {
-    //                 params: {
-    //                     message: 'Hello, this is a test post!',
-    //                     access_token: pageAccessToken
-    //                 }
-    //             });
-
-    //             console.log('Post ID:', postResponse.data.id);
-    //         }
-
-    //         // Respond with user, pages, and access token
-    //         res.json({ user, pages, accessToken });
-
-    //     } catch (error) {
-    //         console.error('Error during Facebook callback:', error);
-    //         res.status(500).send('Error during authentication');
-    //     }
-    // }
-
-
 
     @Get('facebook/callback')
     async facebookCallback(@Query('code') code: string, @Req() req, @Res() res): Promise<any> {
@@ -113,7 +42,9 @@ export class ProviderController {
                 if (!accessToken) return res.status(400).json({ message: 'Facebook accessToken not found' });
 
                 const facebookProfile = await this.facebookStrategy.getUserData(data.access_token);
-                const userId = req.session?.user?.id;
+                const userId = this.globalStateService.getUserId();
+                console.log("userId", userId);
+
 
                 console.log('facebok', facebookProfile);
 
@@ -138,34 +69,61 @@ export class ProviderController {
 
     // ====================Instagram======================
     @Get('instagram')
-    async instagramLogin(@Res() res: Response): Promise<void> {
-        const instagramAuthUrl = `https://api.instagram.com/oauth/authorize
-      ?client_id=${this.configService.get('INSTAGRAM_CLIENT_ID')}
-      &redirect_uri=${this.configService.get('INSTAGRAM_REDIRECT_URI')}
-      &scope=user_profile,user_media
-      &response_type=code`;
-
-        res.redirect(instagramAuthUrl);
+    instagramLogin(@Res() res: Response) {
+        const instagramLoginUrl = this.instagramStrategy.generateInstagramLoginURL();
+        res.redirect(instagramLoginUrl);
     }
 
     @Get('instagram/callback')
-    async instagramCallback(@Query('code') code: string, @Res() res: Response): Promise<void> {
-        const accessToken = await this.instagramStretegy.getAccessToken(code);
-        const user = await this.instagramStretegy.getUserProfile(accessToken)
-        console.log("AccessTokem", accessToken);
-        console.log("USerData", user);
-        // res.redirect('/profile');
+    async instagramCallback(@Req() req: Request, @Res() res: Response) {
+        const redirectUrl = 'http://localhost:3000/connect/instagram/callback';
+        res.redirect(redirectUrl);
     }
 
-    @Get('instagram/profile')
-    async getInstagramProfile(@Req() req: Request): Promise<any> {
-        const accessToken = req.session.accessToken;
+    @Get('instagram/getUser')
+    async instagramGetUser(@Req() req: Request, @Res() res: Response) {
+        const accessToken = req.query.access_token as string;
+
         if (!accessToken) {
-            throw new Error('User not authenticated');
+            return res.status(400).send('Access token is missing');
         }
-        const profile = await this.instagramStretegy.getUserProfile(accessToken);
-        console.log("PRofi", profile);
+
+        try {
+            const pages = await this.instagramStrategy.getFacebookPages(accessToken);
+
+            const instagramProfile = await Promise.all(
+                pages.data?.map(async (page) => {
+                    const instagramBusinessAccount = await this.instagramStrategy.getInstagramBusinessAccountId(page.id, accessToken);
+                    if (instagramBusinessAccount?.instagram_business_account) {
+                        return await this.instagramStrategy.getInstagramUserDetails(
+                            instagramBusinessAccount.instagram_business_account.id,
+                            accessToken
+                        );
+                    }
+                    return null;
+                }) ?? []
+            );
+
+            const userId = this.globalStateService.getUserId();
+            console.log("userId", userId);
+
+            if (!userId) {
+                return res.status(400).json({ message: 'User ID not found in session' });
+            }
+
+            const instagramData = await this.providerService.handleInstagramLoginCallback(userId, instagramProfile, accessToken);
+            console.log("insta", instagramData);
+
+            // res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(instagramData))}`);
+            res.json(instagramData)
+
+        } catch (error) {
+            console.error('Error during Instagram callback', error);
+            return res.status(500).send('Internal server error');
+        }
     }
+
+
 
 
     // ====================LinkedIn======================
@@ -191,7 +149,6 @@ export class ProviderController {
         try {
             const accessToken = await this.linkedInStrategy.getAccessToken(code);
             const linkedinUser = await this.linkedInStrategy.getUserProfile(accessToken);
-            // console.log(linkedinUser);
 
             if (!linkedinUser || !accessToken) {
                 return res.status(400).json({
@@ -203,9 +160,8 @@ export class ProviderController {
             if (!userId) {
                 return res.status(400).json({ message: 'User ID not found in session' });
             }
-
+            console.log('LinkedIn', linkedinUser);
             const linkedInData = await this.providerService.handleLinkedInLoginCallback(userId, linkedinUser, accessToken);
-            console.log(linkedInData);
 
             res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(linkedInData))}`);
         } catch (error) {
@@ -231,7 +187,7 @@ export class ProviderController {
             const accessToken = twitterUser.accessToken;
 
             console.log("user", twitterUser);
-            console.log("accessToken", accessToken);
+
 
             if (!twitterUser || !accessToken) {
                 return res.status(400).json({
@@ -240,6 +196,7 @@ export class ProviderController {
             }
 
             const userId = req.session?.user?.id;
+            console.log("userId", userId);
             if (!userId) {
                 return res.status(400).json({ message: 'User ID not found in session' });
             }
