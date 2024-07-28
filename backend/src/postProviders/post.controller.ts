@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Post, Req, Res, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Get, HttpStatus, Post, Query, Req, Res, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { PostService } from "./post.service";
 import { Request, Response } from 'express';
@@ -21,16 +21,14 @@ export class PostController {
     }
 
 
+
+
     @Post('create')
     @UseInterceptors(FileInterceptor('image'))
-    async createPost(
-        @UploadedFile() file: Express.Multer.File,
-        @Body() body: any,
-        @Res() res: Response
-    ) {
+    async createPost(@UploadedFile() file: Express.Multer.File, @Body() body: any, @Res() res: Response) {
         try {
             console.log("File received:", file);
-            console.log("Body received:", body); 
+            console.log("Body received:", body);
 
             const content = JSON.parse(body.content);
             const createPostDto = {
@@ -45,6 +43,12 @@ export class PostController {
             console.error('Error creating post:', error);
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: error.message });
         }
+    }
+
+    @Get('hashtags')
+    async getHashtags(@Query('keyword') keyword: string): Promise<string[]> {
+        console.log("Ethu");
+        return this.postService.fetchHashtags(keyword);
     }
 
 }

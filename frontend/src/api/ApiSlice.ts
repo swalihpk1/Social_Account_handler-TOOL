@@ -1,4 +1,3 @@
-// api/apiSlice.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { AuthResponse, CharacterLimits, UserData } from '../types/Types';
 
@@ -51,8 +50,22 @@ export const apiSlice = createApi({
                 params: { access_token: accessToken },
             }),
         }),
-
+        fetchHashtags: builder.query<{ data: string[] }, string>({
+            query: (keyword) => ({
+                url: `${POST_URL}/hashtags`,
+                method: 'GET',
+                params: { keyword },
+            }),
+        }),
     }),
 });
 
-export const { useSignUpMutation, useLoginMutation, useRemoveSocialAccountMutation, useGetCharacterLimitsQuery, useCreatePostMutation, useGetInstagramAccessTokenQuery } = apiSlice;
+export const { 
+    useSignUpMutation, 
+    useLoginMutation, 
+    useRemoveSocialAccountMutation, 
+    useGetCharacterLimitsQuery, 
+    useCreatePostMutation, 
+    useGetInstagramAccessTokenQuery, 
+    useFetchHashtagsQuery 
+} = apiSlice;

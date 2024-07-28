@@ -25,7 +25,6 @@ const SocialAccountBox: React.FC<SocialAccountBoxProps> = ({ provider, profileNa
     const [snackbarOpen, setSnackbarOpen] = useState(false);
 
     const handleRemove = async () => {
-        // const userId = '';
         try {
             await removeSocialAccountApi({ provider }).unwrap();
             dispatch(removeSocialAccount(provider));
@@ -47,7 +46,7 @@ const SocialAccountBox: React.FC<SocialAccountBoxProps> = ({ provider, profileNa
                 direction='row'
                 spacing={1}
                 sx={{
-                    width: { xs: '100%', sm: '45%' },
+                    width: '100%',
                     padding: '5px',
                     alignItems: 'center',
                     backgroundColor: 'rgba(217, 217, 217, 0.2)',

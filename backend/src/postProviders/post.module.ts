@@ -5,6 +5,7 @@ import { PostService } from './post.service';
 import { PostConfiguration, PostConfigurationSchema } from 'src/schemas/postConfiguration.schema';
 import { PostController } from './post.controller';
 import { MulterModule } from '@nestjs/platform-express';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
     imports: [
@@ -12,6 +13,7 @@ import { MulterModule } from '@nestjs/platform-express';
         MulterModule.register({
             dest: 'public/postImages',
         }),
+        HttpModule,
     ],
     providers: [PostService],
     exports: [PostService],

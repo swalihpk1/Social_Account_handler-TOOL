@@ -5,12 +5,15 @@ import { InjectModel } from "@nestjs/mongoose";
 import { PostConfiguration, PostConfigurationDocument } from "src/schemas/postConfiguration.schema";
 import { CreatePostDto } from "./dto/createPost.dto";
 import { create } from "domain";
+import { HttpService } from "@nestjs/axios";
+import { lastValueFrom } from "rxjs";
 
 @Injectable()
 export class PostService {
-    private readonly logger = new Logger(PostService.name);
+
     constructor(
         @InjectModel(PostConfiguration.name) private postConfigurationModel: Model<PostConfigurationDocument>,
+        private httpService: HttpService
     ) { }
 
     async fetchCharacterLimits() {
@@ -23,6 +26,17 @@ export class PostService {
         } catch (error) {
             throw new Error(`Error fetching character limits: ${error.message}`);
         }
+    }
+
+    async fetchHashtags(keyword: string): Promise<string[]> {
+
+        console.log("Hashtags");
+        const url = `https://api.ritekit.com/v1/stats/hashtag-suggestions?text=${keyword}`;
+        const headers = {
+            Authorization: process.env.RITEKIT_HASHTAG_ID,
+        };
+        const response = await lastValueFrom(this.httpService.get(url, { headers }));
+        return response.data.data.map((item: any) => item.hashtag);
     }
 
     async createPost(post: CreatePostDto) {

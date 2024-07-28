@@ -21,6 +21,9 @@ import {
     Snackbar,
     Alert,
     Skeleton,
+    Paper,
+    InputBase,
+    FormControlLabel,
 
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -48,7 +51,10 @@ import XPreview from './XPreview';
 import InstagramPreview from './InstagramPreview';
 import { useGetCharacterLimitsQuery } from '../../api/ApiSlice';
 import { useCreatePostMutation } from '../../api/ApiSlice';
+import SearchIcon from '@mui/icons-material/Search';
 import { PostData } from '../../types/Types';
+import HashtagGenerator from '../../components/HashtagGenerator';
+
 
 
 const CreatePost: React.FC = () => {
@@ -80,6 +86,7 @@ const CreatePost: React.FC = () => {
     });
     const { data: characterLimits, isLoading } = useGetCharacterLimitsQuery();
     const [createPost] = useCreatePostMutation();
+    const [showHashtagGenerator, setShowHashtagGenerator] = useState(false);
 
 
     useEffect(() => {
@@ -99,6 +106,12 @@ const CreatePost: React.FC = () => {
             setCharacterLimit(characterLimits[selectedToggle]);
         }
     }, [characterLimits, selectedToggle]);
+
+
+    const toggleHashtagGenerator = () => {
+        setShowHashtagGenerator(prev => !prev);
+    };
+
 
     const handleSubmit = async () => {
         const filteredContent = Object.keys(text)
@@ -223,10 +236,10 @@ const CreatePost: React.FC = () => {
     }))
 
     const smallProviderIcons: { [key: string]: React.ReactNode } = {
-        facebook: <FacebookRoundedIcon sx={{ fontSize: '13px', background: 'white', borderRadius: '10px' }} />,
-        twitter: <XIcon sx={{ fontSize: '13px', background: 'white', borderRadius: '10px' }} />,
-        instagram: <InstagramIcon sx={{ fontSize: '13px', background: 'white', borderRadius: '10px' }} />,
-        linkedin: <LinkedInIcon sx={{ fontSize: '13px', background: 'white', borderRadius: '10px' }} />,
+        facebook: <FacebookRoundedIcon sx={{ color: '#1877F2', fontSize: '12px', background: 'white', borderRadius: '20px' }} />,
+        instagram: <InstagramIcon sx={{ color: '#EE1973', fontSize: '12px', background: 'white', borderRadius: '20px' }} />,
+        linkedin: <LinkedInIcon sx={{ color: '#1877F2', fontSize: '12px', background: 'white', borderRadius: '20px' }} />,
+        twitter: <XIcon sx={{ color: '#000000', fontSize: '12px', background: 'white', borderRadius: '20px' }} />,
     };
 
     // const normalProviderIcons: { [key: string]: React.ReactNode } = {
@@ -571,12 +584,14 @@ const CreatePost: React.FC = () => {
                                     <Stack direction="row" spacing={1} alignItems='center' marginBottom='.5rem'>
                                         <EmojiEmotionsOutlinedIcon
                                             sx={{ background: 'lightgrey', borderRadius: '15px', padding: '2px', color: 'grey', cursor: 'pointer' }}
-                                            onClick={toggleEmojiPicker}
+                                            onClick={() => { }}
                                         />
                                         <TagOutlinedIcon
-                                            sx={{ background: 'lightgrey', borderRadius: '15px', padding: '2px', color: 'grey' }}
+                                            sx={{ background: 'lightgrey', borderRadius: '15px', padding: '2px', color: 'grey', cursor: 'pointer' }}
+                                            onClick={toggleHashtagGenerator}
                                         />
                                     </Stack>
+
 
 
                                 </Box>
@@ -721,7 +736,17 @@ const CreatePost: React.FC = () => {
 
                     }}>
                     {showEmojiPicker && (
-                        <Box position='absolute' left='67%' top='29%' transform='translate(-50%, -50%)' sx={{ zIndex: '1' }}>
+                        <Box
+                            position='absolute'
+                            left='67%'
+                            top='29%'
+                            transform='translate(-50%, -50%)'
+                            sx={{
+                                zIndex: '1',
+                                boxShadow: '0px 4px 8px rgba(2, 0.6,0.5, 0.5)',
+                                borderRadius: '8px',
+                            }}
+                        >
                             <Picker
                                 skinTonePickerLocation={'false'}
                                 width='300'
@@ -739,7 +764,7 @@ const CreatePost: React.FC = () => {
                     ))} */}
 
 
-                    {selectedToggle === 'Initial content' && (
+                    {/* {selectedToggle === 'Initial content' && (
                         <>
                             <Stack direction='row' gap='.5rem' sx={{ mt: '2rem', mx: '1.5rem', mb: '.5rem' }}>
                                 <Skeleton variant="rectangular" animation='wave' sx={{ borderRadius: '3px', width: '1rem', height: '1rem' }} />
@@ -843,7 +868,71 @@ const CreatePost: React.FC = () => {
                     )}
 
 
-                    <Typography sx={{ fontSize: 'small', textAlign: 'center', fontWeight: '100', color: 'gray', mx: '2rem', mt: 1 }}>Social networks regularly make updates to formatting, so your post may appear slightly different when published.</Typography>
+                    <Typography sx={{ fontSize: 'small', textAlign: 'center', fontWeight: '100', color: 'gray', mx: '2rem', mt: 1 }}>Social networks regularly make updates to formatting, so your post may appear slightly different when published.</Typography> */}
+
+
+
+
+                    {/* <Stack
+                        gap="3px"
+                        sx={{
+                            background: 'white',
+                            p: 2,
+                            borderRadius: 1,
+                            boxShadow: '0px 4px 8px rgba(0.3, 0.6, 0.5, 0.2)'
+                        }}
+                    >
+                        <Typography variant='overline' color='#203170' textAlign='center' paddingBottom='.5rem'>
+
+                            Generate hashtags
+                        </Typography>
+
+                        <Stack direction="row" alignItems="center" gap="10px">
+                            <TextField
+                                placeholder="Enter hashtag keyword"
+                                variant="filled"
+                                color="primary"
+                                sx={{ flex: 1 }}
+                            />
+                            <Button
+                                variant="outlined"
+                                color="primary"
+                                sx={{ height: '56px' }}
+                            >
+                                <SearchIcon />
+                            </Button>
+                        </Stack>
+
+                        <Stack direction="column" spacing={1} sx={{ mt: 2 }}>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        sx={{ color: '#233170', '&.Mui-checked': { color: '#233170' } }}
+                                    />
+                                }
+                                label={<Typography color='#575757'>#Friends</Typography>}
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        sx={{ color: '#233170', '&.Mui-checked': { color: '#233170' } }}
+                                    />
+                                }
+                                label={<Typography>#Family</Typography>}
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        sx={{ color: '#233170', '&.Mui-checked': { color: '#233170' } }}
+                                    />
+                                }
+                                label={<Typography>#Travel</Typography>}
+                            />
+                        </Stack>
+                    </Stack> */}
+
+                    {showHashtagGenerator && <HashtagGenerator />}
+
                 </Box>
 
             </Stack >

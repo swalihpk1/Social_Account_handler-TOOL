@@ -52,7 +52,7 @@ const Connect: React.FC = () => {
     useEffect(() => {
 
         const hash = window.location.hash;
-        const params = new URLSearchParams(hash.substring(1)); 
+        const params = new URLSearchParams(hash.substring(1));
         const accessToken = params.get('access_token');
 
         console.log('accessToken', accessToken);
@@ -268,19 +268,20 @@ const Connect: React.FC = () => {
                                     </Typography>
                                 </Box>
                             )}
-                            <Stack direction='row' spacing={2} sx={{ width: '100%' }}>
+                            <Grid container gap={2}>
                                 {Object.entries(userInfo?.socialAccounts || {}).map(([provider, accountData]) => {
-                                    const { profileName, profilePicture } = accountData as SocialAccount;
+                                    const { profileName, profilePicture } = accountData;
                                     return (
-                                        <SocialAccountBox
-                                            key={provider}
-                                            provider={provider}
-                                            profileName={profileName}
-                                            profilePicture={profilePicture}
-                                        />
+                                        <Grid item xs={12} sm={6}  md={3} key={provider}>
+                                            <SocialAccountBox
+                                                provider={provider}
+                                                profileName={profileName}
+                                                profilePicture={profilePicture}
+                                            />
+                                        </Grid>
                                     );
                                 })}
-                            </Stack>
+                            </Grid>
 
                         </Stack>
                     </Box>
