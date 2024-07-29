@@ -11,7 +11,7 @@ import { updateUser } from '../../features/auth/CredSlice';
 import { RootState } from '../../app/store';
 import SocialAccountBox from '../../components/SocialAccountBox';
 import { useNavigate } from 'react-router-dom';
-import { SocialAccount } from '../../types/Types';
+// import { SocialAccount } from '../../types/Types';
 import axios from 'axios';
 // import { useRedirect } from '../../components/RedirectProvider';
 

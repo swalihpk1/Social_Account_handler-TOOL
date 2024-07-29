@@ -89,6 +89,7 @@ const CreatePost: React.FC = () => {
     const [showHashtagGenerator, setShowHashtagGenerator] = useState(false);
 
 
+
     useEffect(() => {
         const currentText = text[selectedToggle] || '';
         const urls = currentText.match(/https?:\/\/[^\s]+/g);
@@ -113,6 +114,28 @@ const CreatePost: React.FC = () => {
 
     const closeHashtagGenerator = () => {
         setShowHashtagGenerator(false);
+    };
+
+    const handleHashtagSelect = (hashtag) => {
+        const newText = selectedToggle === 'Initial content' ? initialContent : text[selectedToggle] || '';
+        const hashtagsText = `#${hashtag} `;
+        const updatedText = newText.slice(0, cursorPosition) + hashtagsText + newText.slice(cursorPosition);
+        setCursorPosition(cursorPosition + hashtagsText.length);
+
+        if (selectedToggle === 'Initial content') {
+            setInitialContent(updatedText);
+            setText({
+                facebook: updatedText,
+                twitter: updatedText,
+                linkedin: updatedText,
+                instagram: updatedText,
+            });
+        } else {
+            setText(prevState => ({
+                ...prevState,
+                [selectedToggle]: updatedText,
+            }));
+        }
     };
 
 
@@ -144,7 +167,6 @@ const CreatePost: React.FC = () => {
 
 
 
-
     const handleTextChange = (e) => {
         const newText = e.target.value;
         setCursorPosition(e.target.selectionStart);
@@ -164,7 +186,6 @@ const CreatePost: React.FC = () => {
             }));
         }
     };
-
 
     const handleShortenLinks = async () => {
         setLinkloading(true);
@@ -353,7 +374,6 @@ const CreatePost: React.FC = () => {
                                                         backgroundColor: '#ffe5b2',
                                                         padding: '1px',
                                                         borderRadius: '2rem',
-
                                                     }}
                                                 >
                                                     <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
@@ -436,8 +456,6 @@ const CreatePost: React.FC = () => {
                                                 {option.provider}
                                             </Typography>
                                         </Stack>
-
-
                                     </Stack>
                                 </MenuItem>
                             ))}
@@ -587,7 +605,7 @@ const CreatePost: React.FC = () => {
                                     <Stack direction="row" spacing={1} alignItems='center' marginBottom='.5rem'>
                                         <EmojiEmotionsOutlinedIcon
                                             sx={{ background: 'lightgrey', borderRadius: '15px', padding: '2px', color: 'grey', cursor: 'pointer' }}
-                                            onClick={() => { }}
+                                            onClick={toggleEmojiPicker}
                                         />
                                         <TagOutlinedIcon
                                             sx={{ background: 'lightgrey', borderRadius: '15px', padding: '2px', color: 'grey', cursor: 'pointer' }}
@@ -720,7 +738,6 @@ const CreatePost: React.FC = () => {
                                 </Modal>
                             </Box>
 
-
                         </Box>
                     </Box>
                 </Box >
@@ -738,9 +755,28 @@ const CreatePost: React.FC = () => {
                         padding: { xs: '1rem', md: '1rem' },
                     }}
                 >
+                    {showEmojiPicker && (
+                        <Box
+                            position='absolute'
+                            left='67%'
+                            top='29%'
+                            transform='translate(-50%, -50%)'
+                            sx={{
+                                zIndex: '1',
+                                boxShadow: '0px 4px 8px rgba(2, 0.6,0.5, 0.5)',
+                                borderRadius: '8px',
+                            }}
+                        >
+                            <Picker
+                                skinTonePickerLocation={'false'}
+                                width='300'
+                                onEmojiClick={handleEmojiClick}
+                            />
+                        </Box>
+                    )}
 
                     {showHashtagGenerator ? (
-                        <HashtagGenerator onClose={closeHashtagGenerator} />
+                        <HashtagGenerator onClose={closeHashtagGenerator} onHashtagSelect={handleHashtagSelect} />
                     ) : (
                         <>
                             {selectedToggle === 'Initial content' && (

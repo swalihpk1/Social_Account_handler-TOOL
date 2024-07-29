@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Stack, TextField, Typography, Checkbox, FormControlLabel, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useFetchHashtagsQuery } from '../api/ApiSlice';
-import SearchLoaidng from './LoadingAnimation/LoadingIcon';
+import SearchLoading from './LoadingAnimation/SearchLoading';
 
-const HashtagGenerator = ({ onClose }) => {
+const HashtagGenerator = ({ onClose, onHashtagSelect }) => {
     const [keyword, setKeyword] = useState('');
     const { data, error, isLoading } = useFetchHashtagsQuery(keyword, {
         skip: keyword === '',
@@ -24,6 +24,10 @@ const HashtagGenerator = ({ onClose }) => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [onClose]);
+
+    const handleHashtagChange = (hashtag: string) => {
+        onHashtagSelect(hashtag);
+    };
 
     return (
         <Stack
@@ -66,7 +70,7 @@ const HashtagGenerator = ({ onClose }) => {
             <Stack direction="column" spacing={1} sx={{ mt: 2 }}>
                 {isLoading && (
                     <Stack direction="row" justifyContent="center" sx={{ width: '100%' }}>
-                        <SearchLoaidng height={50} width={50} />
+                        <SearchLoading height={50} width={50} />
                     </Stack>
                 )}
                 {error && <Typography>Error: {error.message}</Typography>}
@@ -78,7 +82,10 @@ const HashtagGenerator = ({ onClose }) => {
                 {data && data.map((hashtag: string) => (
                     <FormControlLabel
                         key={hashtag}
-                        control={<Checkbox sx={{ color: '#233170', '&.Mui-checked': { color: '#233170' } }} />}
+                        control={<Checkbox
+                            sx={{ color: '#233170', '&.Mui-checked': { color: '#233170' } }}
+                            onChange={() => handleHashtagChange(hashtag)}
+                        />}
                         label={<Typography color='#575757'>#{hashtag}</Typography>}
                     />
                 ))}
