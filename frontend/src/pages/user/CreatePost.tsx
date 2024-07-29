@@ -107,9 +107,12 @@ const CreatePost: React.FC = () => {
         }
     }, [characterLimits, selectedToggle]);
 
-
     const toggleHashtagGenerator = () => {
-        setShowHashtagGenerator(prev => !prev);
+        setShowHashtagGenerator(!showHashtagGenerator);
+    };
+
+    const closeHashtagGenerator = () => {
+        setShowHashtagGenerator(false);
     };
 
 
@@ -593,7 +596,6 @@ const CreatePost: React.FC = () => {
                                     </Stack>
 
 
-
                                 </Box>
                                 <Divider style={{ height: '2.5px', backgroundColor: '#e5e5e5' }} />
 
@@ -723,7 +725,8 @@ const CreatePost: React.FC = () => {
                     </Box>
                 </Box >
 
-                <Box component="form"
+                <Box
+                    component="form"
                     gap={1}
                     overflow='scroll'
                     sx={{
@@ -733,207 +736,112 @@ const CreatePost: React.FC = () => {
                         backgroundColor: '#d8d8d8',
                         height: { xs: 'auto', md: '100%' },
                         padding: { xs: '1rem', md: '1rem' },
+                    }}
+                >
 
-                    }}>
-                    {showEmojiPicker && (
-                        <Box
-                            position='absolute'
-                            left='67%'
-                            top='29%'
-                            transform='translate(-50%, -50%)'
-                            sx={{
-                                zIndex: '1',
-                                boxShadow: '0px 4px 8px rgba(2, 0.6,0.5, 0.5)',
-                                borderRadius: '8px',
-                            }}
-                        >
-                            <Picker
-                                skinTonePickerLocation={'false'}
-                                width='300'
-                                onEmojiClick={handleEmojiClick}
-                            />
-                        </Box>
-                    )}
-
-                    {/* {shortenedLinks.map((link, index) => (
-                        <Box sx={{ mt: 2, p: 3 }}>
-                            <Typography key={index} variant="body1" sx={{ mt: 1 }}>
-                                {link}
-                            </Typography>
-                        </Box>
-                    ))} */}
-
-
-                    {/* {selectedToggle === 'Initial content' && (
+                    {showHashtagGenerator ? (
+                        <HashtagGenerator onClose={closeHashtagGenerator} />
+                    ) : (
                         <>
-                            <Stack direction='row' gap='.5rem' sx={{ mt: '2rem', mx: '1.5rem', mb: '.5rem' }}>
-                                <Skeleton variant="rectangular" animation='wave' sx={{ borderRadius: '3px', width: '1rem', height: '1rem' }} />
-                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
-                            </Stack>
-
-                            <Stack gap='3px' sx={{ background: 'white', mx: '1.5rem', borderRadius: '6px', p: 1 }}>
-                                <Stack direction='row' gap={1} sx={{ alignItems: 'center' }}>
-                                    <Skeleton variant='rectangular' animation='wave' sx={{ borderRadius: '5px', width: '2rem', height: '2rem' }}>
-                                        <Avatar />
-                                    </Skeleton>
-                                    <Typography>
-                                        <Skeleton animation='wave' width='6rem' sx={{ borderRadius: '7px', height: '1rem' }} />
-                                    </Typography>
-                                </Stack>
-
-                                {!initialContent ? (
-                                    <Box>
-                                        <Typography>
-                                            <Skeleton animation='wave' sx={{ borderRadius: '7px', height: '1rem' }} />
-                                        </Typography>
-                                        <Typography>
-                                            <Skeleton animation='wave' width='6rem' sx={{ borderRadius: '7px', height: '1rem' }} />
-                                        </Typography>
-                                    </Box>
-                                ) : (
-                                    <Box sx={{ width: '100%', overflow: 'hidden' }}>
-                                        <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 'small' }}>
-                                            {initialContent}
-                                        </Typography>
-                                    </Box>
-                                )}
-
-                                <Stack>
-                                    {selectedLibraryImage && (
-                                        <img
-                                            src={selectedLibraryImage.src}
-                                            alt={selectedLibraryImage.alt}
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                        />
-                                    )}
-                                    {selectedLocalImage && (
-                                        <img
-                                            src={URL.createObjectURL(selectedLocalImage)}
-                                            alt="Uploaded"
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                        />
-                                    )}
-                                </Stack>
-
-                                <Stack direction='row' gap={1} sx={{ alignItems: 'center', mt: '1rem' }}>
-                                    <Typography>
+                            {selectedToggle === 'Initial content' && (
+                                <>
+                                    <Stack direction='row' gap='.5rem' sx={{ mt: '2rem', mx: '1.5rem', mb: '.5rem' }}>
+                                        <Skeleton variant="rectangular" animation='wave' sx={{ borderRadius: '3px', width: '1rem', height: '1rem' }} />
                                         <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
-                                    </Typography>
-                                    <Typography>
-                                        <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
-                                    </Typography>
-                                    <Typography>
-                                        <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
-                                    </Typography>
-                                </Stack>
-                            </Stack>
+                                    </Stack>
+
+                                    <Stack gap='3px' sx={{ background: 'white', mx: '1.5rem', borderRadius: '6px', p: 1 }}>
+                                        <Stack direction='row' gap={1} sx={{ alignItems: 'center' }}>
+                                            <Skeleton variant='rectangular' animation='wave' sx={{ borderRadius: '5px', width: '2rem', height: '2rem' }}>
+                                                <Avatar />
+                                            </Skeleton>
+                                            <Typography>
+                                                <Skeleton animation='wave' width='6rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                            </Typography>
+                                        </Stack>
+
+                                        <Box sx={{ width: '100%', overflow: 'hidden' }}>
+                                            <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 'small' }}>
+                                                {initialContent}
+                                            </Typography>
+                                        </Box>
+
+                                        <Stack>
+                                            {selectedLibraryImage && (
+                                                <img
+                                                    src={selectedLibraryImage.src}
+                                                    alt={selectedLibraryImage.alt}
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                />
+                                            )}
+                                            {selectedLocalImage && (
+                                                <img
+                                                    src={URL.createObjectURL(selectedLocalImage)}
+                                                    alt="Uploaded"
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                />
+                                            )}
+                                        </Stack>
+
+                                        <Stack direction='row' gap={1} sx={{ alignItems: 'center', mt: '1rem' }}>
+                                            <Typography>
+                                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                            </Typography>
+                                            <Typography>
+                                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                            </Typography>
+                                            <Typography>
+                                                <Skeleton animation='wave' width='4rem' sx={{ borderRadius: '7px', height: '1rem' }} />
+                                            </Typography>
+                                        </Stack>
+                                    </Stack>
+                                </>
+                            )}
+
+                            {selectedToggle === 'facebook' && (
+                                <FacebookPreview
+                                    text={text.facebook}
+                                    account={userSocialAccounts.find(account => account.provider === 'facebook')}
+                                    selectedLocalImage={selectedLocalImage}
+                                    selectedLibraryImage={selectedLibraryImage}
+                                    shortenedLinks={shortenedLinks}
+                                />
+                            )}
+                            {selectedToggle === 'linkedin' && (
+                                <LinkedInPreview
+                                    text={text.linkedin}
+                                    account={userSocialAccounts.find(account => account.provider === 'linkedin')}
+                                    selectedLocalImage={selectedLocalImage}
+                                    selectedLibraryImage={selectedLibraryImage}
+                                    shortenedLinks={shortenedLinks}
+                                />
+                            )}
+                            {selectedToggle === 'twitter' && (
+                                <XPreview
+                                    text={text.twitter}
+                                    account={userSocialAccounts.find(account => account.provider === 'twitter')}
+                                    selectedLocalImage={selectedLocalImage}
+                                    selectedLibraryImage={selectedLibraryImage}
+                                    shortenedLinks={shortenedLinks}
+                                />
+                            )}
+                            {selectedToggle === 'instagram' && (
+                                <InstagramPreview
+                                    text={text.instagram}
+                                    account={userSocialAccounts.find(account => account.provider === 'instagram')}
+                                    selectedLocalImage={selectedLocalImage}
+                                    selectedLibraryImage={selectedLibraryImage}
+                                    shortenedLinks={shortenedLinks}
+                                />
+                            )}
+
+                            <Typography sx={{ fontSize: 'small', textAlign: 'center', fontWeight: '100', color: 'gray', mx: '2rem', mt: 1 }}>
+                                Social networks regularly make updates to formatting, so your post may appear slightly different when published.
+                            </Typography>
                         </>
                     )}
-
-                    {selectedToggle === 'facebook' && (
-                        <FacebookPreview
-                            text={text.facebook}
-                            account={userSocialAccounts.find(account => account.provider === 'facebook')}
-                            selectedLocalImage={selectedLocalImage}
-                            selectedLibraryImage={selectedLibraryImage}
-                            shortenedLinks={shortenedLinks}
-                        />
-                    )}
-                    {selectedToggle === 'linkedin' && (
-                        <LinkedInPreview
-                            text={text.linkedin}
-                            account={userSocialAccounts.find(account => account.provider === 'linkedin')}
-                            selectedLocalImage={selectedLocalImage}
-                            selectedLibraryImage={selectedLibraryImage}
-                            shortenedLinks={shortenedLinks}
-                        />
-                    )}
-                    {selectedToggle === 'twitter' && (
-                        <XPreview
-                            text={text.twitter}
-                            account={userSocialAccounts.find(account => account.provider === 'twitter')}
-                            selectedLocalImage={selectedLocalImage}
-                            selectedLibraryImage={selectedLibraryImage}
-                            shortenedLinks={shortenedLinks}
-                        />
-                    )}
-                    {selectedToggle === 'instagram' && (
-                        <InstagramPreview
-                            text={text.instagram}
-                            account={userSocialAccounts.find(account => account.provider === 'instagram')}
-                            selectedLocalImage={selectedLocalImage}
-                            selectedLibraryImage={selectedLibraryImage}
-                            shortenedLinks={shortenedLinks}
-                        />
-                    )}
-
-
-                    <Typography sx={{ fontSize: 'small', textAlign: 'center', fontWeight: '100', color: 'gray', mx: '2rem', mt: 1 }}>Social networks regularly make updates to formatting, so your post may appear slightly different when published.</Typography> */}
-
-
-
-
-                    {/* <Stack
-                        gap="3px"
-                        sx={{
-                            background: 'white',
-                            p: 2,
-                            borderRadius: 1,
-                            boxShadow: '0px 4px 8px rgba(0.3, 0.6, 0.5, 0.2)'
-                        }}
-                    >
-                        <Typography variant='overline' color='#203170' textAlign='center' paddingBottom='.5rem'>
-
-                            Generate hashtags
-                        </Typography>
-
-                        <Stack direction="row" alignItems="center" gap="10px">
-                            <TextField
-                                placeholder="Enter hashtag keyword"
-                                variant="filled"
-                                color="primary"
-                                sx={{ flex: 1 }}
-                            />
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                sx={{ height: '56px' }}
-                            >
-                                <SearchIcon />
-                            </Button>
-                        </Stack>
-
-                        <Stack direction="column" spacing={1} sx={{ mt: 2 }}>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        sx={{ color: '#233170', '&.Mui-checked': { color: '#233170' } }}
-                                    />
-                                }
-                                label={<Typography color='#575757'>#Friends</Typography>}
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        sx={{ color: '#233170', '&.Mui-checked': { color: '#233170' } }}
-                                    />
-                                }
-                                label={<Typography>#Family</Typography>}
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        sx={{ color: '#233170', '&.Mui-checked': { color: '#233170' } }}
-                                    />
-                                }
-                                label={<Typography>#Travel</Typography>}
-                            />
-                        </Stack>
-                    </Stack> */}
-
-                    {showHashtagGenerator && <HashtagGenerator />}
-
                 </Box>
+
 
             </Stack >
             <Divider style={{ height: '2.5px', backgroundColor: '#e5e5e5' }} />
