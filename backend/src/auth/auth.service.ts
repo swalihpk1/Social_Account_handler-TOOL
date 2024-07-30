@@ -12,7 +12,7 @@ export class AuthService {
     constructor(
         @InjectModel(User.name) private userModel: Model<UserDocument>,
         private jwtSecret: JwtConfigService,
-        private globalStateService: GlobalStateService // Inject GlobalStateService
+        private globalStateService: GlobalStateService 
     ) { }
 
     async signup(userDto: UserData): Promise<User> {

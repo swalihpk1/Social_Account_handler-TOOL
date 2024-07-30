@@ -35,19 +35,39 @@ const Connect: React.FC = () => {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        const userParam = params.get('user');
+        const userParam = params.get('user'); 
+
+        console.log('USER Parameter:', userParam);
+        console.log('parameter:', params);
 
         if (userParam) {
-            const userData = JSON.parse(decodeURIComponent(userParam));
-            dispatch(updateUser({
-                provider: userData.provider,
-                profileName: userData.profileName,
-                profilePicture: userData.profilePicture
-            }));
+            try {
+                const data = JSON.parse(decodeURIComponent(userParam));
 
-            navigate('/connect');
+                if (data && data.userProfile) {
+                    const { provider, profileName, profilePicture } = data.userProfile;
+                    const userPages = data.userPages ? data.userPages.map(page => ({
+                        pageName: page.pageName,
+                        pageImage: page.pageImage
+                    })) : [];
+
+                    dispatch(updateUser({
+                        provider,
+                        profileName,
+                        profilePicture,
+                        userPages
+                    }));
+
+                    navigate('/connect');
+                }
+            } catch (error) {
+                console.error('Error parsing user data', error);
+            }
+        } else {
+            console.error('User parameter is missing in URL');
         }
     }, [dispatch, navigate]);
+
 
     useEffect(() => {
 
@@ -272,7 +292,7 @@ const Connect: React.FC = () => {
                                 {Object.entries(userInfo?.socialAccounts || {}).map(([provider, accountData]) => {
                                     const { profileName, profilePicture } = accountData;
                                     return (
-                                        <Grid item xs={12} sm={6}  md={3} key={provider}>
+                                        <Grid item xs={12} sm={6} md={3} key={provider}>
                                             <SocialAccountBox
                                                 provider={provider}
                                                 profileName={profileName}

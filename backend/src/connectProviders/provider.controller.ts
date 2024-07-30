@@ -37,34 +37,58 @@ export class ProviderController {
         if (code) {
             try {
                 const data = await this.facebookStrategy.getAccessToken(code);
-                const accessToken = data.access_token
+                const accessToken = data.access_token;
+                console.log('Access Token:', accessToken);
 
-                if (!accessToken) return res.status(400).json({ message: 'Facebook accessToken not found' });
+                if (!accessToken) {
+                    return res.status(400).json({ message: 'Facebook accessToken not found' });
+                }
 
-                const facebookProfile = await this.facebookStrategy.getUserData(data.access_token);
+                const facebookProfile = await this.facebookStrategy.getUserData(accessToken);
                 const userId = this.globalStateService.getUserId();
-                console.log("userId", userId);
-
-
-                console.log('facebok', facebookProfile);
+                console.log('User ID:', userId);
 
                 if (!userId) {
                     return res.status(400).json({ message: 'User ID not found in session' });
                 }
 
-                if (!facebookProfile) return res.status(400).json({ message: 'Facebook userData not found' });
+                if (!facebookProfile) {
+                    return res.status(400).json({ message: 'Facebook userData not found' });
+                }
 
-                const facebookData = await this.providerService.handleFacebookLoginCallback(userId, facebookProfile, accessToken);
+                const userPages = await this.facebookStrategy.getUserPages(accessToken);
+                if (!userPages) {
+                    return res.status(400).json({ message: 'User pages not found' });
+                }
 
-                res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(facebookData))}`);
+                const userProfile = await this.providerService.handleFacebookLoginCallback(userId, facebookProfile, accessToken);
+                const responseData = {
+                    userProfile: {
+                        profileName: userProfile.profileName,
+                        profilePicture: userProfile.profilePicture,
+                        provider: 'facebook'
+                    },
+                    userPages: userPages.map(page => ({
+                        pageName: page.pageName,
+                        pageImage: page.pageImage
+                    }))
+                };
+
+                console.log('Response Data:', responseData);
+
+                const redirectUrl = `http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(responseData))}`;
+                console.log('Redirect URL:', redirectUrl);
+                res.redirect(redirectUrl);
 
             } catch (error) {
                 console.error('Error during Facebook callback', error);
+                return res.status(500).send('Internal Server Error');
             }
         } else {
             return res.status(400).send('Authorization code is missing');
         }
     }
+
 
 
     // ====================Instagram======================

@@ -22,9 +22,40 @@ export class FacebookStrategy {
         const url = `https://graph.facebook.com/v12.0/me?fields=id,name,email,picture&access_token=${accessToken}`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
-            return response.data;
+            const userData = response.data;
+
+            const userDetails = {
+                userName: userData.name,
+                userImage: userData.picture.data.url
+            };
+            return userDetails;
         } catch (error) {
             this.logger.error('Error fetching user data:', error.response?.data || error.message);
+            throw error;
+        }
+    }
+
+    async getUserPages(accessToken: string): Promise<any> {
+        const url = `https://graph.facebook.com/v12.0/me/accounts?access_token=${accessToken}`;
+        try {
+            const response = await lastValueFrom(this.httpService.get(url));
+            const pages = response.data.data;
+
+            const pagesDetails = await Promise.all(
+                pages.map(async (page) => {
+                    const pageDetailsUrl = `https://graph.facebook.com/v12.0/${page.id}?fields=picture&access_token=${accessToken}`;
+                    const pageDetailsResponse = await lastValueFrom(this.httpService.get(pageDetailsUrl));
+                    const pictureUrl = pageDetailsResponse.data.picture.data.url;
+                    return {
+                        pageName: page.name,
+                        pageImage: pictureUrl,
+                    };
+                })
+            );
+
+            return pagesDetails;
+        } catch (error) {
+            this.logger.error('Error fetching user pages:', error.response?.data || error.message);
             throw error;
         }
     }

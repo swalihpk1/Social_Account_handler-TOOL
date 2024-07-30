@@ -9,9 +9,9 @@ export class ProviderService {
         @InjectModel(User.name) private userModel: Model<UserDocument>,
     ) { }
 
-    async handleFacebookLoginCallback(userId: string, facebookUser: any, accessToken: string): Promise<{ profileName: string, provider: string, profilePicture: string } | null> {
-        const { name } = facebookUser;
-        const profilePicture = facebookUser.picture.data.url
+    async handleFacebookLoginCallback(userId: string, facebookUser: any, accessToken: string): Promise<{ profileName: string, profilePicture: string } | null> {
+        const { userName, userImage } = facebookUser;
+
 
         let foundUser = await this.userModel.findById(userId);
         if (!foundUser) {
@@ -22,10 +22,8 @@ export class ProviderService {
         await foundUser.save();
 
         return {
-            profileName: name,
-            profilePicture,
-            provider: 'facebook',
-
+            profileName: userName,
+            profilePicture: userImage,
         };
     }
 

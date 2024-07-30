@@ -11,10 +11,17 @@ export interface AuthResponse {
     refreshToken: string;
 }
 
+export interface Page {
+    pageName: string;
+    pageImage: string;
+}
+
 export interface SocialAccount {
     profileName: string;
     profilePicture?: string;
+    userPages?: Page[]; 
 }
+
 
 export interface UserInfo {
     name?: string;
@@ -50,19 +57,7 @@ export interface RedirectContextProps {
 
 }
 
-declare namespace JSX {
-    interface IntrinsicElements {
-        'lord-icon': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-            src: string;
-            trigger: string;
-            colors?: string;
-            stroke?: number;
-            scale?: number;
-            state?: string;
-            delay?: number;
-        };
-    }
-}
+
 
 export interface StyledListItemProps {
     icon: React.ReactElement;

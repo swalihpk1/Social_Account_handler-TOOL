@@ -1,7 +1,5 @@
-// redux/auth/credSlice.ts
-
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { AuthState, UserInfo } from '../../types/Types';
+import { AuthState, UserInfo, Page } from '../../types/Types';
 
 const initialState: AuthState = {
     userInfo: localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo') as string) : null,
@@ -21,16 +19,18 @@ const credSlice = createSlice({
             localStorage.setItem('accessToken', action.payload.accessToken);
             localStorage.setItem('refreshToken', action.payload.refreshToken);
         },
-        updateUser: (state, action: PayloadAction<{ provider: string; profileName: string; profilePicture?: string }>) => {
+        updateUser: (state, action: PayloadAction<{ provider: string; profileName: string; profilePicture?: string; userPages?: Page[] }>) => {
             if (state.userInfo) {
                 state.userInfo.socialAccounts = state.userInfo.socialAccounts || {};
                 state.userInfo.socialAccounts[action.payload.provider] = {
                     profileName: action.payload.profileName,
                     profilePicture: action.payload.profilePicture,
+                    userPages: action.payload.userPages || []
                 };
                 localStorage.setItem('userInfo', JSON.stringify(state.userInfo));
             }
         },
+
         removeSocialAccount: (state, action: PayloadAction<string>) => {
             if (state.userInfo && state.userInfo.socialAccounts) {
                 delete state.userInfo.socialAccounts[action.payload];
@@ -47,7 +47,6 @@ const credSlice = createSlice({
         },
     },
 });
-
 
 export const { setCredentials, updateUser, removeSocialAccount, logout } = credSlice.actions;
 
