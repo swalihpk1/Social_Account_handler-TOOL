@@ -13,6 +13,7 @@ import SocialAccountBox from '../../components/SocialAccountBox';
 import { useNavigate } from 'react-router-dom';
 // import { SocialAccount } from '../../types/Types';
 import axios from 'axios';
+import FBAccountListModal from './FBAccountListModal';
 // import { useRedirect } from '../../components/RedirectProvider';
 
 const Connect: React.FC = () => {
@@ -21,6 +22,10 @@ const Connect: React.FC = () => {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const navigate = useNavigate();
+    const [openFbPagesModal, setOpenFbPagesModal] = useState(false);
+    const [userPages, setUserPages] = useState([]);
+    const [fbUserData, setFbUserData] = useState(null);
+
 
     const handleSocialLogin = (provider: string) => {
         console.log("asdfadsf");
@@ -33,40 +38,62 @@ const Connect: React.FC = () => {
         }
     };
 
+
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        const userParam = params.get('user'); 
+        const userParam = params.get('data');
 
-        console.log('USER Parameter:', userParam);
-        console.log('parameter:', params);
+        console.log('Data Parameter:', userParam);
 
         if (userParam) {
             try {
                 const data = JSON.parse(decodeURIComponent(userParam));
 
-                if (data && data.userProfile) {
-                    const { provider, profileName, profilePicture } = data.userProfile;
-                    const userPages = data.userPages ? data.userPages.map(page => ({
-                        pageName: page.pageName,
-                        pageImage: page.pageImage
-                    })) : [];
-
+                if (data.userProfile.provider === 'facebook') {
+                    setFbUserData(data.userProfile);
+                    setUserPages(data.userPages);
+                    setOpenFbPagesModal(true);
+                } else {
                     dispatch(updateUser({
-                        provider,
-                        profileName,
-                        profilePicture,
-                        userPages
+                        provider: data.userProfile.provider,
+                        profileName: data.userProfile.profileName,
+                        profilePicture: data.userProfile.profilePicture
                     }));
-
                     navigate('/connect');
                 }
             } catch (error) {
                 console.error('Error parsing user data', error);
             }
         } else {
-            console.error('User parameter is missing in URL');
+            console.error('Data parameter is missing in URL');
         }
     }, [dispatch, navigate]);
+
+    const handleModalClose = () => {
+        setOpenFbPagesModal(false);
+        navigate('/connect'); // Navigate to connect after closing modal without confirming
+    };
+
+    const handleModalConfirm = (selectedPages) => {
+        if (fbUserData) {
+            dispatch(updateUser({
+                provider: fbUserData.provider,
+                profileName: fbUserData.profileName,
+                profilePicture: fbUserData.profilePicture,
+                userPages: selectedPages.map(page => ({
+                    pageName: page.pageName,
+                    pageImage: page.pageImage
+                }))
+            }));
+
+            // Optionally store in local storage
+            localStorage.setItem('userProfile', JSON.stringify(fbUserData));
+            localStorage.setItem('userPages', JSON.stringify(selectedPages));
+
+            setOpenFbPagesModal(false);
+            navigate('/connect');
+        }
+    };
 
 
     useEffect(() => {
@@ -305,6 +332,16 @@ const Connect: React.FC = () => {
 
                         </Stack>
                     </Box>
+
+
+
+                    <FBAccountListModal
+                        open={openFbPagesModal}
+                        onClose={handleModalClose}
+                        pages={userPages}
+                        onConfirm={handleModalConfirm}
+                    />
+
 
                     <Button
                         variant="contained"

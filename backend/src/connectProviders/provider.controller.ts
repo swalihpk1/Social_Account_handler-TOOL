@@ -31,7 +31,6 @@ export class ProviderController {
         return { url: facebookLoginUrl };
     }
 
-
     @Get('facebook/callback')
     async facebookCallback(@Query('code') code: string, @Req() req, @Res() res): Promise<any> {
         if (code) {
@@ -76,7 +75,7 @@ export class ProviderController {
 
                 console.log('Response Data:', responseData);
 
-                const redirectUrl = `http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(responseData))}`;
+                const redirectUrl = `http://localhost:3000/connect?data=${encodeURIComponent(JSON.stringify(responseData))}`;
                 console.log('Redirect URL:', redirectUrl);
                 res.redirect(redirectUrl);
 
@@ -88,6 +87,7 @@ export class ProviderController {
             return res.status(400).send('Authorization code is missing');
         }
     }
+
 
 
 
