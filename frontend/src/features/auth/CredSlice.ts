@@ -19,14 +19,29 @@ const credSlice = createSlice({
             localStorage.setItem('accessToken', action.payload.accessToken);
             localStorage.setItem('refreshToken', action.payload.refreshToken);
         },
-        updateUser: (state, action: PayloadAction<{ provider: string; profileName: string; profilePicture?: string; userPages?: Page[] }>) => {
+        updateUser: (state, action: PayloadAction<{ provider: string; profileName: string; profilePicture: string }>) => {
             if (state.userInfo) {
                 state.userInfo.socialAccounts = state.userInfo.socialAccounts || {};
                 state.userInfo.socialAccounts[action.payload.provider] = {
+                    ...state.userInfo.socialAccounts[action.payload.provider],
                     profileName: action.payload.profileName,
                     profilePicture: action.payload.profilePicture,
-                    userPages: action.payload.userPages || []
                 };
+                localStorage.setItem('userInfo', JSON.stringify(state.userInfo));
+            }
+        },
+        updatePages: (state, action: PayloadAction<{ provider: string; userPages: Page[] }>) => {
+            if (state.userInfo) {
+                state.userInfo.socialAccounts = state.userInfo.socialAccounts || {};
+                if (state.userInfo.socialAccounts[action.payload.provider]) {
+                    state.userInfo.socialAccounts[action.payload.provider].userPages = action.payload.userPages;
+                } else {
+                    state.userInfo.socialAccounts[action.payload.provider] = {
+                        profileName: state.userInfo.socialAccounts[action.payload.provider]?.profileName || '',
+                        profilePicture: state.userInfo.socialAccounts[action.payload.provider]?.profilePicture,
+                        userPages: action.payload.userPages,
+                    };
+                }
                 localStorage.setItem('userInfo', JSON.stringify(state.userInfo));
             }
         },
@@ -48,6 +63,6 @@ const credSlice = createSlice({
     },
 });
 
-export const { setCredentials, updateUser, removeSocialAccount, logout } = credSlice.actions;
+export const { setCredentials, updateUser, updatePages, removeSocialAccount, logout } = credSlice.actions;
 
 export default credSlice.reducer;

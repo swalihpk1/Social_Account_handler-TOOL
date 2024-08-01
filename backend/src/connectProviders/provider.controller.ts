@@ -75,7 +75,7 @@ export class ProviderController {
 
                 console.log('Response Data:', responseData);
 
-                const redirectUrl = `http://localhost:3000/connect?data=${encodeURIComponent(JSON.stringify(responseData))}`;
+                const redirectUrl = `http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(responseData))}`;
                 console.log('Redirect URL:', redirectUrl);
                 res.redirect(redirectUrl);
 
@@ -138,7 +138,6 @@ export class ProviderController {
             const instagramData = await this.providerService.handleInstagramLoginCallback(userId, instagramProfile, accessToken);
             console.log("insta", instagramData);
 
-            // res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(instagramData))}`);
             res.json(instagramData)
 
         } catch (error) {

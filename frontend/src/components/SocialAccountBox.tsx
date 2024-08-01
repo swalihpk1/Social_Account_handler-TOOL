@@ -6,7 +6,7 @@ import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import XIcon from '@mui/icons-material/X';
-import { SocialAccountBoxProps } from '../types/Types';
+import { SocialAccountBoxProps, Page } from '../types/Types';
 import { useDispatch } from 'react-redux';
 import { removeSocialAccount } from '../features/auth/CredSlice';
 import { useRemoveSocialAccountMutation } from '../api/ApiSlice';
@@ -18,7 +18,7 @@ const icons: Record<string, JSX.Element> = {
     twitter: <XIcon sx={{ color: '#000000', fontSize: '12px', background: 'white', borderRadius: '20px' }} />,
 };
 
-const SocialAccountBox: React.FC<SocialAccountBoxProps> = ({ provider, profileName, profilePicture }) => {
+const SocialAccountBox: React.FC<SocialAccountBoxProps> = ({ provider, profileName, profilePicture, userPages }) => {
     const dispatch = useDispatch();
     const [removeSocialAccountApi] = useRemoveSocialAccountMutation();
 
@@ -42,61 +42,110 @@ const SocialAccountBox: React.FC<SocialAccountBoxProps> = ({ provider, profileNa
 
     return (
         <>
-            <Stack
-                direction='row'
-                spacing={1}
-                sx={{
-                    width: '100%',
-                    padding: '5px',
-                    alignItems: 'center',
-                    backgroundColor: 'rgba(217, 217, 217, 0.2)',
-                    borderRadius: 2,
-                    marginBottom: 1,
-                }}
-            >
-                <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                    {profilePicture ? (
-                        <img src={profilePicture} alt={`${provider} profile`} style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
-                    ) : (
-                        <AccountCircleIcon sx={{ color: 'grey', fontSize: '30px', background: 'white', borderRadius: '20px' }} />
-                    )}
-                    <Box
+            {userPages && userPages.length > 0 ? (
+                userPages.map((page: Page, index: number) => (
+                    <Stack
+                        key={index}
+                        direction='row'
+                        spacing={1}
                         sx={{
-                            position: 'absolute',
-                            bottom: -5,
-                            right: -2,
-                            padding: '2px',
+                            width: '100%',
+                            padding: '5px',
+                            alignItems: 'center',
+                            backgroundColor: 'rgba(217, 217, 217, 0.2)',
+                            borderRadius: 2,
+                            marginBottom: 1,
                         }}
                     >
-                        {icon}
+                        <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                            {page.pageImage ? (
+                                <img src={page.pageImage} alt={`${provider} page`} style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
+                            ) : (
+                                <AccountCircleIcon sx={{ color: 'grey', fontSize: '30px', background: 'white', borderRadius: '20px' }} />
+                            )}
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    bottom: -5,
+                                    right: -2,
+                                    padding: '2px',
+                                }}
+                            >
+                                {icon}
+                            </Box>
+                        </Box>
+
+                        <Box sx={{ flexGrow: 1 }}>
+                            <Typography sx={{ color: 'white', textTransform: 'none', fontSize: 'small' }}>
+                                {page.pageName}
+                            </Typography>
+                            <Typography sx={{ color: 'white', textTransform: 'none', fontSize: 'xx-small' }}>
+                                {provider.charAt(0).toUpperCase() + provider.slice(1)}
+                            </Typography>
+                        </Box>
+                        <CancelIcon sx={{
+                            color: '#B1B1B1', fontSize: { xs: '20px', sm: '25px' },
+                            '&:hover': {
+                                color: 'aliceblue',
+                            },
+                        }}
+                            onClick={handleRemove}
+                        />
+                    </Stack>
+                ))
+            ) : (
+                <Stack
+                    direction='row'
+                    spacing={1}
+                    sx={{
+                        width: '100%',
+                        padding: '5px',
+                        alignItems: 'center',
+                        backgroundColor: 'rgba(217, 217, 217, 0.2)',
+                        borderRadius: 2,
+                        marginBottom: 1,
+                    }}
+                >
+                    <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                        {profilePicture ? (
+                            <img src={profilePicture} alt={`${provider} profile`} style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
+                        ) : (
+                            <AccountCircleIcon sx={{ color: 'grey', fontSize: '30px', background: 'white', borderRadius: '20px' }} />
+                        )}
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                bottom: -5,
+                                right: -2,
+                                padding: '2px',
+                            }}
+                        >
+                            {icon}
+                        </Box>
                     </Box>
-                </Box>
 
-                <Box sx={{ flexGrow: 1 }}>
-                    <Typography sx={{ color: 'white', textTransform: 'none', fontSize: 'small' }}>
-                        {profileName}
-                    </Typography>
-                    <Typography sx={{ color: 'white', textTransform: 'none', fontSize: 'xx-small' }}>
-                        {provider.charAt(0).toUpperCase() + provider.slice(1)}
-                    </Typography>
-                </Box>
-                <CancelIcon sx={{
-                    color: '#B1B1B1', fontSize: { xs: '20px', sm: '25px' },
-                    '&:hover': {
-                        color: 'aliceblue',
-                    },
-                }}
-                    onClick={handleRemove}
-                />
-            </Stack>
+                    <Box sx={{ flexGrow: 1 }}>
+                        <Typography sx={{ color: 'white', textTransform: 'none', fontSize: 'small' }}>
+                            {profileName}
+                        </Typography>
+                        <Typography sx={{ color: 'white', textTransform: 'none', fontSize: 'xx-small' }}>
+                            {provider.charAt(0).toUpperCase() + provider.slice(1)}
+                        </Typography>
+                    </Box>
+                    <CancelIcon sx={{
+                        color: '#B1B1B1', fontSize: { xs: '20px', sm: '25px' },
+                        '&:hover': {
+                            color: 'aliceblue',
+                        },
+                    }}
+                        onClick={handleRemove}
+                    />
+                </Stack>
+            )}
 
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={6000}
-                onClose={handleCloseSnackbar}
-            >
-                <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
-                    Social account removed successfully!
+            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+                <Alert onClose={handleCloseSnackbar} severity="success">
+                    {provider} account removed successfully!
                 </Alert>
             </Snackbar>
         </>

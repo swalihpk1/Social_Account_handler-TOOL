@@ -19,7 +19,7 @@ export interface Page {
 export interface SocialAccount {
     profileName: string;
     profilePicture?: string;
-    userPages?: Page[]; 
+    userPages?: Page[];
 }
 
 
@@ -48,6 +48,7 @@ export interface SocialAccountBoxProps {
     provider: string;
     profileName: string;
     profilePicture?: string;
+    userPages: Page[];
 }
 
 

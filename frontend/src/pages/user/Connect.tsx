@@ -7,7 +7,7 @@ import XIcon from '@mui/icons-material/X';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { ConnectedBTN } from './Styles';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateUser } from '../../features/auth/CredSlice';
+import { updatePages, updateUser } from '../../features/auth/CredSlice';
 import { RootState } from '../../app/store';
 import SocialAccountBox from '../../components/SocialAccountBox';
 import { useNavigate } from 'react-router-dom';
@@ -41,23 +41,21 @@ const Connect: React.FC = () => {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        const userParam = params.get('data');
-
-        console.log('Data Parameter:', userParam);
+        const userParam = params.get('user');
 
         if (userParam) {
             try {
-                const data = JSON.parse(decodeURIComponent(userParam));
+                const User = JSON.parse(decodeURIComponent(userParam));
 
-                if (data.userProfile.provider === 'facebook') {
-                    setFbUserData(data.userProfile);
-                    setUserPages(data.userPages);
+                if (User.userProfile) {
+                    setFbUserData(User.userProfile);
+                    setUserPages(User.userPages || []);
                     setOpenFbPagesModal(true);
                 } else {
                     dispatch(updateUser({
-                        provider: data.userProfile.provider,
-                        profileName: data.userProfile.profileName,
-                        profilePicture: data.userProfile.profilePicture
+                        provider: User.provider,
+                        profileName: User.profileName,
+                        profilePicture: User.profilePicture
                     }));
                     navigate('/connect');
                 }
@@ -71,29 +69,28 @@ const Connect: React.FC = () => {
 
     const handleModalClose = () => {
         setOpenFbPagesModal(false);
-        navigate('/connect'); // Navigate to connect after closing modal without confirming
+        navigate('/connect');
     };
 
     const handleModalConfirm = (selectedPages) => {
         if (fbUserData) {
-            dispatch(updateUser({
-                provider: fbUserData.provider,
-                profileName: fbUserData.profileName,
-                profilePicture: fbUserData.profilePicture,
-                userPages: selectedPages.map(page => ({
-                    pageName: page.pageName,
-                    pageImage: page.pageImage
-                }))
+            const pagesData = selectedPages.map(page => ({
+                pageName: page.pageName,
+                pageImage: page.pageImage,
             }));
 
-            // Optionally store in local storage
-            localStorage.setItem('userProfile', JSON.stringify(fbUserData));
-            localStorage.setItem('userPages', JSON.stringify(selectedPages));
+            dispatch(updatePages({
+                provider: fbUserData.provider,
+                userPages: pagesData
+            }));
+
+            localStorage.setItem('userPages', JSON.stringify(pagesData));
 
             setOpenFbPagesModal(false);
             navigate('/connect');
         }
     };
+
 
 
     useEffect(() => {
@@ -317,13 +314,14 @@ const Connect: React.FC = () => {
                             )}
                             <Grid container gap={2}>
                                 {Object.entries(userInfo?.socialAccounts || {}).map(([provider, accountData]) => {
-                                    const { profileName, profilePicture } = accountData;
+                                    const { profileName, profilePicture, userPages = [] } = accountData;
                                     return (
                                         <Grid item xs={12} sm={6} md={3} key={provider}>
                                             <SocialAccountBox
                                                 provider={provider}
                                                 profileName={profileName}
                                                 profilePicture={profilePicture}
+                                                userPages={userPages}
                                             />
                                         </Grid>
                                     );
@@ -340,6 +338,7 @@ const Connect: React.FC = () => {
                         onClose={handleModalClose}
                         pages={userPages}
                         onConfirm={handleModalConfirm}
+                        fbUser={fbUserData}
                     />
 
 
