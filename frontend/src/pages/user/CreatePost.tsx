@@ -55,6 +55,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { PostData } from '../../types/Types';
 import HashtagGenerator from '../../components/HashtagGenerator';
 import ImageCropModal from '../../components/imageCropModal';
+import EditIcon from '@mui/icons-material/Edit';
 
 
 

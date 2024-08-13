@@ -41,7 +41,7 @@ const ImageCropModal = ({ isOpen, onClose, imageSrc, onCropComplete }) => {
                     guides={false}
                     onInitialized={(instance) => setCropper(instance)}
                 />
-                //     <Button onClick={handleCropComplete}>Crop</Button>
+                <Button onClick={handleCropComplete}>Crop</Button>
                 <Button onClick={onClose}>Cancel</Button>
             </Box>
         </Modal >
