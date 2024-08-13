@@ -54,6 +54,7 @@ import { useCreatePostMutation } from '../../api/ApiSlice';
 import SearchIcon from '@mui/icons-material/Search';
 import { PostData } from '../../types/Types';
 import HashtagGenerator from '../../components/HashtagGenerator';
+import ImageCropModal from '../../components/imageCropModal';
 
 
 
@@ -87,6 +88,9 @@ const CreatePost: React.FC = () => {
     const { data: characterLimits, isLoading } = useGetCharacterLimitsQuery();
     const [createPost] = useCreatePostMutation();
     const [showHashtagGenerator, setShowHashtagGenerator] = useState(false);
+    const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+    const [cropImageSrc, setCropImageSrc] = useState('');
+    const [cropImageType, setCropImageType] = useState('');
 
 
 
@@ -114,6 +118,21 @@ const CreatePost: React.FC = () => {
 
     const closeHashtagGenerator = () => {
         setShowHashtagGenerator(false);
+    };
+
+    const handleCropComplete = (croppedImageData) => {
+        if (cropImageType === 'local') {
+
+            fetch(croppedImageData)
+                .then(res => res.blob())
+                .then(blob => {
+                    const file = new File([blob], "cropped_image.png", { type: "image/png" });
+                    setSelectedLocalImage(file);
+                });
+        } else if (cropImageType === 'library') {
+            setSelectedLibraryImage({ ...selectedLibraryImage, src: croppedImageData });
+        }
+        setIsCropModalOpen(false);
     };
 
     const handleHashtagSelect = (hashtag) => {
@@ -653,18 +672,52 @@ const CreatePost: React.FC = () => {
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                             />
                                             {isLocalImageHover && (
-                                                <CloseIcon
-                                                    onClick={handleRemoveLocalImage}
-                                                    sx={{
-                                                        position: 'absolute',
-                                                        top: '-10px',
-                                                        right: '-10px',
-                                                        cursor: 'pointer',
-                                                        background: '#828282',
-                                                        borderRadius: '1rem',
-                                                        color: 'white',
-                                                    }}
-                                                />
+                                                <>
+                                                    <Box
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            top: 0,
+                                                            left: 0,
+                                                            right: 0,
+                                                            bottom: 0,
+                                                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                                                            transition: 'background-color 0.5s ease',
+                                                        }}
+                                                    />
+                                                    <CloseIcon
+                                                        onClick={handleRemoveLocalImage}
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            top: '-10px',
+                                                            right: '-10px',
+                                                            cursor: 'pointer',
+                                                            background: '#479bff',
+                                                            borderRadius: '1rem',
+                                                            color: 'white',
+                                                            zIndex: 1,
+                                                        }}
+                                                    />
+                                                    <EditIcon
+                                                        onClick={() => {
+                                                            setCropImageSrc(URL.createObjectURL(selectedLocalImage));
+                                                            setCropImageType('local');
+                                                            setIsCropModalOpen(true);
+                                                        }}
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            bottom: '10%',
+                                                            fontSize: '2rem',
+                                                            right: ' 34%',
+                                                            cursor: 'pointer',
+                                                            background: '#444444',
+                                                            borderRadius: '1rem',
+                                                            color: 'white',
+                                                            padding: '4px',
+                                                            zIndex: 1,
+
+                                                        }}
+                                                    />
+                                                </>
                                             )}
                                         </Box>
                                     ) : (
@@ -701,24 +754,66 @@ const CreatePost: React.FC = () => {
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                             />
                                             {isLibraryImageHover && (
-                                                <CloseIcon
-                                                    onClick={handleRemoveLibraryImage}
-                                                    sx={{
-                                                        position: 'absolute',
-                                                        top: '-10px',
-                                                        right: '-10px',
-                                                        cursor: 'pointer',
-                                                        background: '#828282',
-                                                        borderRadius: '1rem',
-                                                        color: 'white'
-                                                    }}
-                                                />
+                                                <>
+                                                    <Box
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            top: 0,
+                                                            left: 0,
+                                                            right: 0,
+                                                            bottom: 0,
+                                                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                                                            transition: 'background-color 0.5s ease',
+                                                        }}
+                                                    />
+                                                    <CloseIcon
+                                                        onClick={handleRemoveLibraryImage}
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            top: '-10px',
+                                                            right: '-10px',
+                                                            cursor: 'pointer',
+                                                            background: '#479bff',
+                                                            borderRadius: '1rem',
+                                                            color: 'white',
+                                                            zIndex: 1,
+                                                        }}
+                                                    />
+                                                    <EditIcon
+                                                        onClick={() => {
+                                                            setCropImageSrc(selectedLibraryImage.src);
+                                                            setCropImageType('library');
+                                                            setIsCropModalOpen(true);
+                                                        }}
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            bottom: '10%',
+                                                            fontSize: '2rem',
+                                                            right: ' 34%',
+                                                            cursor: 'pointer',
+                                                            background: '#444444',
+                                                            borderRadius: '1rem',
+                                                            color: 'white',
+                                                            padding: '4px',
+                                                            zIndex: 1,
+
+                                                        }}
+                                                    />
+                                                </>
                                             )}
                                         </Box>
                                     ) : (
                                         <AutoStoriesOutlinedIcon sx={{ fontSize: '4rem', width: '4rem', height: '4rem' }} />
                                     )}
                                 </Box>
+
+                                <ImageCropModal
+                                    isOpen={isCropModalOpen}
+                                    onClose={() => setIsCropModalOpen(false)}
+                                    imageSrc={cropImageSrc}
+                                    onCropComplete={handleCropComplete}
+                                />
+
 
                                 <Modal component="div" open={isModalOpen} onClose={handleCloseImageModal}>
                                     <Box
