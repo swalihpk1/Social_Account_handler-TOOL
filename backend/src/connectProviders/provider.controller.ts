@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req, Res, UnauthorizedException, UseGuards, Redirect } from '@nestjs/common';
+import { Controller, Get, Query, Req, Res, UnauthorizedException, UseGuards, Redirect, Session } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { UserDocument, User } from 'src/schemas/user.schema';
@@ -9,6 +9,7 @@ import { LinkedInStrategy } from './providerStrategys/linkedIn.strategy';
 import { InstagramStrategy } from './providerStrategys/instagram.strategy';
 import { FacebookStrategy } from './providerStrategys/facebook.strategy';
 import { GlobalStateService } from 'src/utils/global-state.service';
+import { TwitterStrategy } from './providerStrategys/twitter.strategy';
 
 
 @Controller('connect')
@@ -19,6 +20,7 @@ export class ProviderController {
         private readonly linkedInStrategy: LinkedInStrategy,
         private readonly instagramStrategy: InstagramStrategy,
         private readonly facebookStrategy: FacebookStrategy,
+        private readonly twitterStrategy: TwitterStrategy,
         @InjectModel(User.name) private userModel: Model<UserDocument>
     ) { }
 
@@ -195,38 +197,45 @@ export class ProviderController {
 
     // ==================== Twitter-X ======================
     @Get('twitter')
-    @UseGuards(AuthGuard('twitter'))
-    async twitterLogin(): Promise<void> {
-        console.log("Redirecting to twitter for login");
+    async twitterLogin(@Res() res): Promise<void> {
+        try {
+            const { oauthToken } = await this.twitterStrategy.getRequestToken();
+            res.redirect(`https://api.twitter.com/oauth/authenticate?oauth_token=${oauthToken}`);
+        } catch (error) {
+            res.status(500).json({ message: 'Failed to initiate Twitter login' });
+        }
     }
 
 
+
     @Get('twitter/callback')
-    @UseGuards(AuthGuard('twitter'))
-    async twitterLoginCallback(@Req() req, @Res() res): Promise<any> {
-        console.log("Inside twitterLoginCallback");
+    async twitterLoginCallback(@Query('oauth_token') oauthToken: string, @Query('oauth_verifier') oauthVerifier: string, @Req() req, @Res() res, @Session() session): Promise<any> {
         try {
-            const twitterUser = req.user;
-            const accessToken = twitterUser.accessToken;
+            const { accessToken, accessTokenSecret } = await this.twitterStrategy.getAccessToken(
+                oauthToken,
+                req.session.oauthTokenSecret,
+                oauthVerifier
+            );
 
-            console.log("user", twitterUser);
+            console.log("Access", accessToken);
 
+            const twitterUser = await this.twitterStrategy.getUserProfile(accessToken, accessTokenSecret);
+            console.log("USER", twitterUser);
 
-            if (!twitterUser || !accessToken) {
+            if (!twitterUser) {
                 return res.status(400).json({
-                    message: 'twitterUser data or accessToken not found'
+                    message: 'Twitter user data not found',
                 });
             }
 
-            const userId = req.session?.user?.id;
-            console.log("userId", userId);
+            const userId = session?.user?.id;
             if (!userId) {
                 return res.status(400).json({ message: 'User ID not found in session' });
             }
 
-            await this.providerService.handleTwitterLoginCallback(userId, accessToken)
+            const twitterData = await this.providerService.handleTwitterLoginCallback(userId, twitterUser, accessToken);
 
-            res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(twitterUser.user))}`);
+            res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(twitterData))}`);
         } catch (error) {
             res.status(500).json({ message: 'Internal server error' });
         }

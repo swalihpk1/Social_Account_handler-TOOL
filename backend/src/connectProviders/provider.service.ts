@@ -66,16 +66,24 @@ export class ProviderService {
         }
     }
 
-    async handleTwitterLoginCallback(userId: string, accessToken: string): Promise<void> {
+
+    async handleTwitterLoginCallback(userId: string, twitterUser: any, accessToken: string): Promise<{ profileName: string, provider: string, profilePicture: string } | null> {
+        const { name, profile_image_url } = twitterUser;
 
         let foundUser = await this.userModel.findById(userId);
         if (!foundUser) {
             throw new Error('User not found');
         }
-
         foundUser.socialAccessTokens.set('twitter', accessToken);
         await foundUser.save();
+
+        return {
+            profileName: name,
+            profilePicture: profile_image_url,
+            provider: 'twitter'
+        }
     }
+
 
 
 

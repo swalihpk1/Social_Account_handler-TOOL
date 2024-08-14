@@ -1,29 +1,63 @@
-import { Injectable } from "@nestjs/common";
-import { PassportStrategy } from "@nestjs/passport";
-import { Profile, Strategy } from 'passport-twitter';
+import { Injectable } from '@nestjs/common';
+import * as OAuth from 'oauth';
+import axios from 'axios';
 
 @Injectable()
-export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
+export class TwitterStrategy {
+    private oauth: OAuth.OAuth;
+
     constructor() {
-        super({
-            consumerKey: process.env.TWITTER_CLIENT_ID,
-            consumerSecret: process.env.TWITTER_CLIENT_SECRET,
-            callbackURL: "http://localhost:3001/connect/twitter/callback",
-            includeEmail: true,
+        this.oauth = new OAuth.OAuth(
+            'https://api.twitter.com/oauth/request_token',
+            'https://api.twitter.com/oauth/access_token',
+            process.env.TWITTER_CLIENT_ID,
+            process.env.TWITTER_CLIENT_SECRET,
+            '1.0A',
+            'http://localhost:3001/connect/twitter/callback',
+            'HMAC-SHA1'
+        );
+    }
+
+    getRequestToken(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.oauth.getOAuthRequestToken((error, oauthToken, oauthTokenSecret, results) => {
+                if (error) {
+                    return reject(error);
+                }
+                resolve({ oauthToken, oauthTokenSecret });
+            });
         });
     }
 
-    async validate(accessToken: string, refreshToken: string, profile: Profile, done: Function) {
-        const { displayName, photos, emails } = profile;
-        const user = {
-            profileName: displayName,
-            profilePicture: photos[0].value,
-            provider: 'twitter'
-        };
-        const payload = {
-            user,
-            accessToken,
-        };
-        done(null, payload);
+    getAccessToken(oauthToken: string, oauthTokenSecret: string, oauthVerifier: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.oauth.getOAuthAccessToken(
+                oauthToken,
+                oauthTokenSecret,
+                oauthVerifier,
+                (error, accessToken, accessTokenSecret, results) => {
+                    if (error) {
+                        return reject(error);
+                    }
+                    resolve({ accessToken, accessTokenSecret });
+                }
+            );
+        });
+    }
+
+    async getUserProfile(accessToken: string, accessTokenSecret: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.oauth.get(
+                'https://api.twitter.com/1.1/account/verify_credentials.json',
+                accessToken,
+                accessTokenSecret,
+                (error, data, response) => {
+                    if (error) {
+                        return reject(error);
+                    }
+                    resolve(JSON.parse(data));
+                }
+            );
+        });
     }
 }
