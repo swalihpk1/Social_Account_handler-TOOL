@@ -20,7 +20,7 @@ const ImageCropModal = ({ isOpen, onClose, imageSrc, onCropComplete }) => {
         const cropper = getCropper();
         if (cropper) {
             const croppedDataUrl = cropper.getCroppedCanvas().toDataURL();
-            setCroppedImage(croppedDataUrl);  // Store the cropped image
+            setCroppedImage(croppedDataUrl); 
             onCropComplete(croppedDataUrl);
         }
     };

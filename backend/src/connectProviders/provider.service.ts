@@ -17,7 +17,7 @@ export class ProviderService {
         if (!foundUser) {
             throw new Error('User not found');
         }
-
+        console.log("ACCESS", accessToken);
         foundUser.socialAccessTokens.set('facebook', accessToken);
         await foundUser.save();
 

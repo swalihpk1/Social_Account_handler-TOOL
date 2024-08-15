@@ -40,6 +40,7 @@ export class FacebookStrategy {
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             const pages = response.data.data;
+            console.log("PageDeatails", pages);
 
             const pagesDetails = await Promise.all(
                 pages.map(async (page) => {
@@ -49,6 +50,7 @@ export class FacebookStrategy {
                     return {
                         pageName: page.name,
                         pageImage: pictureUrl,
+                        pageToken:page.access_token
                     };
                 })
             );

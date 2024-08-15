@@ -38,7 +38,7 @@ export class ProviderController {
         if (code) {
             try {
                 const data = await this.facebookStrategy.getAccessToken(code);
-                const accessToken = data.access_token;
+                let accessToken = data.access_token;
                 console.log('Access Token:', accessToken);
 
                 if (!accessToken) {
@@ -61,6 +61,8 @@ export class ProviderController {
                 if (!userPages) {
                     return res.status(400).json({ message: 'User pages not found' });
                 }
+                
+                accessToken = userPages[0].pageToken;
 
                 const userProfile = await this.providerService.handleFacebookLoginCallback(userId, facebookProfile, accessToken);
                 const responseData = {
@@ -71,14 +73,11 @@ export class ProviderController {
                     },
                     userPages: userPages.map(page => ({
                         pageName: page.pageName,
-                        pageImage: page.pageImage
+                        pageImage: page.pageImage,
                     }))
                 };
 
-                console.log('Response Data:', responseData);
-
                 const redirectUrl = `http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(responseData))}`;
-                console.log('Redirect URL:', redirectUrl);
                 res.redirect(redirectUrl);
 
             } catch (error) {
