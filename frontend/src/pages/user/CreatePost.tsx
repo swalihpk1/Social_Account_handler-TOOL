@@ -273,11 +273,13 @@ const CreatePost: React.FC = () => {
         document.getElementById('fileInput').click();
     };
 
-    const userSocialAccounts = Object.entries(userInfo?.socialAccounts || {}).map(([provider, { profileName, profilePicture }]) => ({
+    const userSocialAccounts = Object.entries(userInfo?.socialAccounts || {}).map(([provider, { profileName, profilePicture, userPages }]) => ({
         provider,
         profileName,
         profilePicture,
-    }))
+        userPages,
+    }));
+
 
     const smallProviderIcons: { [key: string]: React.ReactNode } = {
         facebook: <FacebookRoundedIcon sx={{ color: '#1877F2', fontSize: '12px', background: 'white', borderRadius: '20px' }} />,
@@ -384,43 +386,56 @@ const CreatePost: React.FC = () => {
                                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
                                         {(selected as string[]).map((value) => {
                                             const option = userSocialAccounts.find((option) => option.provider === value);
-                                            return option ? (
-                                                <Box
-                                                    key={value}
-                                                    sx={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.5rem',
-                                                        backgroundColor: '#ffe5b2',
-                                                        padding: '1px',
-                                                        borderRadius: '2rem',
-                                                    }}
-                                                >
-                                                    <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                                                        <Avatar alt={option.profileName} src={option.profilePicture} sx={{ width: 24, height: 24 }} />
-                                                        <Box
-                                                            sx={{
-                                                                position: 'absolute',
-                                                                right: -5,
-                                                                bottom: -8,
-                                                                padding: '0',
-                                                            }}
-                                                        >
-                                                            {smallProviderIcons[option.provider]}
-                                                        </Box>
-                                                    </Box>
-                                                    {option.profileName}
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={(event) => {
-                                                            event.stopPropagation();
-                                                            handleRemoveOption(value);
+
+                                            if (option) {
+                                                let profileName = option.profileName;
+                                                let profilePicture = option.profilePicture;
+
+                                                // Check if the provider is Facebook and use the page details if available
+                                                if (option.provider === 'facebook' && option.userPages?.length) {
+                                                    profileName = option.userPages[0].pageName;
+                                                    profilePicture = option.userPages[0].pageImage;
+                                                }
+
+                                                return (
+                                                    <Box
+                                                        key={value}
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.5rem',
+                                                            backgroundColor: '#ffe5b2',
+                                                            padding: '1px',
+                                                            borderRadius: '2rem',
                                                         }}
                                                     >
-                                                        <CloseIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Box>
-                                            ) : null;
+                                                        <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                                                            <Avatar alt={profileName} src={profilePicture} sx={{ width: 24, height: 24 }} />
+                                                            <Box
+                                                                sx={{
+                                                                    position: 'absolute',
+                                                                    right: -5,
+                                                                    bottom: -8,
+                                                                    padding: '0',
+                                                                }}
+                                                            >
+                                                                {smallProviderIcons[option.provider]}
+                                                            </Box>
+                                                        </Box>
+                                                        {profileName}
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                handleRemoveOption(value);
+                                                            }}
+                                                        >
+                                                            <CloseIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Box>
+                                                );
+                                            }
+                                            return null;
                                         })}
                                     </Box>
                                 ),
@@ -441,44 +456,54 @@ const CreatePost: React.FC = () => {
                                     <ListItemText primary={`Accounts (${userSocialAccounts.length})`} primaryTypographyProps={{ fontWeight: 'bold' }} />
                                 </ListItem>
                             </MenuItem>
-                            {userSocialAccounts.map((option) => (
-                                <MenuItem key={option.provider} value={option.provider}>
-                                    <Stack direction="row" alignItems="center" gap="0.5rem">
-                                        <Checkbox
-                                            checked={selectedOptions.includes(option.provider)}
-                                            onChange={(event) => {
-                                                event.stopPropagation();
-                                                handleTextFieldChange({
-                                                    target: {
-                                                        value: selectedOptions.includes(option.provider)
-                                                            ? selectedOptions.filter((v) => v !== option.provider)
-                                                            : [...selectedOptions, option.provider],
-                                                    },
-                                                } as any);
-                                            }}
-                                        />
-                                        <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                                            <Avatar src={option.profilePicture} alt={option.profileName} sx={{ width: 35, height: 35, borderRadius: '20px' }} />
-                                            <Box
-                                                sx={{
-                                                    position: 'absolute',
-                                                    right: -2,
-                                                    bottom: -5,
-                                                    padding: '0',
+                            {userSocialAccounts.map((option) => {
+                                let profileName = option.profileName;
+                                let profilePicture = option.profilePicture;
+
+                                if (option.provider === 'facebook' && option.userPages?.length) {
+                                    profileName = option.userPages[0].pageName;
+                                    profilePicture = option.userPages[0].pageImage;
+                                }
+
+                                return (
+                                    <MenuItem key={option.provider} value={option.provider}>
+                                        <Stack direction="row" alignItems="center" gap="0.5rem">
+                                            <Checkbox
+                                                checked={selectedOptions.includes(option.provider)}
+                                                onChange={(event) => {
+                                                    event.stopPropagation();
+                                                    handleTextFieldChange({
+                                                        target: {
+                                                            value: selectedOptions.includes(option.provider)
+                                                                ? selectedOptions.filter((v) => v !== option.provider)
+                                                                : [...selectedOptions, option.provider],
+                                                        },
+                                                    } as any);
                                                 }}
-                                            >
-                                                {smallProviderIcons[option.provider]}
+                                            />
+                                            <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                                                <Avatar src={profilePicture} alt={profileName} sx={{ width: 35, height: 35, borderRadius: '20px' }} />
+                                                <Box
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        right: -2,
+                                                        bottom: -5,
+                                                        padding: '0',
+                                                    }}
+                                                >
+                                                    {smallProviderIcons[option.provider]}
+                                                </Box>
                                             </Box>
-                                        </Box>
-                                        <Stack>
-                                            <Typography>{option.profileName} </Typography>
-                                            <Typography sx={{ fontSize: 'xx-small', lineHeight: 1 }}>
-                                                {option.provider}
-                                            </Typography>
+                                            <Stack>
+                                                <Typography>{profileName}</Typography>
+                                                <Typography sx={{ fontSize: 'xx-small', lineHeight: 1 }}>
+                                                    {option.provider}
+                                                </Typography>
+                                            </Stack>
                                         </Stack>
-                                    </Stack>
-                                </MenuItem>
-                            ))}
+                                    </MenuItem>
+                                );
+                            })}
                             <MenuItem>
                                 <Link href="#" underline="none" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <AddCircleIcon />
@@ -632,8 +657,6 @@ const CreatePost: React.FC = () => {
                                             onClick={toggleHashtagGenerator}
                                         />
                                     </Stack>
-
-
                                 </Box>
                                 <Divider style={{ height: '2.5px', backgroundColor: '#e5e5e5' }} />
 
@@ -838,6 +861,8 @@ const CreatePost: React.FC = () => {
                     </Box>
                 </Box >
 
+
+
                 <Box
                     component="form"
                     gap={1}
@@ -933,7 +958,11 @@ const CreatePost: React.FC = () => {
                             {selectedToggle === 'facebook' && (
                                 <FacebookPreview
                                     text={text.facebook}
-                                    account={userSocialAccounts.find(account => account.provider === 'facebook')}
+                                    account={{
+                                        ...userSocialAccounts.find(account => account.provider === 'facebook'),
+                                        profileName: userSocialAccounts.find(account => account.provider === 'facebook')?.userPages?.[0]?.pageName || '',
+                                        profilePicture: userSocialAccounts.find(account => account.provider === 'facebook')?.userPages?.[0]?.pageImage || '',
+                                    }}
                                     selectedLocalImage={selectedLocalImage}
                                     selectedLibraryImage={selectedLibraryImage}
                                     shortenedLinks={shortenedLinks}

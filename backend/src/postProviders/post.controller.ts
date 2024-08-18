@@ -3,11 +3,18 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { PostService } from "./post.service";
 import { Request, Response } from 'express';
 import { CreatePostDto } from "./dto/createPost.dto";
-
+import { InjectModel } from "@nestjs/mongoose";
+import { User, UserDocument } from "src/schemas/user.schema";
+import { Model } from 'mongoose';
+import { GlobalStateService } from "src/utils/global-state.service";
 
 @Controller('post')
 export class PostController {
-    constructor(private readonly postService: PostService) { }
+    constructor(
+        private readonly postService: PostService,
+        @InjectModel(User.name) private userModel: Model<UserDocument>,
+        private readonly globalStateService: GlobalStateService,
+    ) { }
 
     @Get('charLimits')
     async fetchCharLimits(@Req() req: Request, @Res() res: Response) {
@@ -19,31 +26,73 @@ export class PostController {
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: error.message });
         }
     }
-
-
-
+     
 
     @Post('create')
     @UseInterceptors(FileInterceptor('image'))
-    async createPost(@UploadedFile() file: Express.Multer.File, @Body() body: any, @Res() res: Response) {
+    async createPost(
+        @UploadedFile() file: Express.Multer.File,
+        @Body() body: any,
+        @Res() res: Response
+    ) {
         try {
             console.log("File received:", file);
             console.log("Body received:", body);
 
+            const userId = this.globalStateService.getUserId();
+            const foundUser = await this.userModel.findById(userId);
+
+            console.log('foundUser', foundUser);
+
+            if (!foundUser) {
+                return res.status(HttpStatus.NOT_FOUND).json({
+                    message: 'User not found.',
+                });
+            }
+
+            const socialAccessTokens = foundUser.socialAccessTokens;
+
+
             const content = JSON.parse(body.content);
+            const libraryImage = body.libraryImage ? JSON.parse(body.libraryImage) : null;
+            const image = file ? file.path : null;
+
             const createPostDto = {
-                content,
-                image: file ? file.path : null,
+                content: content,
+                image: image,
+                libraryImage: libraryImage,
             };
 
-            console.log('Controller received data:', createPostDto);
-            const newPost = await this.postService.createPost(createPostDto);
-            return res.status(HttpStatus.CREATED).json(newPost);
+            const results = await this.postService.publishToAllPlatforms(
+                createPostDto.content,
+                createPostDto.image,
+                createPostDto.libraryImage,
+                socialAccessTokens
+            );
+
+            await this.postService.create({
+                content: createPostDto.content,
+                platforms: results.map((result, index) => ({
+                    platform: ['facebook', 'twitter', 'linkedin', 'instagram'][index],
+                    response: result.data,
+                })),
+                image: createPostDto.image || (createPostDto.libraryImage ? createPostDto.libraryImage.src : null),
+                timestamp: new Date(),
+            });
+
+            return res.status(HttpStatus.CREATED).json({
+                message: 'Post created successfully on all platforms!',
+                results: results.map(result => result.data),
+            });
         } catch (error) {
-            console.error('Error creating post:', error);
-            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: error.message });
+            console.error(error);
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+                message: 'Error occurred while creating the post.',
+                error: error.response ? error.response.data : error.message,
+            });
         }
     }
+
 
     @Get('hashtags')
     async getHashtags(@Query('keyword') keyword: string): Promise<string[]> {

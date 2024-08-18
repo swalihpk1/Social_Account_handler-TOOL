@@ -19,6 +19,13 @@ class ContentDto {
     instagram?: string;
 }
 
+class LibraryImageDto {
+    @IsNotEmpty()
+    @IsString()
+    src: string;
+
+}
+
 export class CreatePostDto {
     @IsNotEmpty()
     @ValidateNested()
@@ -28,4 +35,9 @@ export class CreatePostDto {
     @IsOptional()
     @IsString()
     image?: string;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => LibraryImageDto)
+    libraryImage?: LibraryImageDto;
 }
