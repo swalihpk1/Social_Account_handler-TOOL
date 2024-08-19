@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { Modal, Box, Button, IconButton, Stack, Card, CardContent, Typography, Divider } from '@mui/material';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
@@ -12,17 +12,12 @@ const ImageCropModal = ({ isOpen, onClose, imageSrc, onCropComplete }) => {
     const cropperRef = useRef(null);
     const [aspectRatio, setAspectRatio] = useState(NaN);
     const [isLocked, setIsLocked] = useState(false);
-    const [croppedImage, setCroppedImage] = useState(null);
 
     const getCropper = () => cropperRef.current?.cropper;
 
     const handleCropComplete = () => {
         const cropper = getCropper();
-        if (cropper) {
-            const croppedDataUrl = cropper.getCroppedCanvas().toDataURL();
-            setCroppedImage(croppedDataUrl); 
-            onCropComplete(croppedDataUrl);
-        }
+        if (cropper) onCropComplete(cropper.getCroppedCanvas().toDataURL());
     };
 
     const handleRotate = (angle) => getCropper()?.rotate(angle);
@@ -44,6 +39,7 @@ const ImageCropModal = ({ isOpen, onClose, imageSrc, onCropComplete }) => {
     const toggleLock = () => {
         setIsLocked(!isLocked);
         if (isLocked) {
+
             setAspectRatio(NaN);
             getCropper()?.setAspectRatio(NaN);
         } else {
@@ -51,13 +47,6 @@ const ImageCropModal = ({ isOpen, onClose, imageSrc, onCropComplete }) => {
             getCropper()?.setAspectRatio(aspectRatio || 1);
         }
     };
-
-    // Set up the Cropper with the previously cropped image or the original image
-    useEffect(() => {
-        if (isOpen && croppedImage) {
-            getCropper()?.replace(croppedImage);
-        }
-    }, [isOpen, croppedImage]);
 
     const aspectRatios = [
         { name: 'Square', ratio: 1, label: '1:1' },
@@ -112,12 +101,12 @@ const ImageCropModal = ({ isOpen, onClose, imageSrc, onCropComplete }) => {
                                             transform: 'translateY(-2px)',
                                             boxShadow: 2,
                                             bgcolor: 'grey',
-                                            color: 'white'
+                                            color:'white'
                                         },
                                     }}
                                 >
                                     <CardContent sx={{ textAlign: 'center' }}>
-                                        <Typography fontWeight="medium">
+                                        <Typography variant="h6" fontWeight="medium">
                                             {item.name}
                                         </Typography>
                                         <Typography variant="body2" sx={{ mt: 1 }}>
@@ -147,7 +136,7 @@ const ImageCropModal = ({ isOpen, onClose, imageSrc, onCropComplete }) => {
                         >
                             <Cropper
                                 ref={cropperRef}
-                                src={croppedImage || imageSrc}
+                                src={imageSrc}
                                 style={{
                                     height: '100%',
                                     width: '100%',
@@ -190,6 +179,8 @@ const ImageCropModal = ({ isOpen, onClose, imageSrc, onCropComplete }) => {
                         </Box>
                     </Stack>
                 </Stack>
+
+
             </Box>
         </Modal>
     );

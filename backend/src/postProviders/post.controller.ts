@@ -52,10 +52,15 @@ export class PostController {
 
             const socialAccessTokens = foundUser.socialAccessTokens;
 
-
             const content = JSON.parse(body.content);
             const libraryImage = body.libraryImage ? JSON.parse(body.libraryImage) : null;
             const image = file ? file.path : null;
+
+            if (!image && !libraryImage) {
+                return res.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'No image provided.',
+                });
+            }
 
             const createPostDto = {
                 content: content,
@@ -92,6 +97,7 @@ export class PostController {
             });
         }
     }
+
 
 
     @Get('hashtags')

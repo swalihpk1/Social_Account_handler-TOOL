@@ -45,12 +45,21 @@ export class PostService {
         return response.data.data.map((item: any) => item.hashtag);
     }
 
-    async postToFacebook(content: string, imagePath: string, accessToken: string): Promise<any> {
+
+    async postToFacebook(content: string, imagePathOrUrl: string, accessToken: string): Promise<any> {
         const url = `https://graph.facebook.com/v20.0/404645566059003/photos`;
         const formData = new FormData();
 
-        if (imagePath) {
-            formData.append('source', fs.createReadStream(imagePath));
+        if (imagePathOrUrl.startsWith('http')) {
+            console.log("Url", imagePathOrUrl);
+            formData.append('url', imagePathOrUrl);
+        } else {
+            try {
+                formData.append('source', fs.createReadStream(imagePathOrUrl));
+            } catch (err) {
+                console.error('Error reading file:', err);
+                throw new Error('Failed to read the local image file.');
+            }
         }
 
         formData.append('message', content);
@@ -60,6 +69,7 @@ export class PostService {
             headers: formData.getHeaders(),
         }).toPromise();
     }
+
 
 
 

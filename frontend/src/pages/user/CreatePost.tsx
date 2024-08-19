@@ -89,11 +89,9 @@ const CreatePost: React.FC = () => {
     const { data: characterLimits, isLoading } = useGetCharacterLimitsQuery();
     const [createPost] = useCreatePostMutation();
     const [showHashtagGenerator, setShowHashtagGenerator] = useState(false);
+    const [cropImageType, setCropImageType] = useState<'local' | 'library'>('local');
     const [isCropModalOpen, setIsCropModalOpen] = useState(false);
-    const [cropImageSrc, setCropImageSrc] = useState('');
-    const [cropImageType, setCropImageType] = useState('');
-
-
+    const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
     useEffect(() => {
         const currentText = text[selectedToggle] || '';
@@ -121,19 +119,62 @@ const CreatePost: React.FC = () => {
         setShowHashtagGenerator(false);
     };
 
-    const handleCropComplete = (croppedImageData) => {
-        if (cropImageType === 'local') {
+    const handleCropComplete = async (croppedImageData: string) => {
+        try {
+            if (cropImageType === 'local' || cropImageType === 'library') {
+                const response = await fetch(croppedImageData);
+                const blob = await response.blob();
 
-            fetch(croppedImageData)
-                .then(res => res.blob())
-                .then(blob => {
-                    const file = new File([blob], "cropped_image.png", { type: "image/png" });
+                const file = new File([blob], "cropped_image.png", { type: blob.type });
+
+                if (cropImageType === 'local') {
                     setSelectedLocalImage(file);
-                });
-        } else if (cropImageType === 'library') {
-            setSelectedLibraryImage({ ...selectedLibraryImage, src: croppedImageData });
+                } else if (cropImageType === 'library') {
+                    setSelectedLibraryImage({ ...selectedLibraryImage, src: URL.createObjectURL(file) });
+                }
+            }
+        } catch (error) {
+            console.error('Error during image processing:', error);
+        } finally {
+            setIsCropModalOpen(false);
         }
-        setIsCropModalOpen(false);
+    };
+
+    const urlToFile = async (url, filename, mimeType) => {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new File([blob], filename, { type: mimeType });
+    };
+
+
+
+    const handleSubmit = async () => {
+        const filteredContent = Object.keys(text)
+            .filter((key) => selectedOptions.includes(key))
+            .reduce((obj, key) => {
+                obj[key] = text[key];
+                return obj;
+            }, {});
+
+        console.log('Filtered', filteredContent);
+
+        const formData = new FormData();
+        formData.append('content', JSON.stringify(filteredContent));
+
+        if (selectedLocalImage) {
+            formData.append('image', selectedLocalImage);
+        } else if (selectedLibraryImage) {
+            // Convert the URL to a Blob and then to a File object
+            const file = await urlToFile(selectedLibraryImage.src, 'library-image.jpg', 'image/jpeg');
+            formData.append('image', file);
+        }
+
+        try {
+            await createPost(formData).unwrap();
+            console.log('Post created successfully');
+        } catch (error) {
+            console.error('Failed to create post:', error);
+        }
     };
 
     const handleHashtagSelect = (hashtag) => {
@@ -157,34 +198,6 @@ const CreatePost: React.FC = () => {
             }));
         }
     };
-
-
-    const handleSubmit = async () => {
-        const filteredContent = Object.keys(text)
-            .filter(key => selectedOptions.includes(key))
-            .reduce((obj, key) => {
-                obj[key] = text[key];
-                return obj;
-            }, {});
-
-        const formData = new FormData();
-        formData.append('content', JSON.stringify(filteredContent));
-
-        if (selectedLocalImage) {
-            formData.append('image', selectedLocalImage);
-        } else if (selectedLibraryImage) {
-            formData.append('libraryImage', JSON.stringify(selectedLibraryImage));
-        }
-
-        console.log([...formData.entries()]);
-        try {
-            await createPost(formData).unwrap();
-            console.log('Post created successfully');
-        } catch (error) {
-            console.error('Failed to create post:', error);
-        }
-    };
-
 
 
     const handleTextChange = (e) => {
@@ -839,6 +852,7 @@ const CreatePost: React.FC = () => {
                                 />
 
 
+
                                 <Modal component="div" open={isModalOpen} onClose={handleCloseImageModal}>
                                     <Box
                                         sx={{
@@ -958,11 +972,7 @@ const CreatePost: React.FC = () => {
                             {selectedToggle === 'facebook' && (
                                 <FacebookPreview
                                     text={text.facebook}
-                                    account={{
-                                        ...userSocialAccounts.find(account => account.provider === 'facebook'),
-                                        profileName: userSocialAccounts.find(account => account.provider === 'facebook')?.userPages?.[0]?.pageName || '',
-                                        profilePicture: userSocialAccounts.find(account => account.provider === 'facebook')?.userPages?.[0]?.pageImage || '',
-                                    }}
+                                    account={userSocialAccounts.find(account => account.provider === 'facebook')}
                                     selectedLocalImage={selectedLocalImage}
                                     selectedLibraryImage={selectedLibraryImage}
                                     shortenedLinks={shortenedLinks}
