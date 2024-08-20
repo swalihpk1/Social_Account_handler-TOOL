@@ -38,6 +38,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "oauth": "^0.10.0",
+    "oauth-1.0a": "^2.2.6",
     "passport": "^0.7.0",
     "passport-custom": "^1.1.1",
     "passport-facebook": "^3.0.0",

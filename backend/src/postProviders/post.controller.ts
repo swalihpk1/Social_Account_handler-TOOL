@@ -57,9 +57,7 @@ export class PostController {
             const image = file ? file.path : null;
 
             if (!image && !libraryImage) {
-                return res.status(HttpStatus.BAD_REQUEST).json({
-                    message: 'No image provided.',
-                });
+                console.log('No image provided, continuing with text-only post.');
             }
 
             const createPostDto = {
@@ -97,6 +95,7 @@ export class PostController {
             });
         }
     }
+
 
 
 

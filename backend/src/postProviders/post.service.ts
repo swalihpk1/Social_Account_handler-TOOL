@@ -10,6 +10,9 @@ import { lastValueFrom } from "rxjs";
 import { Post, PostDocument } from "src/schemas/post.schema";
 import * as fs from 'fs';
 import * as FormData from 'form-data';
+const OAuth = require('oauth-1.0a');
+const crypto = require('crypto');
+
 
 @Injectable()
 export class PostService {
@@ -71,20 +74,106 @@ export class PostService {
     }
 
 
+    async postToTwitter(content: string, imagePath: string | null, accessToken: string): Promise<any> {
+        try {
+            const accessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET
 
+            const oauthInstance = new OAuth({
+                consumer: {
+                    key: process.env.TWITTER_CLIENT_ID,
+                    secret: process.env.TWITTER_CLIENT_SECRET,
+                },
+                signature_method: 'HMAC-SHA1',
+                hash_function(base_string, key) {
+                    return crypto
+                        .createHmac('sha1', key)
+                        .update(base_string)
+                        .digest('base64');
+                },
+            });
 
-    async postToTwitter(content: string, accessToken: string, accessTokenSecret: string): Promise<any> {
-        const url = `https://api.twitter.com/2/tweets`;
-        const body = {
-            text: content
-        };
+            let mediaId: string | null = null;
 
-        return this.httpService.post(url, body, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`
+            if (imagePath) {
+                if (!fs.existsSync(imagePath)) {
+                    throw new Error(`Image not found at path: ${imagePath}`);
+                }
+
+                const mediaUploadUrl = 'https://upload.twitter.com/1.1/media/upload.json';
+                const formData = new FormData();
+                formData.append('media', fs.createReadStream(imagePath));
+
+                const authHeader = oauthInstance.toHeader(
+                    oauthInstance.authorize(
+                        {
+                            url: mediaUploadUrl,
+                            method: 'POST',
+                        },
+                        {
+                            key: accessToken,
+                            secret: accessTokenSecret,
+                        }
+                    )
+                );
+
+                const mediaResponse = await lastValueFrom(
+                    this.httpService.post(mediaUploadUrl, formData, {
+                        headers: {
+                            ...authHeader,
+                            ...formData.getHeaders(),
+                        },
+                    })
+                );
+
+                if (mediaResponse.data && mediaResponse.data.media_id_string) {
+                    mediaId = mediaResponse.data.media_id_string;
+                } else {
+                    throw new Error('Failed to upload media to Twitter');
+                }
             }
-        }).toPromise();
+
+            const tweetPostUrl = 'https://api.twitter.com/2/tweets';
+            const tweetBody: any = {
+                text: content,
+            };
+
+            if (mediaId) {
+                tweetBody.media = {
+                    media_ids: [mediaId],
+                };
+            }
+
+            const authHeader = oauthInstance.toHeader(
+                oauthInstance.authorize(
+                    {
+                        url: tweetPostUrl,
+                        method: 'POST',
+                    },
+                    {
+                        key: accessToken,
+                        secret: accessTokenSecret,
+                    }
+                )
+            );
+
+            const tweetResponse = await lastValueFrom(
+                this.httpService.post(tweetPostUrl, tweetBody, {
+                    headers: {
+                        ...authHeader,
+                        'Content-Type': 'application/json',
+                    },
+                })
+            );
+
+            return tweetResponse.data;
+        } catch (error) {
+            console.error('Error posting to Twitter:', error.message);
+            throw error;
+        }
     }
+
+
+
 
     async postToLinkedIn(content: string, image: string, accessToken: string): Promise<any> {
         const registerUrl = 'https://api.linkedin.com/v2/assets?action=registerUpload';
@@ -174,9 +263,8 @@ export class PostService {
             promises.push(this.postToFacebook(content.facebook, image || libraryImage?.src, socialAccessTokens.get('facebook')));
         }
 
-
         if (content.twitter) {
-            promises.push(this.postToTwitter(content.twitter, socialAccessTokens.get('twitter'), socialAccessTokens.get('twitterSecret')));
+            promises.push(this.postToTwitter(content.twitter, image || libraryImage?.src, socialAccessTokens.get('twitter')));
         }
 
         if (content.linkedin) {

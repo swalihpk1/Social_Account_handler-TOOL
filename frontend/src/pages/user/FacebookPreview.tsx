@@ -18,15 +18,20 @@ const FacebookPreview: React.FC<SocialPreviewProps> = ({ text, account, selected
             </Stack>
 
             <Stack sx={{ background: 'white', mx: '1.5rem', borderRadius: '6px', pt: 1 }}>
-                <Stack direction='row' sx={{ px: 1, display: 'flex', justifyContent: 'space-between' }}>
-                    <Stack direction='row' gap={.5} sx={{ alignItems: 'center' }} >
-                        <Avatar alt={account.profileName} src={account.profilePicture} sx={{ width: 33, height: 33 }} />
-                        <Stack>
-                            <Typography sx={{ fontSize: 'small' }}>{account.profileName}</Typography>
-                            <Typography fontSize='xx-small' lineHeight='.5' color='grey'>Just now</Typography>
-                        </Stack>
+                <Stack direction="row" gap={0.5} sx={{ alignItems: 'center' }}>
+                    <Avatar
+                        alt={account.provider === 'facebook' && account.userPages?.length ? account.userPages[0].pageName : account.profileName}
+                        src={account.provider === 'facebook' && account.userPages?.length ? account.userPages[0].pageImage : account.profilePicture}
+                        sx={{ width: 33, height: 33, ml: '5px' }}
+                    />
+                    <Stack>
+                        <Typography sx={{ fontSize: 'small' }}>
+                            {account.provider === 'facebook' && account.userPages?.length ? account.userPages[0].pageName : account.profileName}
+                        </Typography>
+                        <Typography fontSize="xx-small" lineHeight="0.5" color="grey">
+                            Just now
+                        </Typography>
                     </Stack>
-                    <Typography>...</Typography>
                 </Stack>
 
                 {!text ? (
@@ -40,7 +45,7 @@ const FacebookPreview: React.FC<SocialPreviewProps> = ({ text, account, selected
                     </Box>
                 ) : (
                     <Box sx={{ width: '100%', overflow: 'hidden', px: 1, mb: '2px' }}>
-                            <Typography sx={{ whiteSpace: 'pre-line', wordBreak: 'break-word', fontSize: 'small' }}>
+                        <Typography sx={{ whiteSpace: 'pre-line', wordBreak: 'break-word', fontSize: 'small' }}>
                             {ReplaceLinksAndHashtags(text, shortenedLinks)}
                         </Typography>
                     </Box>
