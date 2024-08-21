@@ -61,7 +61,7 @@ export class ProviderController {
                 if (!userPages) {
                     return res.status(400).json({ message: 'User pages not found' });
                 }
-                
+
                 accessToken = userPages[0].pageToken;
 
                 const userProfile = await this.providerService.handleFacebookLoginCallback(userId, facebookProfile, accessToken);
@@ -156,7 +156,7 @@ export class ProviderController {
     redirectToLinkedin() {
         const clientId = process.env.LINKEDIN_CLIENT_ID;
         const redirectUri = process.env.LINKEDIN_REDIRECT_URI;
-        const scope = 'openid profile email';
+        const scope = 'openid profile email w_member_social';
         const state = '12345';
 
         const linkedinAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${state}`;
@@ -166,6 +166,7 @@ export class ProviderController {
 
     @Get('linkedin/callback')
     async linkedinCallback(@Query('code') code: string, @Query('state') state: string, @Req() req: Request, @Res() res: Response) {
+        console.log("VAnn");
         if (!code) {
             throw new UnauthorizedException('No code provided');
         }
@@ -173,7 +174,7 @@ export class ProviderController {
         try {
             const accessToken = await this.linkedInStrategy.getAccessToken(code);
             const linkedinUser = await this.linkedInStrategy.getUserProfile(accessToken);
-
+            console.log("ACCESS", accessToken);
             if (!linkedinUser || !accessToken) {
                 return res.status(400).json({
                     message: 'LinkedIn user data or accessToken not found'

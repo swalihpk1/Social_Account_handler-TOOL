@@ -49,28 +49,44 @@ export class PostService {
     }
 
 
-    async postToFacebook(content: string, imagePathOrUrl: string, accessToken: string): Promise<any> {
-        const url = `https://graph.facebook.com/v20.0/404645566059003/photos`;
+    async postToFacebook(content: string, accessToken: string, imagePathOrUrl?: string): Promise<any> {
+        const url = imagePathOrUrl
+            ? `https://graph.facebook.com/v20.0/404645566059003/photos`
+            : `https://graph.facebook.com/v20.0/404645566059003/feed`;
+
         const formData = new FormData();
 
-        if (imagePathOrUrl.startsWith('http')) {
-            console.log("Url", imagePathOrUrl);
-            formData.append('url', imagePathOrUrl);
-        } else {
-            try {
-                formData.append('source', fs.createReadStream(imagePathOrUrl));
-            } catch (err) {
-                console.error('Error reading file:', err);
-                throw new Error('Failed to read the local image file.');
+        if (imagePathOrUrl) {
+            if (imagePathOrUrl.startsWith('http')) {
+                formData.append('url', imagePathOrUrl);
+            } else {
+                try {
+                    if (fs.existsSync(imagePathOrUrl)) {
+                        formData.append('source', fs.createReadStream(imagePathOrUrl));
+                    } else {
+                        throw new Error(`File not found at path: ${imagePathOrUrl}`);
+                    }
+                } catch (err) {
+                    console.error('Error reading file:', err.message);
+                    throw new Error('Failed to read the local image file.');
+                }
             }
+        } else {
+            console.log('No image provided, continuing with text-only post.');
         }
 
         formData.append('message', content);
         formData.append('access_token', accessToken);
 
-        return this.httpService.post(url, formData, {
-            headers: formData.getHeaders(),
-        }).toPromise();
+        try {
+            const response = await this.httpService.post(url, formData, {
+                headers: formData.getHeaders(),
+            }).toPromise();
+            return response.data;
+        } catch (error) {
+            console.error('Error posting to Facebook:', error.response?.data || error.message);
+            throw new Error('Failed to post content to Facebook');
+        }
     }
 
 
@@ -174,53 +190,72 @@ export class PostService {
 
 
 
+    async postToLinkedIn(content: string, image: string | null, accessToken: string): Promise<any> {
+        let assetId: string | null = null;
+        const personId = 'Lu1y1zbkz2';
 
-    async postToLinkedIn(content: string, image: string, accessToken: string): Promise<any> {
-        const registerUrl = 'https://api.linkedin.com/v2/assets?action=registerUpload';
-        const postUrl = 'https://api.linkedin.com/v2/ugcPosts';
+        console.log("Step 1 - Image input:", image);
 
-        // Register image upload (if image is provided)
-        const registerBody = {
-            registerUploadRequest: {
-                recipes: ["urn:li:digitalmediaRecipe:feedshare-image"],
-                owner: "urn:li:person:{person-id}",
-                serviceRelationships: [
-                    {
-                        relationshipType: "OWNER",
-                        identifier: "urn:li:userGeneratedContent"
+        if (image) {
+            // Step 1: Register the image upload
+            const registerUrl = 'https://api.linkedin.com/v2/assets?action=registerUpload';
+            const registerBody = {
+                registerUploadRequest: {
+                    recipes: ["urn:li:digitalmediaRecipe:feedshare-image"],
+                    owner: `urn:li:person:${personId}`,
+                    serviceRelationships: [
+                        {
+                            relationshipType: "OWNER",
+                            identifier: "urn:li:userGeneratedContent"
+                        }
+                    ]
+                }
+            };
+
+            try {
+                const registerResponse = await this.httpService.post(registerUrl, registerBody, {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`
                     }
-                ]
+                }).toPromise();
+
+                console.log("Step 2 - Register response:", registerResponse.data);
+
+                assetId = registerResponse.data.value.asset;
+                const mediaUrl = registerResponse.data.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
+
+                console.log("Step 3 - Upload URL:", mediaUrl);
+
+                // Step 2: Read the image from the file system and convert it to a buffer
+                const imageData = fs.readFileSync(image);
+
+                // Step 3: Upload the image
+                const uploadResponse = await this.httpService.post(mediaUrl, imageData, {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'image/jpeg' // or 'image/png' based on the image format
+                    }
+                }).toPromise();
+
+                console.log("Step 4 - Image upload response:", uploadResponse.status);
+            } catch (error) {
+                console.error("Error during image registration/upload:", error.response?.data || error.message);
+                throw new Error("Image upload failed");
             }
-        };
+        }
 
-        const registerResponse = await this.httpService.post(registerUrl, registerBody, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`
-            }
-        }).toPromise();
-
-        const assetId = registerResponse.data.value.asset;
-
-        // Upload the image
-        const mediaUrl = registerResponse.data.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
-        await this.httpService.post(mediaUrl, image, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'image/jpeg'
-            }
-        }).toPromise();
-
-        // Post UGC content
+        // Step 3: Create the LinkedIn post, with or without the image
+        const postUrl = 'https://api.linkedin.com/v2/ugcPosts';
         const postBody = {
-            author: "urn:li:person:{person-id}",
+            author: `urn:li:person:${personId}`,
             lifecycleState: "PUBLISHED",
             specificContent: {
                 "com.linkedin.ugc.ShareContent": {
                     shareCommentary: {
                         text: content
                     },
-                    shareMediaCategory: "IMAGE",
-                    media: [
+                    shareMediaCategory: assetId ? "IMAGE" : "NONE",
+                    media: assetId ? [
                         {
                             status: "READY",
                             description: {
@@ -231,7 +266,7 @@ export class PostService {
                                 text: "Post from API"
                             }
                         }
-                    ]
+                    ] : []
                 }
             },
             visibility: {
@@ -239,12 +274,23 @@ export class PostService {
             }
         };
 
-        return this.httpService.post(postUrl, postBody, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`
-            }
-        }).toPromise();
+        try {
+            const postResponse = await this.httpService.post(postUrl, postBody, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }).toPromise();
+
+            console.log("Step 5 - Post creation response:", postResponse.data);
+
+            return postResponse.data;
+        } catch (error) {
+            console.error("Error during post creation:", error.response?.data || error.message);
+            throw new Error("Post creation failed");
+        }
     }
+
+
 
     async postToInstagram(content: string, imageUrl: string, accessToken: string): Promise<any> {
         const createMediaUrl = `https://graph.facebook.com/v20.0/{instagram-account-id}/media?image_url=${imageUrl}&caption=${content}&access_token=${accessToken}`;
@@ -260,7 +306,7 @@ export class PostService {
         const promises = [];
 
         if (content.facebook) {
-            promises.push(this.postToFacebook(content.facebook, image || libraryImage?.src, socialAccessTokens.get('facebook')));
+            promises.push(this.postToFacebook(content.facebook, socialAccessTokens.get('facebook'), image || libraryImage?.src));
         }
 
         if (content.twitter) {
@@ -268,7 +314,8 @@ export class PostService {
         }
 
         if (content.linkedin) {
-            promises.push(this.postToLinkedIn(content.linkedin, image || libraryImage.src, socialAccessTokens.get('linkedin')));
+            const imageToUpload = image ? image : libraryImage?.src;
+            promises.push(this.postToLinkedIn(content.linkedin, imageToUpload, socialAccessTokens.get('linkedin')));
         }
 
         if (content.instagram) {
