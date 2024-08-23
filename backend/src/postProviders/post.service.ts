@@ -3,15 +3,17 @@ import { User, UserDocument } from "src/schemas/user.schema";
 import { Model } from 'mongoose';
 import { InjectModel } from "@nestjs/mongoose";
 import { PostConfiguration, PostConfigurationDocument } from "src/schemas/postConfiguration.schema";
-// import { CreatePostDto } from "./dto/createPost.dto";
-import { create } from "domain";
 import { HttpService } from "@nestjs/axios";
 import { lastValueFrom } from "rxjs";
 import { Post, PostDocument } from "src/schemas/post.schema";
-import * as fs from 'fs';
-import * as FormData from 'form-data';
+import { AwsS3Service } from "src/config/aws/aws-s3.service";
 const OAuth = require('oauth-1.0a');
 const crypto = require('crypto');
+import * as FormData from 'form-data';
+import axios from "axios";
+import { CLIENT_RENEG_LIMIT } from "tls";
+const fs = require('fs');
+
 
 
 @Injectable()
@@ -21,6 +23,7 @@ export class PostService {
         @InjectModel(PostConfiguration.name) private postConfigurationModel: Model<PostConfigurationDocument>,
         @InjectModel(Post.name) private postModel: Model<PostDocument>,
         @InjectModel(User.name) private userModel: Model<UserDocument>,
+        private awsS3Service: AwsS3Service,
         private httpService: HttpService,
     ) { }
 
@@ -48,31 +51,76 @@ export class PostService {
         return response.data.data.map((item: any) => item.hashtag);
     }
 
+    async createPost(content: any, file: Express.Multer.File | null, socialAccessTokens: Map<string, string>) {
+        let imageUrl: string | null = null;
+        let localImagePath: string | null = null;
 
-    async postToFacebook(content: string, accessToken: string, imagePathOrUrl?: string): Promise<any> {
-        const url = imagePathOrUrl
-            ? `https://graph.facebook.com/v20.0/404645566059003/photos`
-            : `https://graph.facebook.com/v20.0/404645566059003/feed`;
+        if (file) {
+
+            localImagePath = file.path;
+
+            try {
+                imageUrl = await this.uploadImageToS3(file);
+            } catch (error) {
+                console.error('Failed to upload image to S3:', error.message);
+                throw new Error('Failed to upload image to S3');
+            }
+        }
+
+        const publishResults = await this.publishToAllPlatforms(
+            content,
+            localImagePath,
+            imageUrl,
+            socialAccessTokens
+        );
+
+        const platforms = publishResults.map(result => ({
+            platform: result.platform,
+            response: result.response || result.error,
+        }));
+
+        const postRecord = new this.postModel({
+            content,
+            image: imageUrl,
+            platforms,
+            timestamp: new Date(),
+        });
+
+        await postRecord.save();
+
+        return publishResults;
+    }
+
+    async uploadImageToS3(file: Express.Multer.File): Promise<string> {
+        try {
+            const bucket = process.env.AWS_S3_BUCKET_NAME;
+            const imageUrl = await this.awsS3Service.uploadFile(file, bucket);
+            return imageUrl;
+        } catch (error) {
+            console.error('Error uploading image to S3:', error.message);
+            throw new Error('Failed to upload image to S3');
+        }
+    }
+
+
+    async postToFacebook(content: string, imageUrl: string | null, accessToken: string): Promise<any> {
+        const url = imageUrl
+            ? 'https://graph.facebook.com/v20.0/404645566059003/photos'
+            : 'https://graph.facebook.com/v20.0/404645566059003/feed';
 
         const formData = new FormData();
 
-        if (imagePathOrUrl) {
-            if (imagePathOrUrl.startsWith('http')) {
-                formData.append('url', imagePathOrUrl);
-            } else {
-                try {
-                    if (fs.existsSync(imagePathOrUrl)) {
-                        formData.append('source', fs.createReadStream(imagePathOrUrl));
-                    } else {
-                        throw new Error(`File not found at path: ${imagePathOrUrl}`);
-                    }
-                } catch (err) {
-                    console.error('Error reading file:', err.message);
-                    throw new Error('Failed to read the local image file.');
+        if (imageUrl) {
+            try {
+                if (fs.existsSync(imageUrl)) {
+                    formData.append('source', fs.createReadStream(imageUrl));
+                } else {
+                    throw new Error(`File not found at path: ${imageUrl}`);
                 }
+            } catch (err) {
+                console.error('Error reading file:', err.message);
+                throw new Error('Failed to read the local image file.');
             }
-        } else {
-            console.log('No image provided, continuing with text-only post.');
         }
 
         formData.append('message', content);
@@ -90,10 +138,10 @@ export class PostService {
     }
 
 
+
     async postToTwitter(content: string, imagePath: string | null, accessToken: string): Promise<any> {
         try {
-            const accessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET
-
+            const accessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
             const oauthInstance = new OAuth({
                 consumer: {
                     key: process.env.TWITTER_CLIENT_ID,
@@ -194,10 +242,7 @@ export class PostService {
         let assetId: string | null = null;
         const personId = 'Lu1y1zbkz2';
 
-        console.log("Step 1 - Image input:", image);
-
         if (image) {
-            // Step 1: Register the image upload
             const registerUrl = 'https://api.linkedin.com/v2/assets?action=registerUpload';
             const registerBody = {
                 registerUploadRequest: {
@@ -219,32 +264,24 @@ export class PostService {
                     }
                 }).toPromise();
 
-                console.log("Step 2 - Register response:", registerResponse.data);
-
                 assetId = registerResponse.data.value.asset;
                 const mediaUrl = registerResponse.data.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
 
-                console.log("Step 3 - Upload URL:", mediaUrl);
-
-                // Step 2: Read the image from the file system and convert it to a buffer
                 const imageData = fs.readFileSync(image);
 
-                // Step 3: Upload the image
                 const uploadResponse = await this.httpService.post(mediaUrl, imageData, {
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'image/jpeg' // or 'image/png' based on the image format
+                        'Content-Type': 'image/jpeg' 
                     }
                 }).toPromise();
-
-                console.log("Step 4 - Image upload response:", uploadResponse.status);
+                
             } catch (error) {
                 console.error("Error during image registration/upload:", error.response?.data || error.message);
                 throw new Error("Image upload failed");
             }
         }
 
-        // Step 3: Create the LinkedIn post, with or without the image
         const postUrl = 'https://api.linkedin.com/v2/ugcPosts';
         const postBody = {
             author: `urn:li:person:${personId}`,
@@ -281,7 +318,6 @@ export class PostService {
                 }
             }).toPromise();
 
-            console.log("Step 5 - Post creation response:", postResponse.data);
 
             return postResponse.data;
         } catch (error) {
@@ -291,42 +327,103 @@ export class PostService {
     }
 
 
-
     async postToInstagram(content: string, imageUrl: string, accessToken: string): Promise<any> {
-        const createMediaUrl = `https://graph.facebook.com/v20.0/{instagram-account-id}/media?image_url=${imageUrl}&caption=${content}&access_token=${accessToken}`;
-        const mediaResponse = await this.httpService.post(createMediaUrl).toPromise();
+        // Log the input parameters for verification
+        console.log("INcontent", content);
+        console.log("INimage", imageUrl);
+        console.log("INaccessToken", accessToken);
 
-        const creationId = mediaResponse.data.id;
-        const publishUrl = `https://graph.facebook.com/v20.0/{instagram-account-id}/media_publish?creation_id=${creationId}&access_token=${accessToken}`;
+        try {
+            // Construct the URL to create media on Instagram
+            const createMediaUrl = `https://graph.facebook.com/v20.0/17841417036059286/media?image_url=${encodeURIComponent(imageUrl)}&caption=${encodeURIComponent(content)}&access_token=${accessToken}`;
+            console.log("\nCreate Media URL:", createMediaUrl); // Log the URL to verify correctness
 
-        return this.httpService.post(publishUrl).toPromise();
+            // Make the HTTP POST request to create media
+            const mediaResponse = await this.httpService.post(createMediaUrl).toPromise();
+            console.log("\nMedia Response:", mediaResponse); // Log the entire response
+
+            // Extract the creation ID from the response
+            const creationId = mediaResponse.data.id;
+            console.log("\nCreation ID:", creationId); // Log the creation ID to verify it was retrieved
+
+            // Construct the URL to publish the media on Instagram
+            const publishUrl = `https://graph.facebook.com/v20.0/17841417036059286/media_publish?creation_id=${creationId}&access_token=${accessToken}`;
+            console.log("\nPublish URL:", publishUrl); // Log the URL to verify correctness
+
+            // Make the HTTP POST request to publish the media
+            const publishResponse = await this.httpService.post(publishUrl).toPromise();
+            console.log("\nPublish Response:", publishResponse); // Log the response of the publish request
+
+            // Return the final response
+            return publishResponse.data;
+
+        } catch (error) {
+            // Log the error if any step fails
+            console.error("Error posting to Instagram:", error);
+            throw error; // Re-throw the error after logging it
+        }
     }
 
-    async publishToAllPlatforms(content: any, image: string | null, libraryImage: any, socialAccessTokens: Map<string, string>): Promise<any> {
-        const promises = [];
 
-        if (content.facebook) {
-            promises.push(this.postToFacebook(content.facebook, socialAccessTokens.get('facebook'), image || libraryImage?.src));
+
+
+    async publishToAllPlatforms(content: any, localImagePath: string | null, s3ImageUrl: string | null, socialAccessTokens: Map<string, string>) {
+        console.log("content", content);
+        const platformPromises = [];
+
+        for (const [platform, token] of socialAccessTokens) {
+            if (!content[platform]) {
+                continue;
+            }
+
+            platformPromises.push(
+                (async () => {
+                    try {
+                        let response;
+                        const platformContent = content[platform];
+                        let platformImage = null;
+
+                        switch (platform) {
+                            case 'facebook':
+                            case 'twitter':
+                            case 'linkedin':
+                                platformImage = localImagePath;
+                                break;
+                            case 'instagram':
+                                platformImage = s3ImageUrl;
+                                break;
+                            default:
+                                throw new Error(`Unsupported platform: ${platform}`);
+                        }
+
+
+                        switch (platform) {
+                            case 'facebook':
+                                response = await this.postToFacebook(platformContent, platformImage, token);
+                                break;
+                            case 'twitter':
+                                response = await this.postToTwitter(platformContent, platformImage, token);
+                                break;
+                            case 'linkedin':
+                                response = await this.postToLinkedIn(platformContent, platformImage, token);
+                                break;
+                            case 'instagram':
+                                response = await this.postToInstagram(platformContent, platformImage, token);
+                                break;
+                            default:
+                                throw new Error(`Unsupported platform: ${platform}`);
+                        }
+                        return { platform, response };
+                    } catch (error) {
+                        console.error(`Error posting to ${platform}:`, error.message);
+                        return { platform, error: error.message };
+                    }
+                })()
+            );
         }
 
-        if (content.twitter) {
-            promises.push(this.postToTwitter(content.twitter, image || libraryImage?.src, socialAccessTokens.get('twitter')));
-        }
-
-        if (content.linkedin) {
-            const imageToUpload = image ? image : libraryImage?.src;
-            promises.push(this.postToLinkedIn(content.linkedin, imageToUpload, socialAccessTokens.get('linkedin')));
-        }
-
-        if (content.instagram) {
-            promises.push(this.postToInstagram(content.instagram, image || libraryImage.src, socialAccessTokens.get('instagram')));
-        }
-
-        return Promise.all(promises);
+        return Promise.all(platformPromises);
     }
 
-    async create(post: Partial<Post>): Promise<Post> {
-        const createdPost = new this.postModel(post);
-        return createdPost.save();
-    }
+
 }

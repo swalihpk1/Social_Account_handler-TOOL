@@ -10,6 +10,7 @@ import { HttpModule } from '@nestjs/axios';
 import { Post, PostSchema } from '../schemas/post.schema';
 import { UserModule } from 'src/schemas/user.module';
 import { GlobalStateModule } from 'src/utils/global-state.module';
+import { customConfigModule } from 'src/config/config.module';
 
 @Module({
     imports: [
@@ -23,6 +24,7 @@ import { GlobalStateModule } from 'src/utils/global-state.module';
             dest: 'public/postImages',
         }),
         HttpModule,
+        customConfigModule
     ],
     providers: [PostService],
     exports: [PostService],

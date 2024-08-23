@@ -3,7 +3,7 @@ import { UserData } from "./dto/auth.dto";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from 'mongoose';
 import { User, UserDocument } from "../schemas/user.schema";
-import { JwtConfigService } from "../config/jwt.config";
+import { JwtConfigService } from "src/config/jwt/jwt.config";
 import { Request } from 'express';
 import { GlobalStateService } from '../utils/global-state.service';
 

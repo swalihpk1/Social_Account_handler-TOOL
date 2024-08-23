@@ -7,7 +7,7 @@ import { TwitterStrategy } from './providerStrategys/twitter.strategy';
 import { InstagramStrategy } from './providerStrategys/instagram.strategy';
 
 import { ProviderController } from './provider.controller';
-import { JwtConfigModule } from 'src/config/jwt.module';
+import { customConfigModule } from 'src/config/config.module';
 import { UserModule } from 'src/schemas/user.module';
 import { HttpModule } from '@nestjs/axios';
 import { GlobalStateModule } from 'src/utils/global-state.module';
@@ -16,7 +16,7 @@ import { GlobalStateModule } from 'src/utils/global-state.module';
 @Module({
   imports: [
     PassportModule.register({}),
-    JwtConfigModule,
+    customConfigModule,
     UserModule,
     HttpModule,
     GlobalStateModule

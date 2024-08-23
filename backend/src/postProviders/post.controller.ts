@@ -2,11 +2,13 @@ import { Body, Controller, Get, HttpStatus, Post, Query, Req, Res, UploadedFile,
 import { FileInterceptor } from "@nestjs/platform-express";
 import { PostService } from "./post.service";
 import { Request, Response } from 'express';
-import { CreatePostDto } from "./dto/createPost.dto";
 import { InjectModel } from "@nestjs/mongoose";
 import { User, UserDocument } from "src/schemas/user.schema";
 import { Model } from 'mongoose';
 import { GlobalStateService } from "src/utils/global-state.service";
+import * as path from 'path';
+import * as fs from 'fs';
+
 
 @Controller('post')
 export class PostController {
@@ -26,15 +28,11 @@ export class PostController {
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: error.message });
         }
     }
-     
+
 
     @Post('create')
     @UseInterceptors(FileInterceptor('image'))
-    async createPost(
-        @UploadedFile() file: Express.Multer.File,
-        @Body() body: any,
-        @Res() res: Response
-    ) {
+    async createPost(@UploadedFile() file: Express.Multer.File, @Body() body: any, @Res() res: Response) {
         try {
             console.log("File received:", file);
             console.log("Body received:", body);
@@ -51,41 +49,28 @@ export class PostController {
             }
 
             const socialAccessTokens = foundUser.socialAccessTokens;
-
             const content = JSON.parse(body.content);
-            const libraryImage = body.libraryImage ? JSON.parse(body.libraryImage) : null;
-            const image = file ? file.path : null;
 
-            if (!image && !libraryImage) {
-                console.log('No image provided, continuing with text-only post.');
-            }
-
-            const createPostDto = {
-                content: content,
-                image: image,
-                libraryImage: libraryImage,
-            };
-
-            const results = await this.postService.publishToAllPlatforms(
-                createPostDto.content,
-                createPostDto.image,
-                createPostDto.libraryImage,
+            const results = await this.postService.createPost(
+                content,
+                file,
                 socialAccessTokens
             );
 
-            await this.postService.create({
-                content: createPostDto.content,
-                platforms: results.map((result, index) => ({
-                    platform: ['facebook', 'twitter', 'linkedin', 'instagram'][index],
-                    response: result.data,
-                })),
-                image: createPostDto.image || (createPostDto.libraryImage ? createPostDto.libraryImage.src : null),
-                timestamp: new Date(),
-            });
+            if (file) {
+                const filePath = path.join(process.cwd(), 'public', 'postImages', file.filename);
+                fs.unlink(filePath, (err) => {
+                    if (err) {
+                        console.error('Failed to delete the file:', err.message);
+                    } else {
+                        console.log('File deleted successfully');
+                    }
+                });
+            }
 
             return res.status(HttpStatus.CREATED).json({
                 message: 'Post created successfully on all platforms!',
-                results: results.map(result => result.data),
+                results: results.map(result => result.response || result.error),
             });
         } catch (error) {
             console.error(error);
@@ -95,7 +80,6 @@ export class PostController {
             });
         }
     }
-
 
 
 
