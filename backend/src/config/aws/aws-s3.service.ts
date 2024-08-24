@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { S3, PutObjectCommand, PutObjectCommandInput } from '@aws-sdk/client-s3';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class AwsS3Service {
@@ -16,20 +18,31 @@ export class AwsS3Service {
     }
 
     async uploadFile(file: Express.Multer.File, bucket: string): Promise<string> {
-        const fileKey = `${Date.now()}_${file.originalname}`;
-        const params: PutObjectCommandInput = {
-            Bucket: bucket,
-            Key: fileKey,
-            Body: file.buffer,
-            ContentType: file.mimetype,
-            // ACL: 'public-read', // Commented out since your bucket doesn't allow ACLs
-        };
+        try {
 
-        const command = new PutObjectCommand(params);
-        await this.s3.send(command);
 
-        // Manually construct the URL
-        const imageUrl = `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
-        return imageUrl;
+            const fileKey = `${Date.now()}_${file.originalname}`;
+
+            const filePath = path.join(file.destination, file.filename);
+
+            const fileBuffer = fs.readFileSync(filePath);
+
+            const params: PutObjectCommandInput = {
+                Bucket: bucket,
+                Key: fileKey,
+                Body: fileBuffer,
+                ContentType: file.mimetype,
+            };
+
+            const command = new PutObjectCommand(params);
+            const s3Response = await this.s3.send(command);
+
+            const imageUrl = `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+
+            return imageUrl;
+        } catch (error) {
+            console.error('Error uploading file to S3:', error);
+            throw new Error('Failed to upload image to S3');
+        }
     }
 }

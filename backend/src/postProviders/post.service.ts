@@ -10,8 +10,6 @@ import { AwsS3Service } from "src/config/aws/aws-s3.service";
 const OAuth = require('oauth-1.0a');
 const crypto = require('crypto');
 import * as FormData from 'form-data';
-import axios from "axios";
-import { CLIENT_RENEG_LIMIT } from "tls";
 const fs = require('fs');
 
 
@@ -334,33 +332,23 @@ export class PostService {
         console.log("INaccessToken", accessToken);
 
         try {
-            // Construct the URL to create media on Instagram
+
             const createMediaUrl = `https://graph.facebook.com/v20.0/17841417036059286/media?image_url=${encodeURIComponent(imageUrl)}&caption=${encodeURIComponent(content)}&access_token=${accessToken}`;
-            console.log("\nCreate Media URL:", createMediaUrl); // Log the URL to verify correctness
 
-            // Make the HTTP POST request to create media
             const mediaResponse = await this.httpService.post(createMediaUrl).toPromise();
-            console.log("\nMedia Response:", mediaResponse); // Log the entire response
 
-            // Extract the creation ID from the response
             const creationId = mediaResponse.data.id;
-            console.log("\nCreation ID:", creationId); // Log the creation ID to verify it was retrieved
 
-            // Construct the URL to publish the media on Instagram
             const publishUrl = `https://graph.facebook.com/v20.0/17841417036059286/media_publish?creation_id=${creationId}&access_token=${accessToken}`;
-            console.log("\nPublish URL:", publishUrl); // Log the URL to verify correctness
 
-            // Make the HTTP POST request to publish the media
             const publishResponse = await this.httpService.post(publishUrl).toPromise();
-            console.log("\nPublish Response:", publishResponse); // Log the response of the publish request
 
-            // Return the final response
             return publishResponse.data;
 
         } catch (error) {
-            // Log the error if any step fails
+
             console.error("Error posting to Instagram:", error);
-            throw error; // Re-throw the error after logging it
+            throw error; 
         }
     }
 
@@ -368,7 +356,6 @@ export class PostService {
 
 
     async publishToAllPlatforms(content: any, localImagePath: string | null, s3ImageUrl: string | null, socialAccessTokens: Map<string, string>) {
-        console.log("content", content);
         const platformPromises = [];
 
         for (const [platform, token] of socialAccessTokens) {
