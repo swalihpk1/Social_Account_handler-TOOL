@@ -56,6 +56,7 @@ import { PostData } from '../../types/Types';
 import HashtagGenerator from '../../components/HashtagGenerator';
 import ImageCropModal from '../../components/imageCropModal';
 import EditIcon from '@mui/icons-material/Edit';
+import SocialPlatformUploader from '../../components/LoadingAnimation/uploadLoading';
 
 
 
@@ -92,6 +93,8 @@ const CreatePost: React.FC = () => {
     const [cropImageType, setCropImageType] = useState<'local' | 'library'>('local');
     const [isCropModalOpen, setIsCropModalOpen] = useState(false);
     const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+    const [postSuccessModal, setPostSuccessModal] = useState(false);
+    const [uploading, setUpLoading] = useState(false);
 
     useEffect(() => {
         const currentText = text[selectedToggle] || '';
@@ -149,6 +152,8 @@ const CreatePost: React.FC = () => {
 
 
     const handleSubmit = async () => {
+        setUpLoading(true); // Start loading and show modal
+
         const filteredContent = Object.keys(text)
             .filter((key) => selectedOptions.includes(key))
             .reduce((obj, key) => {
@@ -164,7 +169,6 @@ const CreatePost: React.FC = () => {
         if (selectedLocalImage) {
             formData.append('image', selectedLocalImage);
         } else if (selectedLibraryImage) {
-            // Convert the URL to a Blob and then to a File object
             const file = await urlToFile(selectedLibraryImage.src, 'library-image.jpg', 'image/jpeg');
             formData.append('image', file);
         }
@@ -172,10 +176,14 @@ const CreatePost: React.FC = () => {
         try {
             await createPost(formData).unwrap();
             console.log('Post created successfully');
+            setPostSuccessModal(true); // Show success modal
         } catch (error) {
             console.error('Failed to create post:', error);
+        } finally {
+            // Do not close the modal here; it will be handled by the timeout in the SocialPlatformUploader component
         }
     };
+
 
     const handleHashtagSelect = (hashtag) => {
         const newText = selectedToggle === 'Initial content' ? initialContent : text[selectedToggle] || '';
@@ -1043,6 +1051,16 @@ const CreatePost: React.FC = () => {
                 >
                     Post now
                 </Button>
+                <SocialPlatformUploader
+                    open={uploading}
+                    handleClose={() => {
+                        setUpLoading(false);
+                        setPostSuccessModal(false);
+                        window.location.reload()
+                    }}
+                    selectedPlatforms={selectedOptions}
+                />
+
             </Stack>
         </Box >
     );

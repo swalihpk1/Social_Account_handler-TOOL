@@ -41,6 +41,7 @@ export class PostService {
     async fetchHashtags(keyword: string): Promise<string[]> {
 
         console.log("Hashtags");
+        
         const url = `https://api.ritekit.com/v1/stats/hashtag-suggestions?text=${keyword}`;
         const headers = {
             Authorization: process.env.RITEKIT_HASHTAG_ID,
