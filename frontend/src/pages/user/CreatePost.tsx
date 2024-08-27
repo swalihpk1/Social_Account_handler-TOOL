@@ -152,7 +152,7 @@ const CreatePost: React.FC = () => {
 
 
     const handleSubmit = async () => {
-        setUpLoading(true); // Start loading and show modal
+        setUpLoading(true); 
 
         const filteredContent = Object.keys(text)
             .filter((key) => selectedOptions.includes(key))
@@ -176,12 +176,10 @@ const CreatePost: React.FC = () => {
         try {
             await createPost(formData).unwrap();
             console.log('Post created successfully');
-            setPostSuccessModal(true); // Show success modal
+            setPostSuccessModal(true); 
         } catch (error) {
             console.error('Failed to create post:', error);
-        } finally {
-            // Do not close the modal here; it will be handled by the timeout in the SocialPlatformUploader component
-        }
+        } 
     };
 
 

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, LinearProgress, Fade, Typography, IconButton } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Box, LinearProgress, Fade, Typography } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -15,31 +15,27 @@ const SocialPlatformUploader = ({ open, handleClose, selectedPlatforms }) => {
 
     useEffect(() => {
         if (open) {
-            // Reset all states when modal opens
+
             const initialStatus = Object.fromEntries(selectedPlatforms.map(p => [p, { uploading: false, success: false }]));
             setUploadStatus(initialStatus);
             setOverallProgress(0);
             setShowProgressBar(true);
             setShowSuccessMessage(false);
 
-            // Start the upload process
             selectedPlatforms.forEach((platform, index) => {
                 simulateUpload(platform, index);
             });
 
-            // Calculate total animation time for progress and success message
-            const totalAnimationTime = (selectedPlatforms.length * 2 + 1) * 1000; // Assuming each upload takes up to 2 seconds
+            const totalAnimationTime = (selectedPlatforms.length * 2 + 1) * 1000; 
 
-            // Set a timeout to display success message after the progress bar completes
             setTimeout(() => {
-                setShowProgressBar(false); // Hide progress bar
-                setShowSuccessMessage(true); // Show success message
+                setShowProgressBar(false); 
+                setShowSuccessMessage(true); 
             }, totalAnimationTime);
 
-            // Set a timeout to close the modal after success message has been displayed
             setTimeout(() => {
-                handleClose(); // Close the modal
-            }, totalAnimationTime + 2000); // Adjust the time for showing the success message
+                handleClose(); 
+            }, totalAnimationTime + 2000); 
         }
     }, [open, selectedPlatforms, handleClose]);
 
@@ -50,7 +46,7 @@ const SocialPlatformUploader = ({ open, handleClose, selectedPlatforms }) => {
                 [platform]: { uploading: false, success: true }
             }));
             setOverallProgress((prev) => prev + (100 / selectedPlatforms.length));
-        }, index * 2000); // Stagger each upload by 2 seconds
+        }, index * 2000); 
     };
 
     const renderPlatform = (platform, icon, progressPercentage) => (

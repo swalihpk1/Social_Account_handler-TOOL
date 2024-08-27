@@ -141,7 +141,7 @@ const FBAccountListModal = ({ open, onClose, pages, onConfirm, fbUser }) => {
                 <Button
                     onClick={handleConfirm}
                     variant="contained"
-                    disabled={selectedPages.length === 0} // Disable if no pages are selected
+                    disabled={selectedPages.length === 0} 
                     sx={{
                         bgcolor: '#4267B2',
                         '&:hover': { bgcolor: '#365899' },

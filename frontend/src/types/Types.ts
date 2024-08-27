@@ -64,8 +64,10 @@ export interface StyledListItemProps {
     icon: React.ReactElement;
     text: string;
     open: boolean;
-    to: string;
+    to?: string;
     iconStyles?: React.CSSProperties;
+    size?: 'small' | 'large' | 'x-large';
+    onClick?: () => void;
 }
 
 export interface LoadingIconProps {
