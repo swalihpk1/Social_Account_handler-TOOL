@@ -1,5 +1,4 @@
-// auth.controller.ts
-import { Controller, Post, Body, Req, Res, HttpCode, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Req, Res, HttpCode, Delete, Patch } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserData } from './dto/auth.dto';
 import { Request, Response } from 'express';
@@ -33,5 +32,18 @@ export class AuthController {
         const userId = req.session?.user?.id;
         const user = await this.authService.removeSocialAccount(userId, provider)
         return user;
+    }
+
+    @Patch('update-username')
+    @HttpCode(200)
+    async updateUsername(@Req() req, @Body('name') name: string) {
+        const userId = req.session?.user?.id;
+        if (!userId) {
+            throw new Error('User not authenticated');
+        }
+
+        const updatedUser = await this.authService.updateUsername(userId, name);
+
+        return updatedUser;
     }
 }

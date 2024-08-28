@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { AuthResponse, CharacterLimits, UserData } from '../types/Types';
+import { AuthResponse, CharacterLimits, UserData, UserInfo } from '../types/Types';
 
 const USER_URL = 'api/user';
 const POST_URL = 'api/post';
@@ -57,15 +57,23 @@ export const apiSlice = createApi({
                 params: { keyword },
             }),
         }),
+        updateUserName: builder.mutation<UserInfo, { name: string }>({
+            query: ({ name }) => ({
+                url: `${USER_URL}/update-username`,
+                method: 'PATCH',
+                body: { name },
+            }),
+        }),
     }),
 });
 
-export const { 
-    useSignUpMutation, 
-    useLoginMutation, 
-    useRemoveSocialAccountMutation, 
-    useGetCharacterLimitsQuery, 
-    useCreatePostMutation, 
-    useGetInstagramAccessTokenQuery, 
-    useFetchHashtagsQuery 
+export const {
+    useSignUpMutation,
+    useLoginMutation,
+    useRemoveSocialAccountMutation,
+    useGetCharacterLimitsQuery,
+    useCreatePostMutation,
+    useGetInstagramAccessTokenQuery,
+    useFetchHashtagsQuery,
+    useUpdateUserNameMutation
 } = apiSlice;

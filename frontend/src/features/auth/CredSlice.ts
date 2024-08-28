@@ -19,6 +19,12 @@ const credSlice = createSlice({
             localStorage.setItem('accessToken', action.payload.accessToken);
             localStorage.setItem('refreshToken', action.payload.refreshToken);
         },
+        updateUserName: (state, action: PayloadAction<string>) => {
+            if (state.userInfo) {
+                state.userInfo.name = action.payload;
+                localStorage.setItem('userInfo', JSON.stringify(state.userInfo));
+            }
+        },
         updateUser: (state, action: PayloadAction<{ provider: string; profileName: string; profilePicture: string }>) => {
             if (state.userInfo) {
                 state.userInfo.socialAccounts = state.userInfo.socialAccounts || {};
@@ -63,6 +69,6 @@ const credSlice = createSlice({
     },
 });
 
-export const { setCredentials, updateUser, updatePages, removeSocialAccount, logout } = credSlice.actions;
+export const { setCredentials, updateUserName, updateUser, updatePages, removeSocialAccount, logout } = credSlice.actions;
 
 export default credSlice.reducer;

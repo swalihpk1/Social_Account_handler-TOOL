@@ -12,7 +12,7 @@ export class AuthService {
     constructor(
         @InjectModel(User.name) private userModel: Model<UserDocument>,
         private jwtSecret: JwtConfigService,
-        private globalStateService: GlobalStateService 
+        private globalStateService: GlobalStateService
     ) { }
 
     async signup(userDto: UserData): Promise<User> {
@@ -74,6 +74,16 @@ export class AuthService {
             delete user.socialAccessTokens[provider];
         }
 
+        await user.save();
+        return user;
+    }
+
+    async updateUsername(userId: string, name: string) {
+        const user = await this.userModel.findById(userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+        user.name = name;
         await user.save();
         return user;
     }

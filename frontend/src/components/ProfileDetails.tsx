@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, IconButton, Stack, Snackbar, Alert, Dialog, CircularProgress, DialogContent } from '@mui/material';
+import { Box, Typography, IconButton, Stack, Snackbar, Alert, Dialog, CircularProgress, DialogContent, TextField } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -14,8 +14,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import { useNavigate } from 'react-router-dom';
-import { useRemoveSocialAccountMutation } from '../api/ApiSlice';
-import { removeSocialAccount, logout } from '../features/auth/CredSlice';
+import { useRemoveSocialAccountMutation, useUpdateUserNameMutation, } from '../api/ApiSlice';
+import { removeSocialAccount, logout, updateUserName as updateUserNameAction } from '../features/auth/CredSlice';
+import { UserInfo } from '../types/Types';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 interface ProfileDetailsProps {
     onClose: () => void;
@@ -29,7 +31,30 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
     const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
 
-    const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+    const [isEditing, setIsEditing] = useState(false);
+    const [updateUserName] = useUpdateUserNameMutation();
+    const userInfo: UserInfo = useSelector((state: RootState) => state.auth.userInfo);
+    const [name, setName] = useState(userInfo?.name || '');
+
+    const handleEditClick = () => {
+        setIsEditing(true);
+    };
+
+
+
+    const handleSaveClick = async () => {
+        if (!name) return;
+
+        try {
+            const result = await updateUserName({ name }).unwrap();
+            dispatch(updateUserNameAction(result.name));
+            setIsEditing(false);
+        } catch (error) {
+            console.error("Failed to update user name:", error);
+        }
+    };
+
+
 
     const handleRemove = async (provider: string) => {
         try {
@@ -42,7 +67,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
     };
 
     const handleLogout = () => {
-        setLogoutDialogOpen(true); 
+        setLogoutDialogOpen(true);
         setLoggingOut(true);
 
         setTimeout(() => {
@@ -51,11 +76,13 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
             sessionStorage.clear();
             localStorage.clear();
             setTimeout(() => {
-                setLogoutDialogOpen(false); 
-                navigate('/login'); 
-            }, 1000); 
-        }, 2000); 
+                setLogoutDialogOpen(false);
+                navigate('/login');
+            }, 1000);
+        }, 2000);
     };
+
+
 
 
     const handleAddAccountClick = () => {
@@ -63,15 +90,22 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
     };
 
     const getIcon = (provider: string) => {
+        const commonStyles = {
+            fontSize: { xs: '20px', sm: '25px' },
+            backgroundColor: 'white',
+            borderRadius: '10px',
+
+        };
+
         switch (provider) {
             case 'linkedin':
-                return <LinkedInIcon sx={{ fontSize: { xs: '20px', sm: '25px' }, color: '#1877F2' }} />;
+                return <LinkedInIcon sx={{ ...commonStyles, color: '#1877F2' }} />;
             case 'facebook':
-                return <FacebookRoundedIcon sx={{ fontSize: { xs: '20px', sm: '25px' }, color: '#1877F2' }} />;
+                return <FacebookRoundedIcon sx={{ ...commonStyles, color: '#1877F2' }} />;
             case 'twitter':
-                return <XIcon sx={{ fontSize: { xs: '20px', sm: '25px' }, color: 'black' }} />;
+                return <XIcon sx={{ ...commonStyles, color: 'black' }} />;
             case 'instagram':
-                return <InstagramIcon sx={{ fontSize: { xs: '20px', sm: '25px' }, color: '#EE1973' }} />;
+                return <InstagramIcon sx={{ ...commonStyles, color: '#EE1973' }} />;
             default:
                 return null;
         }
@@ -80,6 +114,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
     const handleCloseSnackbar = () => {
         setSnackbarOpen(false);
     };
+
 
     return (
         <Stack sx={{ height: '97vh' }}>
@@ -98,10 +133,43 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
                 >
                     <AccountCircleRoundedIcon sx={{ width: '100px', height: '100px', color: 'white', background: '#203170', borderRadius: '2rem' }} />
                 </Box>
-                <Typography variant="h6" sx={{ color: 'white', pl: '1.7rem' }}>
-                    {userInfo?.username || 'No name'} <EditRoundedIcon sx={{ color: '#c2c2c2' }} />
+                <Typography variant="h6" sx={{ color: 'white', ml: 6 }}>
+                    {isEditing ? (
+                        <>
+                            <TextField
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                variant="outlined"
+                                size="small"
+                                autoFocus
+                                sx={{
+                                    input: { color: 'white' },
+                                    '& .MuiOutlinedInput-root': {
+                                        '& fieldset': {
+                                            border: 'none', // Removes the border
+                                        },
+                                        '&:hover fieldset': {
+                                            border: 'none', // Removes the border on hover
+                                        },
+                                        '&.Mui-focused fieldset': {
+                                            border: 'none', // Removes the border when focused
+                                        },
+                                    },
+                                }}
+                            />
+                            <IconButton onClick={handleSaveClick}>
+                                <CheckCircleIcon sx={{ color: 'white' }} />
+                            </IconButton>
+                        </>
+                    ) : (
+                        <>
+                            {userInfo?.name || 'No name'}
+                            <IconButton onClick={handleEditClick}>
+                                <EditRoundedIcon sx={{ color: '#c2c2c2', cursor: 'pointer' }} />
+                            </IconButton>
+                        </>
+                    )}
                 </Typography>
-
                 <Typography variant="body1" sx={{ color: '#b5b5b5' }}>
                     {userInfo?.email}
                 </Typography>
