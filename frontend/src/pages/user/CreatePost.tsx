@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Box,
     TextField,
@@ -21,9 +21,7 @@ import {
     Snackbar,
     Alert,
     Skeleton,
-    Paper,
-    InputBase,
-    FormControlLabel,
+
 
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -51,12 +49,12 @@ import XPreview from './XPreview';
 import InstagramPreview from './InstagramPreview';
 import { useGetCharacterLimitsQuery } from '../../api/ApiSlice';
 import { useCreatePostMutation } from '../../api/ApiSlice';
-import SearchIcon from '@mui/icons-material/Search';
-import { PostData } from '../../types/Types';
 import HashtagGenerator from '../../components/HashtagGenerator';
 import ImageCropModal from '../../components/imageCropModal';
 import EditIcon from '@mui/icons-material/Edit';
 import SocialPlatformUploader from '../../components/LoadingAnimation/uploadLoading';
+import SchedulePicker from '../../components/SchedulePicker';
+import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 
 
 
@@ -78,7 +76,6 @@ const CreatePost: React.FC = () => {
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'info' | 'warning' | 'error'>('success');
     const [TypeLoading, setTypeLoading] = useState<boolean>(false);
     const [cursorPosition, setCursorPosition] = useState<number>(0);
-    // const textFieldRef = useRef<HTMLInputElement>(null);
     const [characterLimit, setCharacterLimit] = useState(0);
     const [initialContent, setInitialContent] = useState('');
     const [text, setText] = useState({
@@ -95,6 +92,8 @@ const CreatePost: React.FC = () => {
     const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
     const [postSuccessModal, setPostSuccessModal] = useState(false);
     const [uploading, setUpLoading] = useState(false);
+    const [schedulePickerOpen, setSchedulePickerOpen] = useState(false);
+    const [scheduledTime, setScheduledTime] = useState<String | null>(null);
 
     useEffect(() => {
         const currentText = text[selectedToggle] || '';
@@ -120,6 +119,11 @@ const CreatePost: React.FC = () => {
 
     const closeHashtagGenerator = () => {
         setShowHashtagGenerator(false);
+    };
+
+
+    const handleSchedule = (dateTime: string) => {
+        setScheduledTime(dateTime);
     };
 
     const handleCropComplete = async (croppedImageData: string) => {
@@ -152,7 +156,7 @@ const CreatePost: React.FC = () => {
 
 
     const handleSubmit = async () => {
-        setUpLoading(true); 
+        setUpLoading(true);
 
         const filteredContent = Object.keys(text)
             .filter((key) => selectedOptions.includes(key))
@@ -176,10 +180,10 @@ const CreatePost: React.FC = () => {
         try {
             await createPost(formData).unwrap();
             console.log('Post created successfully');
-            setPostSuccessModal(true); 
+            setPostSuccessModal(true);
         } catch (error) {
             console.error('Failed to create post:', error);
-        } 
+        }
     };
 
 
@@ -358,10 +362,6 @@ const CreatePost: React.FC = () => {
         setSelectedOptions((prevSelected) => prevSelected.filter((value) => value !== valueToRemove));
     };
 
-    // const handleToggle = (event: React.MouseEvent<HTMLElement>, newAlignment: string | null) => {
-    //     setSelectedToggle(newAlignment);
-    // };
-
     return (
         <Box sx={{
             flexGrow: 1,
@@ -410,7 +410,6 @@ const CreatePost: React.FC = () => {
                                                 let profileName = option.profileName;
                                                 let profilePicture = option.profilePicture;
 
-                                                // Check if the provider is Facebook and use the page details if available
                                                 if (option.provider === 'facebook' && option.userPages?.length) {
                                                     profileName = option.userPages[0].pageName;
                                                     profilePicture = option.userPages[0].pageImage;
@@ -1029,9 +1028,42 @@ const CreatePost: React.FC = () => {
                         cursor: 'pointer',
                         fontWeight: '600',
                         color: '#203170',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                     }}
+                    onClick={() => setSchedulePickerOpen(true)}
                 >
-                    Schedule for later
+                    {scheduledTime ? (
+                        <Box
+                            sx={{
+                                background: '#2196f340',
+                                p: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '4px',
+                                cursor: 'text',
+                            }}
+                        >
+                            {scheduledTime}
+                            <CancelRoundedIcon
+                                sx={{
+                                    marginLeft: '1rem',
+                                    color: '#3f51b59c',
+                                    border: '1px solid black',
+                                    borderRadius: '3rem',
+                                    cursor: 'pointer',
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setScheduledTime(null);
+                                }}
+                            />
+                        </Box>
+                    ) : (
+                        'Schedule for later'
+                    )}
                 </Link>
                 <Button
                     variant="contained"
@@ -1047,19 +1079,23 @@ const CreatePost: React.FC = () => {
                     }}
                     onClick={handleSubmit}
                 >
-                    Post now
+                    {scheduledTime ? 'Schedule' : 'Post now'}
                 </Button>
                 <SocialPlatformUploader
                     open={uploading}
                     handleClose={() => {
                         setUpLoading(false);
                         setPostSuccessModal(false);
-                        window.location.reload()
+                        window.location.reload();
                     }}
                     selectedPlatforms={selectedOptions}
                 />
-
             </Stack>
+            <SchedulePicker
+                open={schedulePickerOpen}
+                onClose={() => setSchedulePickerOpen(false)}
+                onSchedule={handleSchedule}
+            />
         </Box >
     );
 };

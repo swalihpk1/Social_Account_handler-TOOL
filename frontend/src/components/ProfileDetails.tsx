@@ -146,13 +146,13 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
                                     input: { color: 'white' },
                                     '& .MuiOutlinedInput-root': {
                                         '& fieldset': {
-                                            border: 'none', // Removes the border
+                                            border: 'none',
                                         },
                                         '&:hover fieldset': {
-                                            border: 'none', // Removes the border on hover
+                                            border: 'none',
                                         },
                                         '&.Mui-focused fieldset': {
-                                            border: 'none', // Removes the border when focused
+                                            border: 'none',
                                         },
                                     },
                                 }}
@@ -192,14 +192,12 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
                                 sx={{
                                     width: '100%',
                                     height: '2.5rem',
-                                    background: '#fefefe63!important',
+                                    background: '#fefefe33!important',
                                     border: '1px solid white',
                                     color: 'white!important',
                                     display: 'flex',
                                     padding: '0 1rem',
-                                    '&:hover': {
-                                        background: '#fefefe90!important',
-                                    },
+                                    cursor: 'text'
                                 }}
                             >
                                 <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
@@ -214,7 +212,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
                                         color: '#dfdfdf',
                                     }}
                                 >
-                                    <DeleteIcon />
+                                    <DeleteIcon sx={{ cursor: 'pointer' }} />
                                 </IconButton>
                             </ConnectedBTN>
                         );

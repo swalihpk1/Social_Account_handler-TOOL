@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@emotion/react": "^11.13.0",
+    "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@fortawesome/fontawesome-svg-core": "^6.5.2",
     "@fortawesome/free-regular-svg-icons": "^6.5.2",
@@ -22,10 +22,14 @@
     "@reduxjs/toolkit": "^2.2.5",
     "axios": "^1.7.3",
     "concurrently": "^8.2.2",
+    "cropperjs": "^1.6.2",
+    "date-fns": "^3.6.0",
     "emoji-picker-react": "^4.11.1",
     "fs": "^0.0.1-security",
     "node-hashtagify": "^1.0.1",
     "react": "^18.2.0",
+    "react-cropper": "^2.3.3",
+    "react-datepicker": "^7.3.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.52.0",
     "react-loader-spinner": "^6.1.6",
