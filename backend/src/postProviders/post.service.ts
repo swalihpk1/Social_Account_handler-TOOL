@@ -10,6 +10,7 @@ import { AwsS3Service } from "src/config/aws/aws-s3.service";
 const OAuth = require('oauth-1.0a');
 const crypto = require('crypto');
 import * as FormData from 'form-data';
+import path from "path";
 const fs = require('fs');
 
 
@@ -41,7 +42,7 @@ export class PostService {
     async fetchHashtags(keyword: string): Promise<string[]> {
 
         console.log("Hashtags");
-        
+
         const url = `https://api.ritekit.com/v1/stats/hashtag-suggestions?text=${keyword}`;
         const headers = {
             Authorization: process.env.RITEKIT_HASHTAG_ID,
@@ -51,49 +52,49 @@ export class PostService {
     }
 
     async createPost(content: any, file: Express.Multer.File | null, socialAccessTokens: Map<string, string>) {
-        let imageUrl: string | null = null;
+        console.log("createPost function called");
+
         let localImagePath: string | null = null;
+        let s3ImageUrl: string | null = null;
+
 
         if (file) {
+            // The image has already been saved to /public/postImages/ by the controller
+            localImagePath = path.join(process.cwd(), 'public', 'postImages', file.filename);
 
-            localImagePath = file.path;
-
-            try {
-                imageUrl = await this.uploadImageToS3(file);
-            } catch (error) {
-                console.error('Failed to upload image to S3:', error.message);
-                throw new Error('Failed to upload image to S3');
-            }
+            // If you plan to upload the image to S3 for Instagram
+            s3ImageUrl = await this.awsS3Service.uploadFile(file);
         }
 
-        const publishResults = await this.publishToAllPlatforms(
-            content,
-            localImagePath,
-            imageUrl,
-            socialAccessTokens
-        );
+        console.log("Calling publishToAllPlatforms...");
 
+        const publishResults = await this.publishToAllPlatforms(content, localImagePath, s3ImageUrl, socialAccessTokens);
+
+        // Save the post in the database...
         const platforms = publishResults.map(result => ({
             platform: result.platform,
             response: result.response || result.error,
         }));
 
+        console.log("Saving post record...");
         const postRecord = new this.postModel({
             content,
-            image: imageUrl,
+            image: file ? file.filename : null,
             platforms,
             timestamp: new Date(),
         });
 
         await postRecord.save();
+        console.log("Post record saved!");
 
         return publishResults;
     }
 
+
     async uploadImageToS3(file: Express.Multer.File): Promise<string> {
         try {
             const bucket = process.env.AWS_S3_BUCKET_NAME;
-            const imageUrl = await this.awsS3Service.uploadFile(file, bucket);
+            const imageUrl = await this.awsS3Service.uploadFile(file);
             return imageUrl;
         } catch (error) {
             console.error('Error uploading image to S3:', error.message);
@@ -102,7 +103,27 @@ export class PostService {
     }
 
 
+    async downloadImageFromS3(imageUrl: string): Promise<string> {
+        try {
+            const imagePath = path.join(__dirname, '..', 'public', 'postImages', path.basename(imageUrl));
+            const imageStream = fs.createWriteStream(imagePath);
+
+            const response = await this.httpService.get(imageUrl, { responseType: 'stream' }).toPromise();
+            response.data.pipe(imageStream);
+
+            return new Promise((resolve, reject) => {
+                imageStream.on('finish', () => resolve(imagePath));
+                imageStream.on('error', reject);
+            });
+        } catch (error) {
+            console.error('Error downloading image from S3:', error.message);
+            throw new Error('Failed to download image from S3');
+        }
+    }
+
+
     async postToFacebook(content: string, imageUrl: string | null, accessToken: string): Promise<any> {
+        console.log("fB called");
         const url = imageUrl
             ? 'https://graph.facebook.com/v20.0/404645566059003/photos'
             : 'https://graph.facebook.com/v20.0/404645566059003/feed';
@@ -129,6 +150,7 @@ export class PostService {
             const response = await this.httpService.post(url, formData, {
                 headers: formData.getHeaders(),
             }).toPromise();
+            console.log("SUCCESS FACEBOOK", response.data);
             return response.data;
         } catch (error) {
             console.error('Error posting to Facebook:', error.response?.data || error.message);
@@ -139,6 +161,7 @@ export class PostService {
 
 
     async postToTwitter(content: string, imagePath: string | null, accessToken: string): Promise<any> {
+        console.log("TW called");
         try {
             const accessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
             const oauthInstance = new OAuth({
@@ -227,7 +250,7 @@ export class PostService {
                     },
                 })
             );
-
+            console.log("SUCCESS twitter", tweetResponse.data);
             return tweetResponse.data;
         } catch (error) {
             console.error('Error posting to Twitter:', error.message);
@@ -271,10 +294,10 @@ export class PostService {
                 const uploadResponse = await this.httpService.post(mediaUrl, imageData, {
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'image/jpeg' 
+                        'Content-Type': 'image/jpeg'
                     }
                 }).toPromise();
-                
+
             } catch (error) {
                 console.error("Error during image registration/upload:", error.response?.data || error.message);
                 throw new Error("Image upload failed");
@@ -327,7 +350,6 @@ export class PostService {
 
 
     async postToInstagram(content: string, imageUrl: string, accessToken: string): Promise<any> {
-        // Log the input parameters for verification
         console.log("INcontent", content);
         console.log("INimage", imageUrl);
         console.log("INaccessToken", accessToken);
@@ -349,27 +371,34 @@ export class PostService {
         } catch (error) {
 
             console.error("Error posting to Instagram:", error);
-            throw error; 
+            throw error;
         }
     }
 
 
+    async publishToAllPlatforms(
+        content: any, localImagePath: string | null, s3ImageUrl: string | null, socialAccessTokens: Map<string, string>) {
+        console.log('Starting publishToAllPlatforms with:', { content, localImagePath, s3ImageUrl, socialAccessTokens });
 
-
-    async publishToAllPlatforms(content: any, localImagePath: string | null, s3ImageUrl: string | null, socialAccessTokens: Map<string, string>) {
         const platformPromises = [];
 
-        for (const [platform, token] of socialAccessTokens) {
+        for (const [platform, token] of Object.entries(socialAccessTokens)) {
+            console.log('Processing platform:', platform);
+
             if (!content[platform]) {
+                console.log(`Skipping ${platform} as no content is provided`);
                 continue;
             }
 
             platformPromises.push(
                 (async () => {
+                    console.log(`Attempting to post on ${platform}`);
                     try {
                         let response;
                         const platformContent = content[platform];
                         let platformImage = null;
+
+                        console.log(`Preparing to post on ${platform} with content:`, platformContent);
 
                         switch (platform) {
                             case 'facebook':
@@ -384,23 +413,31 @@ export class PostService {
                                 throw new Error(`Unsupported platform: ${platform}`);
                         }
 
+                        console.log(`Image path for ${platform}:`, platformImage);
 
+                        // Mocking API calls for debugging purposes
                         switch (platform) {
                             case 'facebook':
+                                console.log("Calling Facebook API");
                                 response = await this.postToFacebook(platformContent, platformImage, token);
                                 break;
                             case 'twitter':
+                                console.log("Calling Twitter API");
                                 response = await this.postToTwitter(platformContent, platformImage, token);
                                 break;
                             case 'linkedin':
+                                console.log("Calling LinkedIn API");
                                 response = await this.postToLinkedIn(platformContent, platformImage, token);
                                 break;
                             case 'instagram':
+                                console.log("Calling Instagram API");
                                 response = await this.postToInstagram(platformContent, platformImage, token);
                                 break;
                             default:
                                 throw new Error(`Unsupported platform: ${platform}`);
                         }
+
+                        console.log(`Successfully posted on ${platform}`);
                         return { platform, response };
                     } catch (error) {
                         console.error(`Error posting to ${platform}:`, error.message);
@@ -410,8 +447,16 @@ export class PostService {
             );
         }
 
-        return Promise.all(platformPromises);
-    }
+        console.log('All platform promises created. Waiting for results...');
 
+        try {
+            const results = await Promise.all(platformPromises);
+            console.log('All platform posting completed. Results:', results);
+            return results;
+        } catch (error) {
+            console.error('Error in publishToAllPlatforms:', error.message);
+            throw new Error('Error occurred while publishing to all platforms');
+        }
+    }
 
 }

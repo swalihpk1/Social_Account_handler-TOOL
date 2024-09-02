@@ -1,5 +1,5 @@
 
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PostService } from './post.service';
 import { PostConfiguration, PostConfigurationSchema } from '../schemas/postConfiguration.schema';
@@ -11,12 +11,14 @@ import { Post, PostSchema } from '../schemas/post.schema';
 import { UserModule } from 'src/schemas/user.module';
 import { GlobalStateModule } from 'src/utils/global-state.module';
 import { customConfigModule } from 'src/config/config.module';
+import { ScheduledPost, ScheduledPostSchema } from 'src/schemas/shedulePost.shcema';
 
 @Module({
     imports: [
         MongooseModule.forFeature([
             { name: PostConfiguration.name, schema: PostConfigurationSchema },
             { name: Post.name, schema: PostSchema },
+            { name: ScheduledPost.name, schema: ScheduledPostSchema }
         ]),
         UserModule,
         GlobalStateModule,
@@ -24,7 +26,7 @@ import { customConfigModule } from 'src/config/config.module';
             dest: 'public/postImages',
         }),
         HttpModule,
-        customConfigModule
+        forwardRef(() => customConfigModule)
     ],
     providers: [PostService],
     exports: [PostService],

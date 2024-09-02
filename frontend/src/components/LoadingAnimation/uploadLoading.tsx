@@ -7,7 +7,7 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import XIcon from '@mui/icons-material/X';
 
-const SocialPlatformUploader = ({ open, handleClose, selectedPlatforms }) => {
+const SocialPlatformUploader = ({ open, handleClose, selectedPlatforms, scheduledTime }) => {
     const [uploadStatus, setUploadStatus] = useState({});
     const [overallProgress, setOverallProgress] = useState(0);
     const [showProgressBar, setShowProgressBar] = useState(true);
@@ -26,16 +26,16 @@ const SocialPlatformUploader = ({ open, handleClose, selectedPlatforms }) => {
                 simulateUpload(platform, index);
             });
 
-            const totalAnimationTime = (selectedPlatforms.length * 2 + 1) * 1000; 
+            const totalAnimationTime = (selectedPlatforms.length * 2 + 1) * 1000;
 
             setTimeout(() => {
-                setShowProgressBar(false); 
-                setShowSuccessMessage(true); 
+                setShowProgressBar(false);
+                setShowSuccessMessage(true);
             }, totalAnimationTime);
 
             setTimeout(() => {
-                handleClose(); 
-            }, totalAnimationTime + 2000); 
+                handleClose();
+            }, totalAnimationTime + 2000);
         }
     }, [open, selectedPlatforms, handleClose]);
 
@@ -46,7 +46,7 @@ const SocialPlatformUploader = ({ open, handleClose, selectedPlatforms }) => {
                 [platform]: { uploading: false, success: true }
             }));
             setOverallProgress((prev) => prev + (100 / selectedPlatforms.length));
-        }, index * 2000); 
+        }, index * 2000);
     };
 
     const renderPlatform = (platform, icon, progressPercentage) => (
@@ -218,7 +218,7 @@ const SocialPlatformUploader = ({ open, handleClose, selectedPlatforms }) => {
                             >
                                 <CheckCircleIcon sx={{ fontSize: 53, color: 'success.main', mb: 1 }} />
                                 <Typography variant="h6" color="success.main">
-                                    Post Successfully Created!
+                                    Post successfully  {scheduledTime ? ' sheduled' : 'created'}
                                 </Typography>
                             </Box>
                         </Fade>

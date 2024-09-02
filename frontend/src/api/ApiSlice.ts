@@ -43,6 +43,13 @@ export const apiSlice = createApi({
                 body: data,
             }),
         }),
+        shedulePost: builder.mutation<void, FormData>({
+            query: (data) => ({
+                url: `${POST_URL}/schedule`,
+                method: 'POST',
+                body: data,
+            }),
+        }),
         getInstagramAccessToken: builder.query({
             query: (accessToken) => ({
                 url: `connect/instagram/getUser`,
@@ -64,6 +71,7 @@ export const apiSlice = createApi({
                 body: { name },
             }),
         }),
+
     }),
 });
 
@@ -73,6 +81,7 @@ export const {
     useRemoveSocialAccountMutation,
     useGetCharacterLimitsQuery,
     useCreatePostMutation,
+    useShedulePostMutation,
     useGetInstagramAccessTokenQuery,
     useFetchHashtagsQuery,
     useUpdateUserNameMutation

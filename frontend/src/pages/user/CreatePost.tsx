@@ -55,6 +55,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import SocialPlatformUploader from '../../components/LoadingAnimation/uploadLoading';
 import SchedulePicker from '../../components/SchedulePicker';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
+import { useShedulePostMutation } from '../../api/ApiSlice';
 
 
 
@@ -86,6 +87,7 @@ const CreatePost: React.FC = () => {
     });
     const { data: characterLimits, isLoading } = useGetCharacterLimitsQuery();
     const [createPost] = useCreatePostMutation();
+    const [shedulePost] = useShedulePostMutation();
     const [showHashtagGenerator, setShowHashtagGenerator] = useState(false);
     const [cropImageType, setCropImageType] = useState<'local' | 'library'>('local');
     const [isCropModalOpen, setIsCropModalOpen] = useState(false);
@@ -93,7 +95,8 @@ const CreatePost: React.FC = () => {
     const [postSuccessModal, setPostSuccessModal] = useState(false);
     const [uploading, setUpLoading] = useState(false);
     const [schedulePickerOpen, setSchedulePickerOpen] = useState(false);
-    const [scheduledTime, setScheduledTime] = useState<String | null>(null);
+    const [scheduledTime, setScheduledTime] = useState<string | null>(null);
+
 
     useEffect(() => {
         const currentText = text[selectedToggle] || '';
@@ -153,9 +156,34 @@ const CreatePost: React.FC = () => {
         return new File([blob], filename, { type: mimeType });
     };
 
-
-
     const handleSubmit = async () => {
+
+        if (!Object.values(text).some((content) => content.trim() !== '')) {
+            setSnackbarMessage("Content cannot be empty!");
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+            return;
+        }
+
+        if (selectedOptions.includes('instagram') && !selectedLocalImage && !selectedLibraryImage) {
+            setSnackbarMessage("Instagram posts require an image!");
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+            return;
+        }
+
+        if (scheduledTime) {
+            const scheduledDate = new Date(scheduledTime);
+            const now = new Date();
+
+            if (scheduledDate <= now) {
+                setSnackbarMessage("Scheduled time must be in the future!");
+                setSnackbarSeverity('error');
+                setSnackbarOpen(true);
+                return;
+            }
+        }
+
         setUpLoading(true);
 
         const filteredContent = Object.keys(text)
@@ -178,8 +206,12 @@ const CreatePost: React.FC = () => {
         }
 
         try {
-            await createPost(formData).unwrap();
-            console.log('Post created successfully');
+            if (scheduledTime) {
+                formData.append('scheduledTime', scheduledTime);
+                await shedulePost(formData).unwrap();
+            } else {
+                await createPost(formData).unwrap();
+            }
             setPostSuccessModal(true);
         } catch (error) {
             console.error('Failed to create post:', error);
@@ -659,11 +691,7 @@ const CreatePost: React.FC = () => {
                                         </Stack>
                                     )}
 
-                                    <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-                                        <Alert severity={snackbarSeverity} sx={{ width: '100%' }}>
-                                            {snackbarMessage}
-                                        </Alert>
-                                    </Snackbar>
+
 
                                     <Stack direction="row" spacing={1} alignItems='center' marginBottom='.5rem'>
                                         <EmojiEmotionsOutlinedIcon
@@ -1089,13 +1117,23 @@ const CreatePost: React.FC = () => {
                         window.location.reload();
                     }}
                     selectedPlatforms={selectedOptions}
+                    scheduledTime={scheduledTime}
                 />
             </Stack>
+
+
             <SchedulePicker
                 open={schedulePickerOpen}
                 onClose={() => setSchedulePickerOpen(false)}
                 onSchedule={handleSchedule}
             />
+
+            <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+                <Alert severity={snackbarSeverity} sx={{ width: '100%' }}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
+
         </Box >
     );
 };
