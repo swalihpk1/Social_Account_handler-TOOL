@@ -26,8 +26,6 @@ export class AwsS3Service {
                 throw new Error('S3 bucket name is not defined in environment variables');
             }
 
-            console.log(`Using bucket: ${bucket}`);
-
             const fileKey = `${Date.now()}_${file.originalname}`;
             const filePath = path.join(file.destination, file.filename);
             const fileBuffer = fs.readFileSync(filePath);

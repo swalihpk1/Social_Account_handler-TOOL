@@ -24,9 +24,10 @@ export class BullQueueService {
 
         new Worker('postSchedule', async (job) => {
             console.log("Worker processing job:", job.id);
-            const { content, fileUrl, socialAccessTokens } = job.data;
+            const { content, fileUrl } = job.data;
+            const socialAccessTokens = job.data.socialAccessTokens
+            console.log("ST", socialAccessTokens);
 
-            // Pass fileUrl to createPost
             await this.postService.createPost(content, fileUrl, socialAccessTokens);
             console.log("Post created successfully for job:", job.id);
         }, { connection: this.connection });

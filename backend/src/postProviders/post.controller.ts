@@ -84,10 +84,10 @@ export class PostController {
                 });
             }
 
-            // return res.status(HttpStatus.CREATED).json({
-            //     message: 'Post created successfully on all platforms!',
-            //     results: results.map(result => result.response || result.error),
-            // });
+            return res.status(HttpStatus.CREATED).json({
+                message: 'Post created successfully on all platforms!',
+                results: results.map(result => result.response || result.error),
+            });
         } catch (error) {
             console.error(error);
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
@@ -119,8 +119,8 @@ export class PostController {
                 });
             }
 
-            // Convert socialAccessTokens Map to a regular object
-            const socialAccessTokens = Object.fromEntries(foundUser.socialAccessTokens);
+            const socialAccessTokens = foundUser.socialAccessTokens;
+
 
             // Parse the content from the request body
             const content = JSON.parse(body.content);
@@ -136,6 +136,7 @@ export class PostController {
                 console.log("Image uploaded to S3:", imageUrl);
             }
 
+            // Prepare job data
             const jobData = {
                 userId,
                 content,
@@ -144,6 +145,7 @@ export class PostController {
                 scheduledTime,
             };
 
+            console.log("Job Data:", jobData);
 
             // Add the job to the queue
             await this.bullQueueService.addPostToQueue(jobData);

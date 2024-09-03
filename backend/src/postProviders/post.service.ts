@@ -10,7 +10,7 @@ import { AwsS3Service } from "src/config/aws/aws-s3.service";
 const OAuth = require('oauth-1.0a');
 const crypto = require('crypto');
 import * as FormData from 'form-data';
-import path from "path";
+import * as path from 'path';
 const fs = require('fs');
 
 
@@ -41,7 +41,6 @@ export class PostService {
 
     async fetchHashtags(keyword: string): Promise<string[]> {
 
-        console.log("Hashtags");
 
         const url = `https://api.ritekit.com/v1/stats/hashtag-suggestions?text=${keyword}`;
         const headers = {
@@ -51,26 +50,25 @@ export class PostService {
         return response.data.data.map((item: any) => item.hashtag);
     }
 
-    async createPost(content: any, file: Express.Multer.File | null, socialAccessTokens: Map<string, string>) {
-        console.log("createPost function called");
+    async createPost(content: any, file: Express.Multer.File | string | null, socialAccessTokens: Map<string, string>) {
 
         let localImagePath: string | null = null;
         let s3ImageUrl: string | null = null;
 
-
         if (file) {
-            // The image has already been saved to /public/postImages/ by the controller
-            localImagePath = path.join(process.cwd(), 'public', 'postImages', file.filename);
-
-            // If you plan to upload the image to S3 for Instagram
-            s3ImageUrl = await this.awsS3Service.uploadFile(file);
+            if (typeof file === 'string') {
+                s3ImageUrl = file;
+                localImagePath = await this.downloadImageFromS3(s3ImageUrl);
+            } else {
+                localImagePath = path.join(process.cwd(), 'public', 'postImages', file.filename);
+                s3ImageUrl = await this.awsS3Service.uploadFile(file);
+            }
         }
 
         console.log("Calling publishToAllPlatforms...");
 
         const publishResults = await this.publishToAllPlatforms(content, localImagePath, s3ImageUrl, socialAccessTokens);
 
-        // Save the post in the database...
         const platforms = publishResults.map(result => ({
             platform: result.platform,
             response: result.response || result.error,
@@ -79,13 +77,23 @@ export class PostService {
         console.log("Saving post record...");
         const postRecord = new this.postModel({
             content,
-            image: file ? file.filename : null,
+            image: file && typeof file !== 'string' ? file.filename : null,
             platforms,
             timestamp: new Date(),
         });
 
         await postRecord.save();
         console.log("Post record saved!");
+
+        if (localImagePath && typeof file === 'string') {
+            fs.unlink(localImagePath, (err) => {
+                if (err) {
+                    console.error('Failed to delete local image:', err.message);
+                } else {
+                    console.log('Local image deleted:', localImagePath);
+                }
+            });
+        }
 
         return publishResults;
     }
@@ -102,10 +110,9 @@ export class PostService {
         }
     }
 
-
     async downloadImageFromS3(imageUrl: string): Promise<string> {
         try {
-            const imagePath = path.join(__dirname, '..', 'public', 'postImages', path.basename(imageUrl));
+            const imagePath = path.join(process.cwd(), 'public', 'postImages', path.basename(imageUrl));
             const imageStream = fs.createWriteStream(imagePath);
 
             const response = await this.httpService.get(imageUrl, { responseType: 'stream' }).toPromise();
@@ -378,11 +385,15 @@ export class PostService {
 
     async publishToAllPlatforms(
         content: any, localImagePath: string | null, s3ImageUrl: string | null, socialAccessTokens: Map<string, string>) {
-        console.log('Starting publishToAllPlatforms with:', { content, localImagePath, s3ImageUrl, socialAccessTokens });
+
+        const socialAccessTokensMap = new Map(Object.entries(socialAccessTokens));
+
+        console.log('Starting publishToAllPlatforms with:', { content, localImagePath, s3ImageUrl, socialAccessTokensMap });
+
 
         const platformPromises = [];
 
-        for (const [platform, token] of Object.entries(socialAccessTokens)) {
+        for (const [platform, token] of socialAccessTokensMap.entries()) {
             console.log('Processing platform:', platform);
 
             if (!content[platform]) {
@@ -415,7 +426,6 @@ export class PostService {
 
                         console.log(`Image path for ${platform}:`, platformImage);
 
-                        // Mocking API calls for debugging purposes
                         switch (platform) {
                             case 'facebook':
                                 console.log("Calling Facebook API");
@@ -447,16 +457,8 @@ export class PostService {
             );
         }
 
-        console.log('All platform promises created. Waiting for results...');
-
-        try {
-            const results = await Promise.all(platformPromises);
-            console.log('All platform posting completed. Results:', results);
-            return results;
-        } catch (error) {
-            console.error('Error in publishToAllPlatforms:', error.message);
-            throw new Error('Error occurred while publishing to all platforms');
-        }
+        const results = await Promise.all(platformPromises);
+        console.log('All platform posting completed. Results:', results);
+        return results;
     }
-
 }
