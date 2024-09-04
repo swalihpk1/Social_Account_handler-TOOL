@@ -108,7 +108,6 @@ export class PostController {
     @UseInterceptors(FileInterceptor('image'))
     async schedulePost(@UploadedFile() file: Express.Multer.File, @Body() body: any, @Res() res: Response) {
         try {
-            console.log("schedulePost endpoint hit with body:", body);
 
             const userId = this.globalStateService.getUserId();
             const foundUser = await this.userModel.findById(userId);
@@ -121,22 +120,17 @@ export class PostController {
 
             const socialAccessTokens = foundUser.socialAccessTokens;
 
-
-            // Parse the content from the request body
             const content = JSON.parse(body.content);
 
-            // Convert the scheduled time string to a Date object
             const scheduledTime = new Date(body.scheduledTime);
             console.log('scheduledTime:', scheduledTime);
 
-            // Upload image to S3 if file is present
             let imageUrl = null;
             if (file) {
                 imageUrl = await this.postService.uploadImageToS3(file);
                 console.log("Image uploaded to S3:", imageUrl);
             }
 
-            // Prepare job data
             const jobData = {
                 userId,
                 content,
@@ -145,12 +139,8 @@ export class PostController {
                 scheduledTime,
             };
 
-            console.log("Job Data:", jobData);
-
-            // Add the job to the queue
             await this.bullQueueService.addPostToQueue(jobData);
 
-            // Store scheduled post in the database
             const scheduledPost = new this.scheduledPostModel({
                 content,
                 platforms: Object.keys(socialAccessTokens).map(platform => ({
@@ -162,7 +152,6 @@ export class PostController {
             });
 
             await scheduledPost.save();
-            console.log("Scheduled post saved to database!");
 
             return res.status(HttpStatus.CREATED).json({
                 message: 'Post successfully scheduled.',

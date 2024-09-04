@@ -51,7 +51,7 @@ export class PostService {
     }
 
     async createPost(content: any, file: Express.Multer.File | string | null, socialAccessTokens: Map<string, string>) {
-
+        
         let localImagePath: string | null = null;
         let s3ImageUrl: string | null = null;
 
@@ -65,7 +65,6 @@ export class PostService {
             }
         }
 
-        console.log("Calling publishToAllPlatforms...");
 
         const publishResults = await this.publishToAllPlatforms(content, localImagePath, s3ImageUrl, socialAccessTokens);
 
@@ -74,7 +73,6 @@ export class PostService {
             response: result.response || result.error,
         }));
 
-        console.log("Saving post record...");
         const postRecord = new this.postModel({
             content,
             image: file && typeof file !== 'string' ? file.filename : null,
@@ -83,7 +81,6 @@ export class PostService {
         });
 
         await postRecord.save();
-        console.log("Post record saved!");
 
         if (localImagePath && typeof file === 'string') {
             fs.unlink(localImagePath, (err) => {
@@ -101,7 +98,6 @@ export class PostService {
 
     async uploadImageToS3(file: Express.Multer.File): Promise<string> {
         try {
-            const bucket = process.env.AWS_S3_BUCKET_NAME;
             const imageUrl = await this.awsS3Service.uploadFile(file);
             return imageUrl;
         } catch (error) {
@@ -130,7 +126,6 @@ export class PostService {
 
 
     async postToFacebook(content: string, imageUrl: string | null, accessToken: string): Promise<any> {
-        console.log("fB called");
         const url = imageUrl
             ? 'https://graph.facebook.com/v20.0/404645566059003/photos'
             : 'https://graph.facebook.com/v20.0/404645566059003/feed';
@@ -157,7 +152,6 @@ export class PostService {
             const response = await this.httpService.post(url, formData, {
                 headers: formData.getHeaders(),
             }).toPromise();
-            console.log("SUCCESS FACEBOOK", response.data);
             return response.data;
         } catch (error) {
             console.error('Error posting to Facebook:', error.response?.data || error.message);
@@ -168,7 +162,6 @@ export class PostService {
 
 
     async postToTwitter(content: string, imagePath: string | null, accessToken: string): Promise<any> {
-        console.log("TW called");
         try {
             const accessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
             const oauthInstance = new OAuth({
@@ -257,7 +250,6 @@ export class PostService {
                     },
                 })
             );
-            console.log("SUCCESS twitter", tweetResponse.data);
             return tweetResponse.data;
         } catch (error) {
             console.error('Error posting to Twitter:', error.message);
@@ -357,9 +349,6 @@ export class PostService {
 
 
     async postToInstagram(content: string, imageUrl: string, accessToken: string): Promise<any> {
-        console.log("INcontent", content);
-        console.log("INimage", imageUrl);
-        console.log("INaccessToken", accessToken);
 
         try {
 
@@ -386,30 +375,23 @@ export class PostService {
     async publishToAllPlatforms(
         content: any, localImagePath: string | null, s3ImageUrl: string | null, socialAccessTokens: Map<string, string>) {
 
-        const socialAccessTokensMap = new Map(Object.entries(socialAccessTokens));
-
-        console.log('Starting publishToAllPlatforms with:', { content, localImagePath, s3ImageUrl, socialAccessTokensMap });
+        console.log('Starting publishToAllPlatforms with:', { content, localImagePath, s3ImageUrl, socialAccessTokens });
 
 
         const platformPromises = [];
 
-        for (const [platform, token] of socialAccessTokensMap.entries()) {
-            console.log('Processing platform:', platform);
+        for (const [platform, token] of socialAccessTokens.entries()) {
 
             if (!content[platform]) {
-                console.log(`Skipping ${platform} as no content is provided`);
                 continue;
             }
 
             platformPromises.push(
                 (async () => {
-                    console.log(`Attempting to post on ${platform}`);
                     try {
                         let response;
                         const platformContent = content[platform];
                         let platformImage = null;
-
-                        console.log(`Preparing to post on ${platform} with content:`, platformContent);
 
                         switch (platform) {
                             case 'facebook':
@@ -428,26 +410,21 @@ export class PostService {
 
                         switch (platform) {
                             case 'facebook':
-                                console.log("Calling Facebook API");
                                 response = await this.postToFacebook(platformContent, platformImage, token);
                                 break;
                             case 'twitter':
-                                console.log("Calling Twitter API");
                                 response = await this.postToTwitter(platformContent, platformImage, token);
                                 break;
                             case 'linkedin':
-                                console.log("Calling LinkedIn API");
                                 response = await this.postToLinkedIn(platformContent, platformImage, token);
                                 break;
                             case 'instagram':
-                                console.log("Calling Instagram API");
                                 response = await this.postToInstagram(platformContent, platformImage, token);
                                 break;
                             default:
                                 throw new Error(`Unsupported platform: ${platform}`);
                         }
 
-                        console.log(`Successfully posted on ${platform}`);
                         return { platform, response };
                     } catch (error) {
                         console.error(`Error posting to ${platform}:`, error.message);
