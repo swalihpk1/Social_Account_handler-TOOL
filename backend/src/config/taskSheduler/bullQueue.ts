@@ -28,7 +28,7 @@ export class BullQueueService {
             );
 
             console.log("Social ", socialAccessTokensMap);
-            
+
             await this.postService.createPost(content, fileUrl, socialAccessTokensMap);
             console.log("Post created successfully for job:", job.id);
         }, { connection: this.connection });
