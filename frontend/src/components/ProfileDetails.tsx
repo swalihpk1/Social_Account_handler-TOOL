@@ -40,8 +40,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
         setIsEditing(true);
     };
 
-
-
     const handleSaveClick = async () => {
         if (!name) return;
 
@@ -81,8 +79,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
             }, 1000);
         }, 2000);
     };
-
-
 
 
     const handleAddAccountClick = () => {

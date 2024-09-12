@@ -11,6 +11,7 @@ import * as fs from 'fs';
 import { BullQueueService } from "src/config/taskSheduler/bullQueue";
 import { ScheduledPost, ScheduledPostDocument } from "src/schemas/shedulePost.shcema";
 import { diskStorage } from "multer";
+import { PostDocument } from "src/schemas/post.schema";
 
 
 @Controller('post')
@@ -21,6 +22,7 @@ export class PostController {
         , @InjectModel(ScheduledPost.name) private scheduledPostModel: Model<ScheduledPostDocument>
         , private readonly globalStateService: GlobalStateService
         , private readonly bullQueueService: BullQueueService
+        , @InjectModel('Post') private postModel: Model<PostDocument>
 
     ) { }
 
@@ -66,12 +68,28 @@ export class PostController {
             const socialAccessTokens = foundUser.socialAccessTokens;
             const content = JSON.parse(body.content);
 
-            
-        const results = await this.postService.createPost(
-            content,
-            file,
-            socialAccessTokens
-        );
+            let imageUrl = null;
+            if (file) {
+                imageUrl = await this.postService.uploadImageToS3(file);
+            }
+
+            const results = await this.postService.createPost(
+                content,
+                file,
+                socialAccessTokens
+            );
+
+            const newPost = new this.postModel({
+                userId,
+                content,
+                platforms: results.map(result => ({
+                    platform: result.platform,
+                    response: result.response || result.error,
+                })),
+                image: imageUrl,
+                createdAt: new Date(),
+            });
+            await newPost.save();
 
             if (file) {
                 const filePath = path.join(process.cwd(), 'public', 'postImages', file.filename);
@@ -108,58 +126,66 @@ export class PostController {
     @UseInterceptors(FileInterceptor('image'))
     async schedulePost(@UploadedFile() file: Express.Multer.File, @Body() body: any, @Res() res: Response) {
         try {
-
             const userId = this.globalStateService.getUserId();
             const foundUser = await this.userModel.findById(userId);
 
             if (!foundUser) {
-                return res.status(HttpStatus.NOT_FOUND).json({
-                    message: 'User not found.',
-                });
+                return res.status(HttpStatus.NOT_FOUND).json({ message: 'User not found.' });
             }
 
             const socialAccessTokens = foundUser.socialAccessTokens;
-
             const content = JSON.parse(body.content);
-
             const scheduledTime = new Date(body.scheduledTime);
-            console.log('scheduledTime:', scheduledTime);
 
             let imageUrl = null;
             if (file) {
                 imageUrl = await this.postService.uploadImageToS3(file);
-                console.log("Image uploaded to S3:", imageUrl);
             }
+            
+            const platforms = Object.keys(content);
+
+            const scheduledPost = new this.scheduledPostModel({
+                userId,
+                content,
+                platforms,
+                image: imageUrl,
+                scheduledTime,
+                status: 'scheduled',
+            });
+
+            console.log("Scheduled post", scheduledPost);
+            await scheduledPost.save();
 
             const jobData = {
+                _id: scheduledPost._id,
                 userId,
                 content,
                 fileUrl: imageUrl,
                 socialAccessTokens,
                 scheduledTime,
             };
-
             await this.bullQueueService.addPostToQueue(jobData);
 
-            const scheduledPost = new this.scheduledPostModel({
-                content,
-                platforms: Object.keys(socialAccessTokens).map(platform => ({
-                    platform,
-                })),
-                image: imageUrl,
-                scheduledTime,
-                status: 'scheduled',
-            });
-
-            await scheduledPost.save();
-
-            return res.status(HttpStatus.CREATED).json({
-                message: 'Post successfully scheduled.',
-            });
+            return res.status(HttpStatus.CREATED).json({ message: 'Post successfully scheduled.' });
         } catch (error) {
             console.error(error);
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error occurred while scheduling the post.', error: error.message });
+        }
+    }
+
+
+    @Get('sheduled-posts')
+    async getScheduledPosts(@Res() res: Response) {
+        try {
+            const userId = this.globalStateService.getUserId();
+            console.log('userId', userId);
+            const scheduledPosts = await this.scheduledPostModel.find({ userId }).exec();
+            console.log("sheduled post", scheduledPosts);
+            return res.status(HttpStatus.OK).json(scheduledPosts);
+        } catch (error) {
+            console.error('Error fetching scheduled posts:', error.message);
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-                message: 'Error occurred while scheduling the post.',
+                message: 'Error fetching scheduled posts',
                 error: error.message,
             });
         }

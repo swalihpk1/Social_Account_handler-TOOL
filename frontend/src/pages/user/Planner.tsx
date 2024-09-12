@@ -4,46 +4,48 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { ThemeProvider as MUIThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, TextField } from '@mui/material';
+import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider } from '@mui/material';
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
-// import InstagramIcon from '@mui/icons-material/Instagram';
-// import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import CalendarViewMonthIcon from '@mui/icons-material/CalendarViewMonth';
 import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek';
 import CalendarViewDayIcon from '@mui/icons-material/CalendarViewDay';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { useFetchSheduledPostsQuery } from '../../api/ApiSlice';
+import XIcon from '@mui/icons-material/X';
 
 
-const initialEvents = [
-    {
-        id: '1',
-        title: 'Team Meeting',
-        start: new Date(),
-        end: new Date(new Date().setHours(new Date().getHours() + 1)),
-        extendedProps: {
-            imageUrl: 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?cs=srgb&dl=pexels-mikebirdy-170811.jpg&fm=jpg',
-        },
-    },
-    {
-        id: '2',
-        title: 'Doctor',
-        start: new Date(new Date().setHours(new Date().getHours() + 1)),
-        end: new Date(new Date().setHours(new Date().getHours() + 2)),
-        extendedProps: {
-            imageUrl: 'https://img-cdn.pixlr.com/image-generator/history/65bb506dcb310754719cf81f/ede935de-1138-4f66-8ed7-44bd16efc709/medium.webp',
-        },
-    },
-    {
-        id: '3',
-        title: 'Client',
-        start: new Date(),
-        end: new Date(new Date().setHours(new Date().getHours() + 1)),
-        extendedProps: {
-            imageUrl: '',
-        },
-    },
-];
+// const initialEvents = [
+//     {
+//         id: '1',
+//         title: 'Team Meeting',
+//         start: new Date(),
+//         end: new Date(new Date().setHours(new Date().getHours() + 1)),
+//         extendedProps: {
+//             imageUrl: 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?cs=srgb&dl=pexels-mikebirdy-170811.jpg&fm=jpg',
+//         },
+//     },
+//     {
+//         id: '2',
+//         title: 'Doctor',
+//         start: new Date(new Date().setHours(new Date().getHours() + 1)),
+//         end: new Date(new Date().setHours(new Date().getHours() + 2)),
+//         extendedProps: {
+//             imageUrl: 'https://img-cdn.pixlr.com/image-generator/history/65bb506dcb310754719cf81f/ede935de-1138-4f66-8ed7-44bd16efc709/medium.webp',
+//         },
+//     },
+//     {
+//         id: '3',
+//         title: 'Client',
+//         start: new Date(),
+//         end: new Date(new Date().setHours(new Date().getHours() + 1)),
+//         extendedProps: {
+//             imageUrl: '',
+//         },
+//     },
+// ];
 
 const muiTheme = createTheme({
     palette: {
@@ -65,22 +67,7 @@ const CustomToolbar = ({
                 <Typography variant="h6" fontWeight='bold'>Calendar</Typography>
             </Box>
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, backgroundColor: '#fff', gap: 1 }}>
-                <FormControl sx={{ minWidth: 100, maxWidth: 140 }}>
-                    <Select value={selectedMonth} onChange={onMonthChange} size="small" sx={{ background: '#C3CBD8', borderRadius: '2rem', color: '#203170' }}>
-                        {months.map((month, index) => (
-                            <MenuItem key={index} value={index}>{month}</MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-
-                <FormControl sx={{ minWidth: 80, maxWidth: 100 }}>
-                    <Select value={selectedYear} onChange={onYearChange} size="small" sx={{ background: '#C3CBD8', borderRadius: '2rem', color: '#203170' }}>
-                        {yearRange.map((year) => (
-                            <MenuItem key={year} value={year}>{year}</MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, backgroundColor: '#fff' }}>
 
                 <FormControl sx={{ minWidth: 120, maxWidth: 170 }}>
                     <Select defaultValue="" displayEmpty size="small" sx={{ background: '#C3CBD8', borderRadius: '2rem', color: '#203170' }}>
@@ -90,6 +77,31 @@ const CustomToolbar = ({
                         <MenuItem value="linkedin">LinkedIn</MenuItem>
                     </Select>
                 </FormControl>
+
+                <Divider orientation="vertical" flexItem />
+
+
+                <FormControl sx={{ minWidth: 100, maxWidth: 140 }}>
+                    <Select value={selectedMonth} onChange={onMonthChange} size="small" sx={{ background: '#C3CBD8', borderRadius: '2rem', color: '#203170' }}>
+                        {months.map((month, index) => (
+                            <MenuItem key={index} value={index}>{month}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+
+                <Divider orientation="vertical" flexItem />
+
+                <FormControl sx={{ minWidth: 80, maxWidth: 100 }}>
+                    <Select value={selectedYear} onChange={onYearChange} size="small" sx={{ background: '#C3CBD8', borderRadius: '2rem', color: '#203170' }}>
+                        {yearRange.map((year) => (
+                            <MenuItem key={year} value={year}>{year}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+
+                <Divider orientation="vertical" flexItem />
+
+
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
                     <IconButton onClick={onPrev} size="small"><ArrowBackIosNewIcon fontSize="small" /></IconButton>
@@ -101,15 +113,16 @@ const CustomToolbar = ({
                     <IconButton onClick={onNext} size="small"><ArrowForwardIosIcon fontSize="small" /></IconButton>
                 </Box>
 
-                <FormControl sx={{ minWidth: 120, maxWidth: 150 }}>
+                <Divider orientation="vertical" flexItem />
+
+                <FormControl sx={{ minWidth: 120, maxWidth: 130 }}>
                     <Select defaultValue="" displayEmpty size="small" sx={{ background: '#C3CBD8', borderRadius: '2rem', color: '#203170' }}>
-                        <MenuItem value="">Post status</MenuItem>
-                        <MenuItem value="active">Active</MenuItem>
-                        <MenuItem value="inactive">Inactive</MenuItem>
+                        <MenuItem value="">All posts</MenuItem>
+                        <MenuItem value="facebook">Drafts</MenuItem>
                     </Select>
                 </FormControl>
 
-
+                <Divider orientation="vertical" flexItem />
 
                 <Box sx={{ display: 'flex', gap: 1, background: '#C3CBD8' }}>
                     <IconButton
@@ -118,7 +131,7 @@ const CustomToolbar = ({
                         sx={{
                             backgroundColor: currentView === 'dayGridMonth' ? '#203170' : 'transparent',
                             color: currentView === 'dayGridMonth' ? '#fff' : 'inherit',
-                            borderRadius: '0',  // Make the background square
+                            borderRadius: '0',
                             '&:hover': { backgroundColor: '#2031703d' }
                         }}
                     >
@@ -131,14 +144,12 @@ const CustomToolbar = ({
                         sx={{
                             backgroundColor: currentView === 'timeGridWeek' ? '#203170' : 'transparent',
                             color: currentView === 'timeGridWeek' ? '#fff' : 'inherit',
-                            borderRadius: '0',  // Make the background square
+                            borderRadius: '0',
                             '&:hover': { backgroundColor: '#2031703d' }
                         }}
                     >
                         <CalendarViewWeekIcon fontSize="small" />
                     </IconButton>
-
-
 
                     <IconButton
                         onClick={() => onViewChange('timeGridDay')}
@@ -146,26 +157,62 @@ const CustomToolbar = ({
                         sx={{
                             backgroundColor: currentView === 'timeGridDay' ? '#203170' : 'transparent',
                             color: currentView === 'timeGridDay' ? '#fff' : 'inherit',
-                            borderRadius: '0',  // Make the background square
+                            borderRadius: '0',
                             '&:hover': { backgroundColor: '#2031703d' }
                         }}
                     >
                         <CalendarViewDayIcon fontSize="small" />
                     </IconButton>
                 </Box>
+
+                <Divider orientation="vertical" flexItem />
+
+                <FormControl sx={{ minWidth: 120, maxWidth: 150 }}>
+                    <Select defaultValue="" displayEmpty size="small" sx={{ background: '#C3CBD8', borderRadius: '2rem', color: '#203170' }}>
+                        <MenuItem value="">Post status</MenuItem>
+                        <MenuItem value="active">Active</MenuItem>
+                        <MenuItem value="inactive">Inactive</MenuItem>
+                    </Select>
+                </FormControl>
+
             </Box>
+
         </Box>
     );
 };
 
 
 const FullPageCalendar = () => {
-    const [events, setEvents] = useState(initialEvents);
+    const [events, setEvents] = useState('');
     const [showEventDetails, setShowEventDetails] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [calendarApi, setCalendarApi] = useState(null);
     const [currentView, setCurrentView] = useState('dayGridMonth');
     const [selectedDate, setSelectedDate] = useState(new Date());
+
+    const { data, isLoading, error } = useFetchSheduledPostsQuery(undefined);
+
+    console.log("DAta", data);
+
+    useEffect(() => {
+        if (data) {
+            const formattedEvents = data.flatMap((post) =>
+                post.platforms.map((platform) => ({
+                    id: `${post._id}-${platform}`,
+                    title: post.content[platform] || Object.values(post.content)[0],
+                    start: new Date(post.scheduledTime),
+                    extendedProps: {
+                        imageUrl: post.image,
+                        platform: platform,
+                        userId: post.userId,
+                        status: post.status,
+                    },
+                }))
+            );
+            console.log("Events", formattedEvents);
+            setEvents(formattedEvents);
+        }
+    }, [data]);
 
     useEffect(() => {
         if (calendarApi) {
@@ -243,11 +290,32 @@ const FullPageCalendar = () => {
 
     const renderEventContent = (eventInfo) => {
         const { event, view } = eventInfo;
+        const platform = event.extendedProps.platform;
+
+        const getPlatformIcon = (platform) => {
+            switch (platform) {
+                case 'facebook':
+                    return <FacebookRoundedIcon sx={{ fontSize: '1rem', color: '#1877F2' }} />;
+                case 'twitter':
+                    return <XIcon sx={{ fontSize: '1rem', color: 'black' }} />;
+                case 'instagram':
+                    return <InstagramIcon sx={{ fontSize: '1rem', color: '#E4405F' }} />;
+                case 'linkedin':
+                    return <LinkedInIcon sx={{ fontSize: '1rem', color: '#0A66C2' }} />;
+                default:
+                    return null;
+            }
+        };
+
+        const formatTime = (date) => {
+            return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+        };
+
+        const truncateText = (text, maxLength) => {
+            return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        };
 
         if (view.type === 'dayGridMonth') {
-            const eventsInSameSlot = eventInfo.view.calendar.getEvents().filter(
-                e => e.startStr === event.startStr && e.endStr === event.endStr
-            );
             return (
                 <Box
                     className="month-view-event"
@@ -263,14 +331,10 @@ const FullPageCalendar = () => {
                         boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
                     }}
                 >
-                    <Typography variant="body2" sx={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#FF6347' }}>
-                        {eventsInSameSlot.length} Events
-                    </Typography>
-
                     <Stack direction='row' justifyContent='flex-start' alignItems='center' gap={1} sx={{ width: '100%' }}>
-                        <FacebookRoundedIcon sx={{ fontSize: '1rem', color: '#1877F2' }} />
+                        {getPlatformIcon(platform)}
                         <Typography variant="body2" sx={{ fontSize: '0.9rem', fontWeight: 'bold' }}>
-                            Swax_x
+                            {platform.charAt(0).toUpperCase() + platform.slice(1)}
                         </Typography>
                     </Stack>
 
@@ -290,11 +354,14 @@ const FullPageCalendar = () => {
                     )}
 
                     <Typography className="event-title" fontSize="0.6rem">
-                        {event.title}
+                        {truncateText(event.title, 20)}
+                    </Typography>
+                    <Typography className="event-time" fontSize="12px" fontWeight='bold' color="text.secondary">
+                        {formatTime(event.start)}
                     </Typography>
                 </Box>
             );
-        } else if (view.type === 'timeGridWeek' || view.type === 'timeGridDay') {
+        } else if (view.type === 'timeGridWeek') {
             return (
                 <Box
                     className="week-view-event"
@@ -307,9 +374,9 @@ const FullPageCalendar = () => {
                     sx={{ boxShadow: '-7px 0px 2px 0px rgba(0, 0, 0, 0.2), 0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 1px 3px 0px rgba(0, 0, 0, 0.12)' }}
                 >
                     <Stack direction='row' justifyContent='flex-start' alignItems='center' gap={1} sx={{ width: '100%', pl: '2px' }}>
-                        <FacebookRoundedIcon sx={{ fontSize: '1rem', color: '#1877F2' }} />
+                        {getPlatformIcon(platform)}
                         <Typography variant="body2" sx={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'black' }}>
-                            Swax_x
+                            {platform.charAt(0).toUpperCase() + platform.slice(1)}
                         </Typography>
                     </Stack>
                     {event.extendedProps.imageUrl && (
@@ -325,11 +392,86 @@ const FullPageCalendar = () => {
                         />
                     )}
                     <Box className="event-details" p='2px'>
-                        <Typography className="event-title" color='black' fontSize="0.6rem">
+                        <Typography
+                            className="event-title"
+                            color='black'
+                            fontSize="0.6rem"
+                            sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 1,
+                                WebkitBoxOrient: 'vertical',
+                            }}
+                        >
                             {event.title}
                         </Typography>
-                        <Typography className="event-time" fontSize="0.8em" color="text.secondary">
-                            {event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <Typography className="event-time" fontSize="12px" fontWeight='bold' color="text.secondary">
+                            {formatTime(event.start)}
+                        </Typography>
+                    </Box>
+                </Box>
+            );
+        } else if (view.type === 'timeGridDay') {
+            return (
+                <Box
+                    className="day-view-event"
+                    display="flex"
+                    flexDirection="row"
+                    height="90%"
+                    width="100%"
+                    bgcolor="background.paper"
+                    borderRadius="8px"
+                    overflow="hidden"
+                    margin="7px"
+                    boxShadow={1}
+                >
+                    {event.extendedProps.imageUrl && (
+                        <Box
+                            component="img"
+                            src={event.extendedProps.imageUrl}
+                            alt="Event"
+                            sx={{
+                                width: '30%',
+                                height: '100%',
+                                objectFit: 'cover',
+                            }}
+                        />
+                    )}
+                    <Box
+                        display="flex"
+                        flexDirection="column"
+                        justifyContent="space-between"
+                        sx={{
+                            width: event.extendedProps.imageUrl ? '70%' : '100%',
+                            p: 1
+                        }}
+                    >
+                        <Box>
+                            <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+                                {getPlatformIcon(platform)}
+                                <Typography variant="body2" sx={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'black' }}>
+                                    {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                                </Typography>
+                            </Stack>
+                            <Typography
+                                className="event-title"
+                                color="black"
+                                sx={{
+                                    fontSize: '0.8rem',
+                                    fontWeight: 'medium',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                }}
+                            >
+                                {event.title}
+                            </Typography>
+                        </Box>
+                        <Typography className="event-time" fontSize="0.9rem" fontWeight="bold" color="text.secondary">
+                            {formatTime(event.start)}
                         </Typography>
                     </Box>
                 </Box>
@@ -417,9 +559,10 @@ const FullPageCalendar = () => {
                         timeGridDay: {
                             allDaySlot: false,
                             slotDuration: '01:00:00',
-                            snapDuration: '01:00:00',
+                            snapDuration: '00:00:00',
                             slotEventOverlap: true,
                             slotEventGap: false,
+
                         },
                         timeGridWeek: {
                             allDaySlot: false,

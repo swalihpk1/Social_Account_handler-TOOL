@@ -4,6 +4,7 @@ import { AuthResponse, CharacterLimits, UserData, UserInfo } from '../types/Type
 const USER_URL = 'api/user';
 const POST_URL = 'api/post';
 
+
 const baseQuery = fetchBaseQuery({ baseUrl: '' });
 
 export const apiSlice = createApi({
@@ -71,7 +72,12 @@ export const apiSlice = createApi({
                 body: { name },
             }),
         }),
-
+        fetchSheduledPosts: builder.query<any, void>({
+            query: () => ({
+                url: `${POST_URL}/sheduled-posts`,
+                method: 'GET',
+            }),
+        }),
     }),
 });
 
@@ -84,5 +90,6 @@ export const {
     useShedulePostMutation,
     useGetInstagramAccessTokenQuery,
     useFetchHashtagsQuery,
-    useUpdateUserNameMutation
+    useUpdateUserNameMutation,
+    useFetchSheduledPostsQuery,
 } = apiSlice;

@@ -1,10 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type ScheduledPostDocument = ScheduledPost & Document;
 
 @Schema()
 export class ScheduledPost {
+    @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+    userId: Types.ObjectId;
+
     @Prop({ type: Object, required: true })
     content: {
         facebook?: string;
@@ -13,11 +16,8 @@ export class ScheduledPost {
         instagram?: string;
     };
 
-    @Prop({ type: Array, required: true })
-    platforms: {
-        platform: string;
-        response?: any;
-    }[];
+    @Prop({ type: [String], required: true })
+    platforms: string[];
 
     @Prop({ type: String })
     image: string;

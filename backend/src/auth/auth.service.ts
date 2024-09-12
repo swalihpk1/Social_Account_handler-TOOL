@@ -44,7 +44,6 @@ export class AuthService {
         req.session.user = { email: user.email, id: user._id };
         console.log('Session data:', req.session);
 
-        // Set userId in GlobalStateService
         this.globalStateService.setUserId(user._id.toString());
 
         const accessToken = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id });

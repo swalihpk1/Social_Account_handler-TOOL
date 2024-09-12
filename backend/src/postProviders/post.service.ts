@@ -51,7 +51,6 @@ export class PostService {
     }
 
     async createPost(content: any, file: Express.Multer.File | string | null, socialAccessTokens: Map<string, string>) {
-        
         let localImagePath: string | null = null;
         let s3ImageUrl: string | null = null;
 
@@ -65,22 +64,7 @@ export class PostService {
             }
         }
 
-
         const publishResults = await this.publishToAllPlatforms(content, localImagePath, s3ImageUrl, socialAccessTokens);
-
-        const platforms = publishResults.map(result => ({
-            platform: result.platform,
-            response: result.response || result.error,
-        }));
-
-        const postRecord = new this.postModel({
-            content,
-            image: file && typeof file !== 'string' ? file.filename : null,
-            platforms,
-            timestamp: new Date(),
-        });
-
-        await postRecord.save();
 
         if (localImagePath && typeof file === 'string') {
             fs.unlink(localImagePath, (err) => {
