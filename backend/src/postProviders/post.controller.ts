@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Post, Query, Req, Res, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Get, HttpStatus, Post, Put, Query, Req, Res, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { PostService } from "./post.service";
 import { Request, Response } from 'express';
@@ -191,6 +191,27 @@ export class PostController {
                 message: 'Error fetching scheduled posts',
                 error: error.message,
             });
+        }
+    }
+
+    @Put('re-schedule-posts')
+    async reschedulePost(@Body() body: { jobId: string, scheduledTime: string }, @Res() res: Response) {
+        try {
+            const { jobId, scheduledTime } = body;
+            const newScheduledTime = new Date(scheduledTime);
+
+            console.log("shedule data", body);
+
+            if (newScheduledTime <= new Date()) {
+                return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Scheduled time must be in the future.' });
+            }
+
+            const updatedJobId = await this.bullQueueService.reschedulePost(jobId, newScheduledTime);
+
+            return res.status(HttpStatus.OK).json({ message: 'Post successfully rescheduled.', jobId: updatedJobId });
+        } catch (error) {
+            console.error('Error rescheduling post:', error);
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error rescheduling post.', error: error.message });
         }
     }
 }

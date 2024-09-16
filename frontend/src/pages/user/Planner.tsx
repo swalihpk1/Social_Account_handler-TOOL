@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { ThemeProvider as MUIThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider } from '@mui/material';
+import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText } from '@mui/material';
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
@@ -13,8 +13,9 @@ import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek';
 import CalendarViewDayIcon from '@mui/icons-material/CalendarViewDay';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import { useFetchSheduledPostsQuery } from '../../api/ApiSlice';
+import { useFetchSheduledPostsQuery, useReschedulePostMutation } from '../../api/ApiSlice';
 import XIcon from '@mui/icons-material/X';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
 const muiTheme = createTheme({
     palette: {
@@ -152,14 +153,19 @@ const CustomToolbar = ({
 
 
 const FullPageCalendar = () => {
-    const [events, setEvents] = useState('');
+    const [events, setEvents] = useState([]);
     const [showEventDetails, setShowEventDetails] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [calendarApi, setCalendarApi] = useState(null);
     const [currentView, setCurrentView] = useState('dayGridMonth');
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const [openConfirmModal, setOpenConfirmModal] = useState(false);
+    const [rescheduleInfo, setRescheduleInfo] = useState(null);
+    const [draggingEvent, setDraggingEvent] = useState(null);
 
     const { data, isLoading, error } = useFetchSheduledPostsQuery(undefined);
+    const [reschedulePost] = useReschedulePostMutation();
+
 
     console.log("DAta", data);
 
@@ -175,6 +181,7 @@ const FullPageCalendar = () => {
                         platform: platform,
                         userId: post.userId,
                         status: post.status,
+                        jobId: post.jobId, 
                     },
                 }))
             );
@@ -198,22 +205,49 @@ const FullPageCalendar = () => {
         setShowEventDetails(true);
     };
 
-    const handleCloseDialog = () => {
-        setShowEventDetails(false);
+    const handleEventDragStart = (info) => {
+        setDraggingEvent(info.event);
     };
 
     const handleEventDrop = (info) => {
-        const updatedEvents = events.map((event) => {
-            if (event.id === info.event.id) {
-                return {
-                    ...event,
-                    start: info.event.start,
-                    end: info.event.end,
-                };
-            }
-            return event;
-        });
-        setEvents(updatedEvents);
+        const jobId = info.event.extendedProps.jobId;
+        const reScheduleTime = info.event.start;
+
+        setRescheduleInfo({ jobId, reScheduleTime, originalEvent: draggingEvent });
+        setOpenConfirmModal(true);
+    };
+
+
+    const handleConfirmReschedule = () => {
+        if (rescheduleInfo) {
+            const { jobId, reScheduleTime } = rescheduleInfo;
+
+            reschedulePost({ jobId, reScheduleTime: reScheduleTime.toISOString() })
+                .unwrap()
+                .then(() => {
+                    console.log('Post rescheduled successfully');
+                })
+                .catch((error) => {
+                    console.error('Error rescheduling post:', error);
+                    // Revert the event to its original position
+                    if (calendarApi) {
+                        const event = calendarApi.getEventById(rescheduleInfo.originalEvent.id);
+                        event.setStart(rescheduleInfo.originalEvent.start);
+                    }
+                });
+        }
+
+        setOpenConfirmModal(false);
+        setRescheduleInfo(null);
+    };
+
+    const handleCancelReschedule = () => {
+        if (calendarApi && rescheduleInfo) {
+            const event = calendarApi.getEventById(rescheduleInfo.originalEvent.id);
+            event.setStart(rescheduleInfo.originalEvent.start);
+        }
+        setOpenConfirmModal(false);
+        setRescheduleInfo(null);
     };
 
     const handleViewChange = (view) => {
@@ -525,6 +559,7 @@ const FullPageCalendar = () => {
                     editable
                     events={events}
                     eventClick={handleEventClick}
+                    eventDragStart={handleEventDragStart}
                     eventDrop={handleEventDrop}
                     headerToolbar={false}
                     eventContent={renderEventContent}
@@ -548,15 +583,14 @@ const FullPageCalendar = () => {
                         timeGridDay: {
                             allDaySlot: false,
                             slotDuration: '01:00:00',
-                            snapDuration: '00:00:00',
+                            snapDuration: '00:05:00',
                             slotEventOverlap: true,
                             slotEventGap: false,
-
                         },
                         timeGridWeek: {
                             allDaySlot: false,
                             slotDuration: '01:00:00',
-                            snapDuration: '00:00:00',
+                            snapDuration: '00:05:00',
                             slotEventOverlap: true,
                         },
                     }}
@@ -568,19 +602,51 @@ const FullPageCalendar = () => {
                     }}
                 />
 
-                <Dialog open={showEventDetails} onClose={handleCloseDialog}>
-                    <DialogTitle>Event Details</DialogTitle>
-                    <DialogContent>
-                        {selectedEvent && (
-                            <>
-                                <h2>{selectedEvent.title}</h2>
-                                <p>Start: {selectedEvent.start.toLocaleString()}</p>
-                                <p>End: {selectedEvent.end.toLocaleString()}</p>
-                            </>
-                        )}
+                <Dialog
+                    open={openConfirmModal}
+                    onClose={handleCancelReschedule}
+                    PaperProps={{
+                        sx: {
+                            borderRadius: 2,
+                            boxShadow: 3,
+                        }
+                    }}
+                >
+                    <DialogTitle sx={{
+                        bgcolor: 'primary.main',
+                        color: 'primary.contrastText',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        padding: 1,
+                        background:'#43528C'
+                    }}>
+                        <CalendarTodayIcon />
+                        <Typography variant="h6">Reschedule Post</Typography>
+                    </DialogTitle>
+                    <DialogContent sx={{ pt: 2 }}>
+                        <DialogContentText>
+                            Are you sure you want to reschedule this post?
+                        </DialogContentText>
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleCloseDialog}>Close</Button>
+                    <DialogActions sx={{ px: 3, pb: 2 }}>
+                        <Button
+                            onClick={handleCancelReschedule}
+                            color="inherit"
+                            variant="outlined"
+                            sx={{ borderRadius: 28 }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleConfirmReschedule}
+                            color="primary"
+                            variant="contained"
+                            autoFocus
+                            sx={{ borderRadius: 28 }}
+                        >
+                            Confirm
+                        </Button>
                     </DialogActions>
                 </Dialog>
             </Box>

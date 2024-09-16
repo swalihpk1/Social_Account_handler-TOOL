@@ -77,4 +77,27 @@ export class BullQueueService {
         return job.id;
     }
 
+    async reschedulePost(jobId: string, newScheduledTime: Date) {
+        const job = await this.postScheduleQueue.getJob(jobId);
+
+        if (!job) {
+            throw new Error('Job not found');
+        }
+
+        await job.remove();
+
+        const newDelay = newScheduledTime.getTime() - Date.now();
+        const newJobData = job.data; 
+        newJobData.scheduledTime = newScheduledTime;
+
+        const newJob = await this.postScheduleQueue.add('postSchedule', newJobData, { delay: newDelay });
+
+
+        await this.scheduledPostModel.findByIdAndUpdate(job.data._id, {
+            scheduledTime: newScheduledTime,
+            jobId: newJob.id,
+        });
+
+        return newJob.id;
+    }
 }

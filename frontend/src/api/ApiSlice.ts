@@ -78,6 +78,13 @@ export const apiSlice = createApi({
                 method: 'GET',
             }),
         }),
+        reschedulePost: builder.mutation<void, { jobId: string, reScheduleTime: string }>({
+            query: ({ jobId, reScheduleTime }) => ({
+                url: `${POST_URL}/re-schedule-posts`,
+                method: 'PUT',
+                body: { jobId, scheduledTime: reScheduleTime },
+            }),
+        }),
     }),
 });
 
@@ -92,4 +99,5 @@ export const {
     useFetchHashtagsQuery,
     useUpdateUserNameMutation,
     useFetchSheduledPostsQuery,
+    useReschedulePostMutation,
 } = apiSlice;
