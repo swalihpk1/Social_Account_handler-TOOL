@@ -16,37 +16,6 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useFetchSheduledPostsQuery } from '../../api/ApiSlice';
 import XIcon from '@mui/icons-material/X';
 
-
-// const initialEvents = [
-//     {
-//         id: '1',
-//         title: 'Team Meeting',
-//         start: new Date(),
-//         end: new Date(new Date().setHours(new Date().getHours() + 1)),
-//         extendedProps: {
-//             imageUrl: 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?cs=srgb&dl=pexels-mikebirdy-170811.jpg&fm=jpg',
-//         },
-//     },
-//     {
-//         id: '2',
-//         title: 'Doctor',
-//         start: new Date(new Date().setHours(new Date().getHours() + 1)),
-//         end: new Date(new Date().setHours(new Date().getHours() + 2)),
-//         extendedProps: {
-//             imageUrl: 'https://img-cdn.pixlr.com/image-generator/history/65bb506dcb310754719cf81f/ede935de-1138-4f66-8ed7-44bd16efc709/medium.webp',
-//         },
-//     },
-//     {
-//         id: '3',
-//         title: 'Client',
-//         start: new Date(),
-//         end: new Date(new Date().setHours(new Date().getHours() + 1)),
-//         extendedProps: {
-//             imageUrl: '',
-//         },
-//     },
-// ];
-
 const muiTheme = createTheme({
     palette: {
         background: {
@@ -321,7 +290,6 @@ const FullPageCalendar = () => {
                     className="month-view-event"
                     display="flex"
                     flexDirection="column"
-                    alignItems="center"
                     sx={{
                         padding: '4px',
                         backgroundColor: '#fff',
@@ -331,10 +299,21 @@ const FullPageCalendar = () => {
                         boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
                     }}
                 >
-                    <Stack direction='row' justifyContent='flex-start' alignItems='center' gap={1} sx={{ width: '100%' }}>
-                        {getPlatformIcon(platform)}
-                        <Typography variant="body2" sx={{ fontSize: '0.9rem', fontWeight: 'bold' }}>
-                            {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                    <Stack
+                        direction="column"
+                        spacing={0.5}
+                        sx={{ width: '100%' }}
+                    >
+
+                        <Stack direction="row" alignItems="center" spacing={0.5}>
+                            {getPlatformIcon(platform)}
+                            <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 'bold', lineHeight: 1 }}>
+                                {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                            </Typography>
+                        </Stack>
+
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', lineHeight: 1, margin: ' 1px 1.5rem !important', bgcolor: '#ffa50069', borderRadius: '1rem', padding: '2px 4px' }}>
+                            {event.extendedProps.status}
                         </Typography>
                     </Stack>
 
@@ -345,21 +324,22 @@ const FullPageCalendar = () => {
                             alt="Event"
                             sx={{
                                 width: '100%',
-                                height: '3.5rem',
+                                height: '3rem',
                                 objectFit: 'cover',
                                 borderRadius: '4px',
-                                marginTop: '4px',
+                                marginTop: '2px',
                             }}
                         />
                     )}
 
-                    <Typography className="event-title" fontSize="0.6rem">
+                    <Typography className="event-title" sx={{ fontSize: '0.6rem', lineHeight: 1.2, marginTop: '2px' }}>
                         {truncateText(event.title, 20)}
                     </Typography>
-                    <Typography className="event-time" fontSize="12px" fontWeight='bold' color="text.secondary">
+                    <Typography className="event-time" sx={{ fontSize: '0.6rem', fontWeight: 'bold', color: 'text.secondary', lineHeight: 1 }}>
                         {formatTime(event.start)}
                     </Typography>
                 </Box>
+
             );
         } else if (view.type === 'timeGridWeek') {
             return (
@@ -386,8 +366,11 @@ const FullPageCalendar = () => {
                             alt="Event"
                             sx={{
                                 width: '100%',
-                                minHeight: '60px',
+                                height: '3rem',
                                 objectFit: 'cover',
+                                borderRadius: '7px',
+                                marginTop: '2px',
+                                px: '4px'
                             }}
                         />
                     )}
@@ -447,29 +430,35 @@ const FullPageCalendar = () => {
                             p: 1
                         }}
                     >
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            {getPlatformIcon(platform)}
+                            <Typography variant="body2" sx={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'black' }}>
+                                {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                            </Typography>
+                        </Stack>
+
                         <Box>
-                            <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-                                {getPlatformIcon(platform)}
-                                <Typography variant="body2" sx={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'black' }}>
-                                    {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                                </Typography>
-                            </Stack>
-                            <Typography
-                                className="event-title"
-                                color="black"
-                                sx={{
-                                    fontSize: '0.8rem',
-                                    fontWeight: 'medium',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: 'vertical',
-                                }}
-                            >
-                                {event.title}
+                            <Typography variant="caption" sx={{ fontSize: '0.7rem', lineHeight: 1, color: 'black', bgcolor: '#ffa50069', borderRadius: '1rem', padding: '2px 4px' }}>
+                                {event.extendedProps.status}
                             </Typography>
                         </Box>
+
+
+                        <Typography
+                            className="event-title"
+                            color="black"
+                            sx={{
+                                fontSize: '0.8rem',
+                                fontWeight: 'medium',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                            }}
+                        >
+                            {event.title}
+                        </Typography>
                         <Typography className="event-time" fontSize="0.9rem" fontWeight="bold" color="text.secondary">
                             {formatTime(event.start)}
                         </Typography>

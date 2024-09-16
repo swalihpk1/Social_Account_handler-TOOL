@@ -141,7 +141,7 @@ export class PostController {
             if (file) {
                 imageUrl = await this.postService.uploadImageToS3(file);
             }
-            
+
             const platforms = Object.keys(content);
 
             const scheduledPost = new this.scheduledPostModel({
@@ -153,7 +153,6 @@ export class PostController {
                 status: 'scheduled',
             });
 
-            console.log("Scheduled post", scheduledPost);
             await scheduledPost.save();
 
             const jobData = {
@@ -164,7 +163,11 @@ export class PostController {
                 socialAccessTokens,
                 scheduledTime,
             };
-            await this.bullQueueService.addPostToQueue(jobData);
+
+            const jobId = await this.bullQueueService.addPostToQueue(jobData);
+
+            scheduledPost.jobId = jobId;
+            await scheduledPost.save();
 
             return res.status(HttpStatus.CREATED).json({ message: 'Post successfully scheduled.' });
         } catch (error) {

@@ -30,6 +30,9 @@ export class ScheduledPost {
 
     @Prop({ type: String, default: 'scheduled' })
     status: string;
+
+    @Prop({ type: String, required: false })
+    jobId: string;
 }
 
 export const ScheduledPostSchema = SchemaFactory.createForClass(ScheduledPost);

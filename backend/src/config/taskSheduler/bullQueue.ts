@@ -71,8 +71,10 @@ export class BullQueueService {
             throw new Error("Scheduled time must be in the future.");
         }
 
-        await this.postScheduleQueue.add('postSchedule', data, { delay });
+        const job = await this.postScheduleQueue.add('postSchedule', data, { delay });
 
         console.log("Job added to queue with delay:", delay);
+        return job.id;
     }
+
 }
