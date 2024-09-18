@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { ThemeProvider as MUIThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText } from '@mui/material';
+import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText, Drawer, Paper } from '@mui/material';
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
@@ -15,7 +15,14 @@ import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useFetchSheduledPostsQuery, useReschedulePostMutation } from '../../api/ApiSlice';
 import XIcon from '@mui/icons-material/X';
+import CloseIcon from '@mui/icons-material/Close';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import FacebookPreview from './FacebookPreview';
+import LinkedInPreview from './LinkedInPreview';
+import XPreview from './XPreview';
+import InstagramPreview from './InstagramPreview';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../app/store';
 
 const muiTheme = createTheme({
     palette: {
@@ -25,136 +32,9 @@ const muiTheme = createTheme({
     },
 });
 
-const CustomToolbar = ({
-    currentView, onViewChange, onPrev, onNext, onMonthChange, onYearChange, selectedMonth, selectedYear, selectedDate
-}) => {
-    const yearRange = [2023, 2024, 2025];
-    const months = Array.from({ length: 12 }, (_, i) => new Date(0, i).toLocaleString('default', { month: 'long' }));
-
-    return (
-        <Box sx={{ backgroundColor: '#fff' }}>
-            <Box sx={{ borderBottom: '1px solid #e0e0e0', padding: 1 }}>
-                <Typography variant="h6" fontWeight='bold'>Calendar</Typography>
-            </Box>
-
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, backgroundColor: '#fff' }}>
-
-                <FormControl sx={{ minWidth: 120, maxWidth: 170 }}>
-                    <Select defaultValue="" displayEmpty size="small" sx={{ background: '#C3CBD8', borderRadius: '2rem', color: '#203170' }}>
-                        <MenuItem value="">Social accounts</MenuItem>
-                        <MenuItem value="facebook">Facebook</MenuItem>
-                        <MenuItem value="instagram">Instagram</MenuItem>
-                        <MenuItem value="linkedin">LinkedIn</MenuItem>
-                    </Select>
-                </FormControl>
-
-                <Divider orientation="vertical" flexItem />
-
-
-                <FormControl sx={{ minWidth: 100, maxWidth: 140 }}>
-                    <Select value={selectedMonth} onChange={onMonthChange} size="small" sx={{ background: '#C3CBD8', borderRadius: '2rem', color: '#203170' }}>
-                        {months.map((month, index) => (
-                            <MenuItem key={index} value={index}>{month}</MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-
-                <Divider orientation="vertical" flexItem />
-
-                <FormControl sx={{ minWidth: 80, maxWidth: 100 }}>
-                    <Select value={selectedYear} onChange={onYearChange} size="small" sx={{ background: '#C3CBD8', borderRadius: '2rem', color: '#203170' }}>
-                        {yearRange.map((year) => (
-                            <MenuItem key={year} value={year}>{year}</MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-
-                <Divider orientation="vertical" flexItem />
-
-
-
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                    <IconButton onClick={onPrev} size="small"><ArrowBackIosNewIcon fontSize="small" /></IconButton>
-                    <Box sx={{ textAlign: 'center', minWidth: 150 }}>
-                        <Typography variant="h6" fontWeight='bold'>
-                            {`${new Date(selectedDate).toLocaleString('default', { month: 'long' })} ${new Date(selectedDate).getFullYear()}`}
-                        </Typography>
-                    </Box>
-                    <IconButton onClick={onNext} size="small"><ArrowForwardIosIcon fontSize="small" /></IconButton>
-                </Box>
-
-                <Divider orientation="vertical" flexItem />
-
-                <FormControl sx={{ minWidth: 120, maxWidth: 130 }}>
-                    <Select defaultValue="" displayEmpty size="small" sx={{ background: '#C3CBD8', borderRadius: '2rem', color: '#203170' }}>
-                        <MenuItem value="">All posts</MenuItem>
-                        <MenuItem value="facebook">Drafts</MenuItem>
-                    </Select>
-                </FormControl>
-
-                <Divider orientation="vertical" flexItem />
-
-                <Box sx={{ display: 'flex', gap: 1, background: '#C3CBD8' }}>
-                    <IconButton
-                        onClick={() => onViewChange('dayGridMonth')}
-                        size="small"
-                        sx={{
-                            backgroundColor: currentView === 'dayGridMonth' ? '#203170' : 'transparent',
-                            color: currentView === 'dayGridMonth' ? '#fff' : 'inherit',
-                            borderRadius: '0',
-                            '&:hover': { backgroundColor: '#2031703d' }
-                        }}
-                    >
-                        <CalendarViewMonthIcon fontSize="small" />
-                    </IconButton>
-
-                    <IconButton
-                        onClick={() => onViewChange('timeGridWeek')}
-                        size="small"
-                        sx={{
-                            backgroundColor: currentView === 'timeGridWeek' ? '#203170' : 'transparent',
-                            color: currentView === 'timeGridWeek' ? '#fff' : 'inherit',
-                            borderRadius: '0',
-                            '&:hover': { backgroundColor: '#2031703d' }
-                        }}
-                    >
-                        <CalendarViewWeekIcon fontSize="small" />
-                    </IconButton>
-
-                    <IconButton
-                        onClick={() => onViewChange('timeGridDay')}
-                        size="small"
-                        sx={{
-                            backgroundColor: currentView === 'timeGridDay' ? '#203170' : 'transparent',
-                            color: currentView === 'timeGridDay' ? '#fff' : 'inherit',
-                            borderRadius: '0',
-                            '&:hover': { backgroundColor: '#2031703d' }
-                        }}
-                    >
-                        <CalendarViewDayIcon fontSize="small" />
-                    </IconButton>
-                </Box>
-
-                <Divider orientation="vertical" flexItem />
-
-                <FormControl sx={{ minWidth: 120, maxWidth: 150 }}>
-                    <Select defaultValue="" displayEmpty size="small" sx={{ background: '#C3CBD8', borderRadius: '2rem', color: '#203170' }}>
-                        <MenuItem value="">Post status</MenuItem>
-                        <MenuItem value="active">Active</MenuItem>
-                        <MenuItem value="inactive">Inactive</MenuItem>
-                    </Select>
-                </FormControl>
-
-            </Box>
-
-        </Box>
-    );
-};
-
 
 const FullPageCalendar = () => {
     const [events, setEvents] = useState([]);
-    const [showEventDetails, setShowEventDetails] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [calendarApi, setCalendarApi] = useState(null);
     const [currentView, setCurrentView] = useState('dayGridMonth');
@@ -162,9 +42,20 @@ const FullPageCalendar = () => {
     const [openConfirmModal, setOpenConfirmModal] = useState(false);
     const [rescheduleInfo, setRescheduleInfo] = useState(null);
     const [draggingEvent, setDraggingEvent] = useState(null);
+    const [openPreviewDrawer, setOpenPreviewDrawer] = useState(false);
+    const calendarRef = useRef(null);
 
-    const { data, isLoading, error } = useFetchSheduledPostsQuery(undefined);
+
+    const { data } = useFetchSheduledPostsQuery(undefined);
     const [reschedulePost] = useReschedulePostMutation();
+    const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+
+    const userSocialAccounts = Object.entries(userInfo?.socialAccounts || {}).map(([provider, { profileName, profilePicture, userPages }]) => ({
+        provider,
+        profileName,
+        profilePicture,
+        userPages,
+    }));
 
 
     console.log("DAta", data);
@@ -172,18 +63,22 @@ const FullPageCalendar = () => {
     useEffect(() => {
         if (data) {
             const formattedEvents = data.flatMap((post) =>
-                post.platforms.map((platform) => ({
-                    id: `${post._id}-${platform}`,
-                    title: post.content[platform] || Object.values(post.content)[0],
-                    start: new Date(post.scheduledTime),
-                    extendedProps: {
-                        imageUrl: post.image,
-                        platform: platform,
-                        userId: post.userId,
-                        status: post.status,
-                        jobId: post.jobId, 
-                    },
-                }))
+                post.platforms.map((platform) => {
+                    const platformContent = post.content[platform] || '';
+
+                    return {
+                        id: `${post._id}-${platform}`,
+                        title: platformContent || Object.values(post.content)[0] || 'No content available',
+                        start: new Date(post.scheduledTime),
+                        extendedProps: {
+                            imageUrl: post.image,
+                            platform: platform,
+                            userId: post.userId,
+                            status: post.status,
+                            jobId: post.jobId,
+                        },
+                    };
+                })
             );
             console.log("Events", formattedEvents);
             setEvents(formattedEvents);
@@ -191,19 +86,34 @@ const FullPageCalendar = () => {
     }, [data]);
 
     useEffect(() => {
-        if (calendarApi) {
-            updateToolbarState(calendarApi.getDate());
+        if (calendarRef.current) {
+            setCalendarApi(calendarRef.current.getApi());
         }
-    }, [calendarApi]);
+    }, []);
+
+
+    useEffect(() => {
+        if (calendarApi) {
+            setTimeout(() => {
+                calendarApi.updateSize();
+            }, 400);
+        }
+    }, [openPreviewDrawer, calendarApi]);
 
     const updateToolbarState = (date) => {
         setSelectedDate(date);
     };
 
-    const handleEventClick = ({ event }) => {
-        setSelectedEvent(event);
-        setShowEventDetails(true);
+    const handleEventClick = (eventInfo) => {
+        setSelectedEvent(eventInfo.event);
+        setOpenPreviewDrawer(true);
     };
+
+    const handleClosePreviewDrawer = () => {
+        setOpenPreviewDrawer(false);
+        setSelectedEvent(null);
+    };
+
 
     const handleEventDragStart = (info) => {
         setDraggingEvent(info.event);
@@ -229,7 +139,6 @@ const FullPageCalendar = () => {
                 })
                 .catch((error) => {
                     console.error('Error rescheduling post:', error);
-                    // Revert the event to its original position
                     if (calendarApi) {
                         const event = calendarApi.getEventById(rescheduleInfo.originalEvent.id);
                         event.setStart(rescheduleInfo.originalEvent.start);
@@ -290,6 +199,38 @@ const FullPageCalendar = () => {
             calendarApi.gotoDate(date);
         }
     };
+    
+    const formatTime = (date) => {
+        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+    };
+
+    const renderEventPreview = () => {
+        if (!selectedEvent) return null;
+
+        console.log('selectedEvent', selectedEvent)
+
+        const account = userSocialAccounts.find(acc => acc.provider === selectedEvent.extendedProps.platform);
+        const eventData = {
+            text: selectedEvent.title,
+            account: account || { provider: selectedEvent.extendedProps.platform, profileName: 'User Name' },
+            selectedLocalImage: null,
+            selectedLibraryImage: selectedEvent.extendedProps.imageUrl ? { src: selectedEvent.extendedProps.imageUrl, alt: 'Event Image' } : null,
+            shortenedLinks: [],
+        };
+
+        switch (selectedEvent.extendedProps.platform) {
+            case 'facebook':
+                return <FacebookPreview {...eventData} />;
+            case 'linkedin':
+                return <LinkedInPreview {...eventData} />;
+            case 'twitter':
+                return <XPreview {...eventData} />;
+            case 'instagram':
+                return <InstagramPreview {...eventData} />;
+            default:
+                return null;
+        }
+    };
 
     const renderEventContent = (eventInfo) => {
         const { event, view } = eventInfo;
@@ -310,10 +251,7 @@ const FullPageCalendar = () => {
             }
         };
 
-        const formatTime = (date) => {
-            return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
-        };
-
+        
         const truncateText = (text, maxLength) => {
             return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
         };
@@ -346,7 +284,7 @@ const FullPageCalendar = () => {
                             </Typography>
                         </Stack>
 
-                        <Typography variant="caption" sx={{ fontSize: '0.7rem', lineHeight: 1, margin: ' 1px 1.5rem !important', bgcolor: '#ffa50069', borderRadius: '1rem', padding: '2px 4px' }}>
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', lineHeight: 1, margin: ' 1px 3rem !important', bgcolor: '#ffa50069', borderRadius: '1rem', padding: '2px 4px' }}>
                             {event.extendedProps.status}
                         </Typography>
                     </Stack>
@@ -502,6 +440,159 @@ const FullPageCalendar = () => {
         }
     };
 
+    const CustomToolbar = ({
+        currentView, onViewChange, onPrev, onNext, onMonthChange, onYearChange, selectedMonth, selectedYear, selectedDate
+    }) => {
+        const yearRange = [2023, 2024, 2025];
+        const months = Array.from({ length: 12 }, (_, i) => new Date(0, i).toLocaleString('default', { month: 'long' }));
+
+        return (
+            <Box sx={{ backgroundColor: '#fff' }}>
+                <Box sx={{ borderBottom: '1px solid #e0e0e0', padding: 1 }}>
+                    <Typography variant="h6" fontWeight='bold'>Calendar</Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, backgroundColor: '#fff' }}>
+
+                    <FormControl sx={{ minWidth: 120, maxWidth: 170 }}>
+                        <Select defaultValue="" displayEmpty size="small"
+                            sx={{
+                                background: '#C3CBD8', borderRadius: '2rem', color: '#203170',
+                                '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                            }}
+                        >
+                            <MenuItem value="">Social accounts</MenuItem>
+                            <MenuItem value="facebook">Facebook</MenuItem>
+                            <MenuItem value="instagram">Instagram</MenuItem>
+                            <MenuItem value="linkedin">LinkedIn</MenuItem>
+                        </Select>
+                    </FormControl>
+
+                    <Divider orientation="vertical" flexItem />
+
+
+                    <FormControl sx={{ minWidth: 100, maxWidth: 140 }}>
+                        <Select value={selectedMonth} onChange={onMonthChange} size="small" sx={{
+                            background: '#C3CBD8', borderRadius: '2rem', color: '#203170',
+                            '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                            '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                        }}>
+                            {months.map((month, index) => (
+                                <MenuItem key={index} value={index}>{month}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <Divider orientation="vertical" flexItem />
+
+                    <FormControl sx={{ minWidth: 80, maxWidth: 100 }}>
+                        <Select value={selectedYear} onChange={onYearChange} size="small" sx={{
+                            background: '#C3CBD8', borderRadius: '2rem', color: '#203170',
+                            '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                            '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                        }}>
+                            {yearRange.map((year) => (
+                                <MenuItem key={year} value={year}>{year}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <Divider orientation="vertical" flexItem />
+
+
+
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                        <IconButton onClick={onPrev} size="small"><ArrowBackIosNewIcon fontSize="small" /></IconButton>
+                        <Box sx={{ textAlign: 'center', minWidth: 150 }}>
+                            <Typography variant="h6" fontWeight='bold'>
+                                {`${new Date(selectedDate).toLocaleString('default', { month: 'long' })} ${new Date(selectedDate).getFullYear()}`}
+                            </Typography>
+                        </Box>
+                        <IconButton onClick={onNext} size="small"><ArrowForwardIosIcon fontSize="small" /></IconButton>
+                    </Box>
+
+                    <Divider orientation="vertical" flexItem />
+
+                    <FormControl sx={{ minWidth: 120, maxWidth: 130 }}>
+                        <Select defaultValue="" displayEmpty size="small" sx={{
+                            background: '#C3CBD8', borderRadius: '2rem', color: '#203170',
+                            '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                            '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                        }}>
+                            <MenuItem value="">All posts</MenuItem>
+                            <MenuItem value="facebook">Drafts</MenuItem>
+                        </Select>
+                    </FormControl>
+
+                    <Divider orientation="vertical" flexItem />
+
+                    <Box sx={{ display: 'flex', gap: 1, background: '#C3CBD8' }}>
+                        <IconButton
+                            onClick={() => onViewChange('dayGridMonth')}
+                            size="small"
+                            sx={{
+                                backgroundColor: currentView === 'dayGridMonth' ? '#203170' : 'transparent',
+                                color: currentView === 'dayGridMonth' ? '#fff' : 'inherit',
+                                borderRadius: '0',
+                                '&:hover': { backgroundColor: '#2031703d' }
+                            }}
+                        >
+                            <CalendarViewMonthIcon fontSize="small" />
+                        </IconButton>
+
+                        <IconButton
+                            onClick={() => onViewChange('timeGridWeek')}
+                            size="small"
+                            sx={{
+                                backgroundColor: currentView === 'timeGridWeek' ? '#203170' : 'transparent',
+                                color: currentView === 'timeGridWeek' ? '#fff' : 'inherit',
+                                borderRadius: '0',
+                                '&:hover': { backgroundColor: '#2031703d' }
+                            }}
+                        >
+                            <CalendarViewWeekIcon fontSize="small" />
+                        </IconButton>
+
+                        <IconButton
+                            onClick={() => onViewChange('timeGridDay')}
+                            size="small"
+                            sx={{
+                                backgroundColor: currentView === 'timeGridDay' ? '#203170' : 'transparent',
+                                color: currentView === 'timeGridDay' ? '#fff' : 'inherit',
+                                borderRadius: '0',
+                                '&:hover': { backgroundColor: '#2031703d' }
+                            }}
+                        >
+                            <CalendarViewDayIcon fontSize="small" />
+                        </IconButton>
+                    </Box>
+
+                    <Divider orientation="vertical" flexItem />
+
+                    <FormControl sx={{ minWidth: 120, maxWidth: 150 }}>
+                        <Select defaultValue="" displayEmpty size="small" sx={{
+                            background: '#C3CBD8', borderRadius: '2rem', color: '#203170',
+                            '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                            '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                        }}>
+                            <MenuItem value="">Post status</MenuItem>
+                            <MenuItem value="active">Active</MenuItem>
+                            <MenuItem value="inactive">Inactive</MenuItem>
+                        </Select>
+                    </FormControl>
+
+                </Box>
+
+            </Box>
+        );
+    };
+
     const renderDayHeader = (info) => {
         if (info.view.type === 'timeGridWeek') {
             return (
@@ -538,118 +629,209 @@ const FullPageCalendar = () => {
         return info.text;
     };
 
+
     return (
         <MUIThemeProvider theme={muiTheme}>
             <CssBaseline />
-            <Box sx={{ height: '100vh', background: '#ffff' }}>
-                <CustomToolbar
-                    currentView={currentView}
-                    onViewChange={handleViewChange}
-                    onPrev={handlePrev}
-                    onNext={handleNext}
-                    onMonthChange={handleMonthChange}
-                    onYearChange={handleYearChange}
-                    selectedMonth={selectedDate.getMonth()}
-                    selectedYear={selectedDate.getFullYear()}
-                    selectedDate={selectedDate}
-                />
-                <FullCalendar
-                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                    initialView={currentView}
-                    editable
-                    events={events}
-                    eventClick={handleEventClick}
-                    eventDragStart={handleEventDragStart}
-                    eventDrop={handleEventDrop}
-                    headerToolbar={false}
-                    eventContent={renderEventContent}
-                    dayHeaderContent={renderDayHeader}
-                    eventOverlap={true}
-                    slotMinTime="06:00:00"
-                    slotMaxTime="22:00:00"
-                    height="auto"
-                    contentHeight="auto"
-                    slotLabelFormat={{
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        meridiem: 'short',
-                    }}
-                    eventTimeFormat={{
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        meridiem: 'short',
-                    }}
-                    views={{
-                        timeGridDay: {
-                            allDaySlot: false,
-                            slotDuration: '01:00:00',
-                            snapDuration: '00:05:00',
-                            slotEventOverlap: true,
-                            slotEventGap: false,
-                        },
-                        timeGridWeek: {
-                            allDaySlot: false,
-                            slotDuration: '01:00:00',
-                            snapDuration: '00:05:00',
-                            slotEventOverlap: true,
-                        },
-                    }}
-                    ref={(el) => {
-                        if (el) setCalendarApi(el.getApi());
-                    }}
-                    datesSet={(dateInfo) => {
-                        updateToolbarState(dateInfo.start);
-                    }}
-                />
+            <Box sx={{
+                display: 'flex',
+                height: '100vh',
+                width: '94.5vw',
+                position: 'fixed',
+                overflow: 'hidden',
+                backgroundColor: 'background.paper'
+            }}>
+                <Box sx={{
+                    flexGrow: 1,
+                    transition: 'width 0.3s ease',
+                    width: '94.5vw',
+                    height: '100%',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    <CustomToolbar
+                        currentView={currentView}
+                        onViewChange={handleViewChange}
+                        onPrev={handlePrev}
+                        onNext={handleNext}
+                        onMonthChange={handleMonthChange}
+                        onYearChange={handleYearChange}
+                        selectedMonth={selectedDate.getMonth()}
+                        selectedYear={selectedDate.getFullYear()}
+                        selectedDate={selectedDate}
+                    />
+                    <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                        <FullCalendar
+                            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                            initialView={currentView}
+                            editable
+                            events={events}
+                            eventClick={handleEventClick}
+                            eventDragStart={handleEventDragStart}
+                            eventDrop={handleEventDrop}
+                            headerToolbar={false}
+                            eventContent={renderEventContent}
+                            dayHeaderContent={renderDayHeader}
+                            eventOverlap={true}
+                            slotMinTime="06:00:00"
+                            slotMaxTime="22:00:00"
+                            height="100%"
+                            slotLabelFormat={{
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                meridiem: 'short',
+                            }}
+                            eventTimeFormat={{
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                meridiem: 'short',
+                            }}
+                            views={{
+                                timeGridDay: {
+                                    allDaySlot: false,
+                                    slotDuration: '01:00:00',
+                                    snapDuration: '00:05:00',
+                                    slotEventOverlap: true,
+                                    slotEventGap: false,
+                                },
+                                timeGridWeek: {
+                                    allDaySlot: false,
+                                    slotDuration: '01:00:00',
+                                    snapDuration: '00:05:00',
+                                    slotEventOverlap: true,
+                                },
+                            }}
+                            ref={calendarRef}
+                            datesSet={(dateInfo) => {
+                                updateToolbarState(dateInfo.start);
+                            }}
+                        />
+                    </Box>
+                </Box>
 
-                <Dialog
-                    open={openConfirmModal}
-                    onClose={handleCancelReschedule}
-                    PaperProps={{
-                        sx: {
-                            borderRadius: 2,
-                            boxShadow: 3,
-                        }
-                    }}
-                >
-                    <DialogTitle sx={{
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        padding: 1,
-                        background:'#43528C'
-                    }}>
-                        <CalendarTodayIcon />
-                        <Typography variant="h6">Reschedule Post</Typography>
-                    </DialogTitle>
-                    <DialogContent sx={{ pt: 2 }}>
-                        <DialogContentText>
-                            Are you sure you want to reschedule this post?
-                        </DialogContentText>
-                    </DialogContent>
-                    <DialogActions sx={{ px: 3, pb: 2 }}>
-                        <Button
-                            onClick={handleCancelReschedule}
-                            color="inherit"
-                            variant="outlined"
-                            sx={{ borderRadius: 28 }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={handleConfirmReschedule}
-                            color="primary"
-                            variant="contained"
-                            autoFocus
-                            sx={{ borderRadius: 28 }}
-                        >
-                            Confirm
-                        </Button>
-                    </DialogActions>
-                </Dialog>
+                <Box sx={{
+                    width: openPreviewDrawer ? '600px' : '0px',
+                    transition: 'width .7s ease, opacity 0.3s ease',
+                    opacity: openPreviewDrawer ? 1 : 0,
+                    borderLeft: openPreviewDrawer ? '1px solid #e0e0e0' : 'none',
+                    backgroundColor: 'background.default',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}>
+                    {openPreviewDrawer && (
+                        <>
+                            <Box sx={{ borderBottom: '1px solid #e0e0e0', background: '#dedede', flexGrow: 1 }}>
+                                <Stack direction="row" justifyContent="space-between" alignItems="center" bgcolor='#cec6d9'>
+                                    <Box sx={{ borderBottom: '1px solid #e0e0e0', padding: 1 }}>
+                                        <Stack direction='row' gap={1} sx={{ alignItems: 'center', p: '0px' }}>
+                                            <CalendarTodayIcon sx={{ background: 'white', borderRadius: '10px', padding: '3px' }} />
+                                            <Typography variant='h6'>Scheduled</Typography>
+                                        </Stack>
+                                    </Box>
+                                    <IconButton onClick={handleClosePreviewDrawer}>
+                                        <CloseIcon />
+                                    </IconButton>
+                                </Stack>
+
+                                <Stack direction='row' gap={2} sx={{ p: '2rem 2rem 0rem' }}>
+                                    <Button
+                                        variant="contained"
+                                        sx={{
+                                            background: '#C3CBD8', borderRadius: '2rem', color: '#203170', textTransform: 'none', boxShadow: 'none',
+                                            '&:hover': {
+                                                background: '#A9B2C0',
+                                                boxShadow: 'none',
+                                            },
+                                        }}
+                                    >
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        sx={{
+                                            background: '#C3CBD8', borderRadius: '2rem', color: '#203170', textTransform: 'none', boxShadow: 'none',
+                                            '&:hover': {
+                                                background: '#A9B2C0',
+                                                boxShadow: 'none',
+                                            },
+                                        }}
+                                    >
+                                        Delete
+                                    </Button>
+                                </Stack>
+
+                                <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+                                    {renderEventPreview()}
+                                </Box>
+
+                                {/* Display Scheduled Time */}
+                                <Box p='0 2rem'>
+                                    <Typography fontWeight='bold'>
+                                        Details
+                                    </Typography>
+                                    <Typography fontSize='12px'>
+                                        Scheduled Time:
+                                    </Typography>
+                                    <Typography fontSize='12px'>
+                                        {selectedEvent && selectedEvent.start ? formatTime(new Date(selectedEvent.start)) : 'No time available'}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </>
+                    )}
+                </Box>
+
             </Box>
+
+            <Dialog
+                open={openConfirmModal}
+                onClose={handleCancelReschedule}
+                PaperProps={{
+                    sx: {
+                        borderRadius: 2,
+                        boxShadow: 3,
+                    }
+                }}
+            >
+                <DialogTitle sx={{
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    padding: 1,
+                    background: '#43528C'
+                }}>
+                    <CalendarTodayIcon />
+                    <Typography variant="h6">Reschedule Post</Typography>
+                </DialogTitle>
+                <DialogContent sx={{ pt: 2 }}>
+                    <DialogContentText>
+                        Are you sure you want to reschedule this post?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button
+                        onClick={handleCancelReschedule}
+                        color="inherit"
+                        variant="outlined"
+                        sx={{ borderRadius: 28 }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleConfirmReschedule}
+                        color="primary"
+                        variant="contained"
+                        autoFocus
+                        sx={{ borderRadius: 28 }}
+                    >
+                        Confirm
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             <style jsx global>{`
                 .fc-timegrid-slot {
@@ -685,10 +867,9 @@ const FullPageCalendar = () => {
                 .fc-timeGridDay-view .fc-col-header-cell {
                     background-color: inherit;
                     color: inherit;
-
                 }
             `}</style>
-        </MUIThemeProvider>
+        </MUIThemeProvider >
     );
 };
 

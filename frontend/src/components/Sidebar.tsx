@@ -16,7 +16,7 @@ const reducedDrawerWidth = 80;
 const expandedDrawerWidth = 400;
 
 const Sidebar: React.FC<any> = ({ setOpen }) => {
-    const [open, setOpenState] = useState(true);
+    const [open, setOpenState] = useState(false); // Set to false for initially reduced width
     const [profileView, setProfileView] = useState(false);
 
     const handleDrawerToggle = () => {
@@ -81,9 +81,8 @@ const Sidebar: React.FC<any> = ({ setOpen }) => {
                         <ProfileDetails onClose={handleCloseProfileView} />
                     )}
                 </Box>
-
             </Box>
-            {/* Bottom Box */}
+
             <Box sx={{ width: '100%' }}>
                 <List sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     {!profileView && (
