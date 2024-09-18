@@ -177,18 +177,25 @@ export class PostController {
     }
 
 
-    @Get('sheduled-posts')
+    @Get('fetch-all-posts')
     async getScheduledPosts(@Res() res: Response) {
         try {
             const userId = this.globalStateService.getUserId();
             console.log('userId', userId);
+
             const scheduledPosts = await this.scheduledPostModel.find({ userId }).exec();
-            console.log("sheduled post", scheduledPosts);
-            return res.status(HttpStatus.OK).json(scheduledPosts);
+            console.log('Scheduled posts', scheduledPosts);
+
+            const postedPosts = await this.postModel.find({ userId }).exec();
+            console.log('Posted posts', postedPosts);
+
+            const mergedPosts = [...scheduledPosts, ...postedPosts];
+
+            return res.status(HttpStatus.OK).json(mergedPosts);
         } catch (error) {
-            console.error('Error fetching scheduled posts:', error.message);
+            console.error('Error fetching posts:', error.message);
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-                message: 'Error fetching scheduled posts',
+                message: 'Error fetching posts',
                 error: error.message,
             });
         }

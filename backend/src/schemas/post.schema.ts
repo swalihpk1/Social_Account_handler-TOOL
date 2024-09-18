@@ -25,6 +25,9 @@ export class Post {
     @Prop({ type: String })
     image: string;
 
+    @Prop({ type: String, default: 'posted' })
+    status: string;
+
     @Prop({ type: Date, default: Date.now })
     timestamp: Date;
 }

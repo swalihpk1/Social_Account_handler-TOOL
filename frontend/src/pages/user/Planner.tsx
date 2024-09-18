@@ -6,6 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { ThemeProvider as MUIThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText, Drawer, Paper } from '@mui/material';
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
+import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import CalendarViewMonthIcon from '@mui/icons-material/CalendarViewMonth';
@@ -13,7 +14,7 @@ import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek';
 import CalendarViewDayIcon from '@mui/icons-material/CalendarViewDay';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import { useFetchSheduledPostsQuery, useReschedulePostMutation } from '../../api/ApiSlice';
+import { useFetchPostsQuery, useReschedulePostMutation } from '../../api/ApiSlice';
 import XIcon from '@mui/icons-material/X';
 import CloseIcon from '@mui/icons-material/Close';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -46,7 +47,7 @@ const FullPageCalendar = () => {
     const calendarRef = useRef(null);
 
 
-    const { data } = useFetchSheduledPostsQuery(undefined);
+    const { data } = useFetchPostsQuery(undefined);
     const [reschedulePost] = useReschedulePostMutation();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
 
@@ -62,26 +63,49 @@ const FullPageCalendar = () => {
 
     useEffect(() => {
         if (data) {
-            const formattedEvents = data.flatMap((post) =>
-                post.platforms.map((platform) => {
+            const formattedEvents = data.flatMap((post) => {
+                const isScheduled = post.status === 'scheduled';
+
+                if (isScheduled) {
+                    return post.platforms.map((platform) => {
+                        const platformContent = post.content[platform] || '';
+
+                        return {
+                            id: `${post._id}-${platform}`,
+                            title: platformContent || 'No content available',
+                            start: new Date(post.scheduledTime),
+                            extendedProps: {
+                                imageUrl: post.image,
+                                platform: platform,
+                                userId: post.userId,
+                                status: post.status,
+                                jobId: post.jobId,
+                            },
+                        };
+                    });
+                }
+
+                return post.platforms.map((platformObj) => {
+                    const platform = platformObj.platform;
                     const platformContent = post.content[platform] || '';
 
                     return {
                         id: `${post._id}-${platform}`,
-                        title: platformContent || Object.values(post.content)[0] || 'No content available',
-                        start: new Date(post.scheduledTime),
+                        title: platformContent || 'No content available',
+                        start: new Date(post.timestamp),
                         extendedProps: {
                             imageUrl: post.image,
                             platform: platform,
                             userId: post.userId,
                             status: post.status,
-                            jobId: post.jobId,
+                            response: platformObj.response,
                         },
                     };
-                })
-            );
-            console.log("Events", formattedEvents);
-            setEvents(formattedEvents);
+                });
+            });
+
+            console.log("Formatted Events", formattedEvents);
+            setEvents((prevEvents) => [...prevEvents, ...formattedEvents]);
         }
     }, [data]);
 
@@ -116,10 +140,19 @@ const FullPageCalendar = () => {
 
 
     const handleEventDragStart = (info) => {
+        if (info.event.extendedProps.status === 'posted') {
+            return;
+        }
         setDraggingEvent(info.event);
     };
 
     const handleEventDrop = (info) => {
+
+        if (info.event.extendedProps.status === 'posted') {
+            info.revert();
+            return;
+        }
+
         const jobId = info.event.extendedProps.jobId;
         const reScheduleTime = info.event.start;
 
@@ -199,7 +232,7 @@ const FullPageCalendar = () => {
             calendarApi.gotoDate(date);
         }
     };
-    
+
     const formatTime = (date) => {
         return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
     };
@@ -251,7 +284,7 @@ const FullPageCalendar = () => {
             }
         };
 
-        
+
         const truncateText = (text, maxLength) => {
             return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
         };
@@ -284,7 +317,10 @@ const FullPageCalendar = () => {
                             </Typography>
                         </Stack>
 
-                        <Typography variant="caption" sx={{ fontSize: '0.7rem', lineHeight: 1, margin: ' 1px 3rem !important', bgcolor: '#ffa50069', borderRadius: '1rem', padding: '2px 4px' }}>
+                        <Typography variant="caption" sx={{
+                            fontSize: '0.7rem', lineHeight: 1, borderRadius: '1rem', padding: '2px 4px',
+                            margin: event.extendedProps.status === 'posted' ? '1px 4rem !important' : '1px 3rem !important', bgcolor: event.extendedProps.status === 'posted' ? '#00c60073' : '#ffa50069'
+                        }}>
                             {event.extendedProps.status}
                         </Typography>
                     </Stack>
@@ -331,6 +367,15 @@ const FullPageCalendar = () => {
                             {platform.charAt(0).toUpperCase() + platform.slice(1)}
                         </Typography>
                     </Stack>
+
+
+                    <Typography variant="caption" sx={{
+                        fontSize: '0.7rem', lineHeight: 1, borderRadius: '1rem', padding: '2px 4px',
+                        margin: event.extendedProps.status === 'posted' ? '1px 4rem !important' : '1px 3rem !important', bgcolor: event.extendedProps.status === 'posted' ? '#00c60073' : '#ffa50069'
+                    }}>
+                        {event.extendedProps.status}
+                    </Typography>
+
                     {event.extendedProps.imageUrl && (
                         <Box
                             component="img"
@@ -361,6 +406,7 @@ const FullPageCalendar = () => {
                         >
                             {event.title}
                         </Typography>
+
                         <Typography className="event-time" fontSize="12px" fontWeight='bold' color="text.secondary">
                             {formatTime(event.start)}
                         </Typography>
@@ -441,23 +487,40 @@ const FullPageCalendar = () => {
     };
 
     const CustomToolbar = ({
-        currentView, onViewChange, onPrev, onNext, onMonthChange, onYearChange, selectedMonth, selectedYear, selectedDate
+        currentView, onViewChange, onPrev, onNext, onMonthChange, onYearChange,
+        selectedMonth, selectedYear, selectedDate, isPreviewOpen
     }) => {
         const yearRange = [2023, 2024, 2025];
         const months = Array.from({ length: 12 }, (_, i) => new Date(0, i).toLocaleString('default', { month: 'long' }));
 
+        const containerStyle = {
+            padding: isPreviewOpen ? 1 : 2,
+            fontSize: isPreviewOpen ? '0.9rem' : '1rem',
+        };
+
+        const selectStyle = {
+            minWidth: isPreviewOpen ? 80 : 120,
+            maxWidth: isPreviewOpen ? 130 : 170,
+            fontSize: isPreviewOpen ? '0.8rem' : '1rem',
+        };
+
         return (
             <Box sx={{ backgroundColor: '#fff' }}>
                 <Box sx={{ borderBottom: '1px solid #e0e0e0', padding: 1 }}>
-                    <Typography variant="h6" fontWeight='bold'>Calendar</Typography>
+                    <Typography variant="h6" fontWeight='bold' fontSize={isPreviewOpen ? '1.1rem' : '1.25rem'}>Calendar</Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, backgroundColor: '#fff' }}>
-
-                    <FormControl sx={{ minWidth: 120, maxWidth: 170 }}>
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    backgroundColor: '#fff',
+                    ...containerStyle
+                }}>
+                    <FormControl sx={selectStyle}>
                         <Select defaultValue="" displayEmpty size="small"
                             sx={{
-                                background: '#C3CBD8', borderRadius: '2rem', color: '#203170',
+                                background: '#ccdfff', borderRadius: '2rem', color: '#203170',
                                 '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
                                 '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
@@ -472,10 +535,9 @@ const FullPageCalendar = () => {
 
                     <Divider orientation="vertical" flexItem />
 
-
-                    <FormControl sx={{ minWidth: 100, maxWidth: 140 }}>
+                    <FormControl sx={selectStyle}>
                         <Select value={selectedMonth} onChange={onMonthChange} size="small" sx={{
-                            background: '#C3CBD8', borderRadius: '2rem', color: '#203170',
+                            background: '#ccdfff', borderRadius: '2rem', color: '#203170',
                             '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
@@ -488,9 +550,9 @@ const FullPageCalendar = () => {
 
                     <Divider orientation="vertical" flexItem />
 
-                    <FormControl sx={{ minWidth: 80, maxWidth: 100 }}>
+                    <FormControl sx={{ ...selectStyle, minWidth: isPreviewOpen ? 60 : 80, maxWidth: isPreviewOpen ? 80 : 100 }}>
                         <Select value={selectedYear} onChange={onYearChange} size="small" sx={{
-                            background: '#C3CBD8', borderRadius: '2rem', color: '#203170',
+                            background: '#ccdfff', borderRadius: '2rem', color: '#203170',
                             '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
@@ -503,23 +565,21 @@ const FullPageCalendar = () => {
 
                     <Divider orientation="vertical" flexItem />
 
-
-
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                        <IconButton onClick={onPrev} size="small"><ArrowBackIosNewIcon fontSize="small" /></IconButton>
-                        <Box sx={{ textAlign: 'center', minWidth: 150 }}>
-                            <Typography variant="h6" fontWeight='bold'>
+                    <Box sx={{ display: 'flex', gap: isPreviewOpen ? 0.5 : 1 }}>
+                        <IconButton onClick={onPrev} size="small"><ArrowBackIosNewIcon fontSize={isPreviewOpen ? "small" : "medium"} /></IconButton>
+                        <Box sx={{ textAlign: 'center', minWidth: isPreviewOpen ? 120 : 150 }}>
+                            <Typography variant="h6" fontWeight='bold' fontSize={isPreviewOpen ? '0.9rem' : '1rem'}>
                                 {`${new Date(selectedDate).toLocaleString('default', { month: 'long' })} ${new Date(selectedDate).getFullYear()}`}
                             </Typography>
                         </Box>
-                        <IconButton onClick={onNext} size="small"><ArrowForwardIosIcon fontSize="small" /></IconButton>
+                        <IconButton onClick={onNext} size="small"><ArrowForwardIosIcon fontSize={isPreviewOpen ? "small" : "medium"} /></IconButton>
                     </Box>
 
                     <Divider orientation="vertical" flexItem />
 
-                    <FormControl sx={{ minWidth: 120, maxWidth: 130 }}>
+                    <FormControl sx={selectStyle}>
                         <Select defaultValue="" displayEmpty size="small" sx={{
-                            background: '#C3CBD8', borderRadius: '2rem', color: '#203170',
+                            background: '#C3CccdfffBD8', borderRadius: '2rem', color: '#203170',
                             '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
@@ -542,7 +602,7 @@ const FullPageCalendar = () => {
                                 '&:hover': { backgroundColor: '#2031703d' }
                             }}
                         >
-                            <CalendarViewMonthIcon fontSize="small" />
+                            <CalendarViewMonthIcon fontSize={isPreviewOpen ? "small" : "medium"} />
                         </IconButton>
 
                         <IconButton
@@ -555,7 +615,7 @@ const FullPageCalendar = () => {
                                 '&:hover': { backgroundColor: '#2031703d' }
                             }}
                         >
-                            <CalendarViewWeekIcon fontSize="small" />
+                            <CalendarViewWeekIcon fontSize={isPreviewOpen ? "small" : "medium"} />
                         </IconButton>
 
                         <IconButton
@@ -568,15 +628,15 @@ const FullPageCalendar = () => {
                                 '&:hover': { backgroundColor: '#2031703d' }
                             }}
                         >
-                            <CalendarViewDayIcon fontSize="small" />
+                            <CalendarViewDayIcon fontSize={isPreviewOpen ? "small" : "medium"} />
                         </IconButton>
                     </Box>
 
                     <Divider orientation="vertical" flexItem />
 
-                    <FormControl sx={{ minWidth: 120, maxWidth: 150 }}>
+                    <FormControl sx={selectStyle}>
                         <Select defaultValue="" displayEmpty size="small" sx={{
-                            background: '#C3CBD8', borderRadius: '2rem', color: '#203170',
+                            background: '#ccdfff', borderRadius: '2rem', color: '#203170',
                             '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
@@ -586,9 +646,7 @@ const FullPageCalendar = () => {
                             <MenuItem value="inactive">Inactive</MenuItem>
                         </Select>
                     </FormControl>
-
                 </Box>
-
             </Box>
         );
     };
@@ -643,7 +701,6 @@ const FullPageCalendar = () => {
             }}>
                 <Box sx={{
                     flexGrow: 1,
-                    transition: 'width 0.3s ease',
                     width: '94.5vw',
                     height: '100%',
                     overflow: 'hidden',
@@ -660,6 +717,7 @@ const FullPageCalendar = () => {
                         selectedMonth={selectedDate.getMonth()}
                         selectedYear={selectedDate.getFullYear()}
                         selectedDate={selectedDate}
+                        isPreviewOpen={openPreviewDrawer}
                     />
                     <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
                         <FullCalendar
@@ -709,7 +767,6 @@ const FullPageCalendar = () => {
                         />
                     </Box>
                 </Box>
-
                 <Box sx={{
                     width: openPreviewDrawer ? '600px' : '0px',
                     transition: 'width .7s ease, opacity 0.3s ease',
@@ -726,8 +783,14 @@ const FullPageCalendar = () => {
                                 <Stack direction="row" justifyContent="space-between" alignItems="center" bgcolor='#cec6d9'>
                                     <Box sx={{ borderBottom: '1px solid #e0e0e0', padding: 1 }}>
                                         <Stack direction='row' gap={1} sx={{ alignItems: 'center', p: '0px' }}>
-                                            <CalendarTodayIcon sx={{ background: 'white', borderRadius: '10px', padding: '3px' }} />
-                                            <Typography variant='h6'>Scheduled</Typography>
+                                            {selectedEvent && selectedEvent.extendedProps.status === 'posted' ? (
+                                                <PublishedWithChangesIcon sx={{ background: 'white', borderRadius: '10px', padding: '3px' }} />
+                                            ) : (
+                                                <CalendarTodayIcon sx={{ background: 'white', borderRadius: '10px', padding: '3px' }} />
+                                            )}
+                                            <Typography variant='h6'>
+                                                {selectedEvent && selectedEvent.extendedProps.status === 'posted' ? 'Posted' : 'Scheduled'}
+                                            </Typography>
                                         </Stack>
                                     </Box>
                                     <IconButton onClick={handleClosePreviewDrawer}>
@@ -766,13 +829,12 @@ const FullPageCalendar = () => {
                                     {renderEventPreview()}
                                 </Box>
 
-                                {/* Display Scheduled Time */}
                                 <Box p='0 2rem'>
                                     <Typography fontWeight='bold'>
                                         Details
                                     </Typography>
                                     <Typography fontSize='12px'>
-                                        Scheduled Time:
+                                        {selectedEvent && selectedEvent.extendedProps.status === 'posted' ? 'Posted Time:' : 'Scheduled Time:'}
                                     </Typography>
                                     <Typography fontSize='12px'>
                                         {selectedEvent && selectedEvent.start ? formatTime(new Date(selectedEvent.start)) : 'No time available'}
@@ -782,6 +844,8 @@ const FullPageCalendar = () => {
                         </>
                     )}
                 </Box>
+
+
 
             </Box>
 

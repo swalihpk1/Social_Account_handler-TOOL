@@ -72,9 +72,9 @@ export const apiSlice = createApi({
                 body: { name },
             }),
         }),
-        fetchSheduledPosts: builder.query<any, void>({
+        fetchPosts: builder.query<any, void>({
             query: () => ({
-                url: `${POST_URL}/sheduled-posts`,
+                url: `${POST_URL}/fetch-all-posts`,
                 method: 'GET',
             }),
         }),
@@ -98,6 +98,6 @@ export const {
     useGetInstagramAccessTokenQuery,
     useFetchHashtagsQuery,
     useUpdateUserNameMutation,
-    useFetchSheduledPostsQuery,
+    useFetchPostsQuery,
     useReschedulePostMutation,
 } = apiSlice;
