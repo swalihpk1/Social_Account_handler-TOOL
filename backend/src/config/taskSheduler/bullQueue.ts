@@ -11,7 +11,7 @@ import { PostDocument } from 'src/schemas/post.schema';
 @Injectable()
 export class BullQueueService {
     private connection: Redis;
-    private postScheduleQueue: Queue;
+    public postScheduleQueue: Queue;
 
     constructor(
         private readonly postService: PostService,
@@ -87,7 +87,7 @@ export class BullQueueService {
         await job.remove();
 
         const newDelay = newScheduledTime.getTime() - Date.now();
-        const newJobData = job.data; 
+        const newJobData = job.data;
         newJobData.scheduledTime = newScheduledTime;
 
         const newJob = await this.postScheduleQueue.add('postSchedule', newJobData, { delay: newDelay });

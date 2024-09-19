@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Post, Put, Query, Req, Res, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Post, Put, Query, Req, Res, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { PostService } from "./post.service";
 import { Request, Response } from 'express';
@@ -219,6 +219,39 @@ export class PostController {
         } catch (error) {
             console.error('Error rescheduling post:', error);
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error rescheduling post.', error: error.message });
+        }
+    }
+
+    @Delete('delete-schedule-post')
+    async deleteScheduledPost(@Body() body: { jobId: string }) {
+        const { jobId } = body;
+
+        try {
+            const scheduledPost = await this.scheduledPostModel.findOne({ jobId });
+
+            if (!scheduledPost) {
+                throw new HttpException('Scheduled post not found', HttpStatus.NOT_FOUND);
+            }
+
+            const job = await this.bullQueueService.postScheduleQueue.getJob(jobId);
+
+            if (job) {
+                await job.remove();
+                console.log(`Job ${jobId} removed from the queue`);
+            } else {
+                console.log(`Job ${jobId} not found in the queue`);
+            }
+
+            await this.scheduledPostModel.findByIdAndDelete(scheduledPost._id);
+            console.log(`Scheduled post with jobId ${jobId} deleted from database`);
+
+            return { message: 'Scheduled post deleted successfully' };
+        } catch (error) {
+            console.error('Error deleting scheduled post:', error.message);
+            throw new HttpException(
+                'Could not delete the scheduled post',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 }

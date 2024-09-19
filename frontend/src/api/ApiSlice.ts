@@ -85,6 +85,13 @@ export const apiSlice = createApi({
                 body: { jobId, scheduledTime: reScheduleTime },
             }),
         }),
+        deleteShedulePost: builder.mutation<void, { jobId: string }>({
+            query: ({ jobId }) => ({
+                url: `${POST_URL}/delete-schedule-post`,
+                method: 'DELETE',
+                body: { jobId }
+            }),
+        }),
     }),
 });
 
@@ -100,4 +107,5 @@ export const {
     useUpdateUserNameMutation,
     useFetchPostsQuery,
     useReschedulePostMutation,
+    useDeleteShedulePostMutation
 } = apiSlice;

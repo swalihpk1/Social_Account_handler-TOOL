@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { ThemeProvider as MUIThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText, Drawer, Paper } from '@mui/material';
+import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText, Drawer, Paper, Alert } from '@mui/material';
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -14,7 +14,7 @@ import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek';
 import CalendarViewDayIcon from '@mui/icons-material/CalendarViewDay';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import { useFetchPostsQuery, useReschedulePostMutation } from '../../api/ApiSlice';
+import { useFetchPostsQuery, useReschedulePostMutation, useDeleteShedulePostMutation } from '../../api/ApiSlice';
 import XIcon from '@mui/icons-material/X';
 import CloseIcon from '@mui/icons-material/Close';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -24,6 +24,8 @@ import XPreview from './XPreview';
 import InstagramPreview from './InstagramPreview';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../app/store';
+import { Snackbar, } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 const muiTheme = createTheme({
     palette: {
@@ -44,11 +46,13 @@ const FullPageCalendar = () => {
     const [rescheduleInfo, setRescheduleInfo] = useState(null);
     const [draggingEvent, setDraggingEvent] = useState(null);
     const [openPreviewDrawer, setOpenPreviewDrawer] = useState(false);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
     const calendarRef = useRef(null);
 
 
     const { data } = useFetchPostsQuery(undefined);
     const [reschedulePost] = useReschedulePostMutation();
+    const [deleteSchedulePost] = useDeleteShedulePostMutation();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
 
     const userSocialAccounts = Object.entries(userInfo?.socialAccounts || {}).map(([provider, { profileName, profilePicture, userPages }]) => ({
@@ -115,14 +119,36 @@ const FullPageCalendar = () => {
         }
     }, []);
 
+    useEffect(() => {
+        if (events) {
+            setEvents(events);
+        }
+    }, [events]);
+
 
     useEffect(() => {
         if (calendarApi) {
             setTimeout(() => {
                 calendarApi.updateSize();
-            }, 400);
+            }, 650);
         }
     }, [openPreviewDrawer, calendarApi]);
+
+
+    const handleDelete = async (jobId: string) => {
+        try {
+            await deleteSchedulePost({ jobId }).unwrap();
+            setEvents((prevEvents) => prevEvents.filter((event) => event.extendedProps.jobId !== jobId));
+            setSnackbarOpen(true);
+        } catch (error) {
+            console.error('Error deleting post:', error);
+            setSnackbarOpen(true);
+        }
+    };
+
+    const handleCloseSnackbar = () => {
+        setSnackbarOpen(false);
+    };
 
     const updateToolbarState = (date) => {
         setSelectedDate(date);
@@ -579,7 +605,7 @@ const FullPageCalendar = () => {
 
                     <FormControl sx={selectStyle}>
                         <Select defaultValue="" displayEmpty size="small" sx={{
-                            background: '#C3CccdfffBD8', borderRadius: '2rem', color: '#203170',
+                            background: '#ccdfff', borderRadius: '2rem', color: '#203170',
                             '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
@@ -779,15 +805,17 @@ const FullPageCalendar = () => {
                 }}>
                     {openPreviewDrawer && (
                         <>
-                            <Box sx={{ borderBottom: '1px solid #e0e0e0', background: '#dedede', flexGrow: 1 }}>
+                            <Box sx={{ borderBottom: '1px solid #e0e0e0', background: 'antiquewhite', flexGrow: 1 }}>
                                 <Stack direction="row" justifyContent="space-between" alignItems="center" bgcolor='#cec6d9'>
                                     <Box sx={{ borderBottom: '1px solid #e0e0e0', padding: 1 }}>
                                         <Stack direction='row' gap={1} sx={{ alignItems: 'center', p: '0px' }}>
-                                            {selectedEvent && selectedEvent.extendedProps.status === 'posted' ? (
-                                                <PublishedWithChangesIcon sx={{ background: 'white', borderRadius: '10px', padding: '3px' }} />
-                                            ) : (
-                                                <CalendarTodayIcon sx={{ background: 'white', borderRadius: '10px', padding: '3px' }} />
-                                            )}
+                                            <IconButton sx={{ background: 'white', borderRadius: '10px', padding: '3px' }}>
+                                                {selectedEvent && selectedEvent.extendedProps.status === 'posted' ? (
+                                                    <PublishedWithChangesIcon />
+                                                ) : (
+                                                    <CalendarTodayIcon />
+                                                )}
+                                            </IconButton>
                                             <Typography variant='h6'>
                                                 {selectedEvent && selectedEvent.extendedProps.status === 'posted' ? 'Posted' : 'Scheduled'}
                                             </Typography>
@@ -798,41 +826,55 @@ const FullPageCalendar = () => {
                                     </IconButton>
                                 </Stack>
 
-                                <Stack direction='row' gap={2} sx={{ p: '2rem 2rem 0rem' }}>
-                                    <Button
-                                        variant="contained"
-                                        sx={{
-                                            background: '#C3CBD8', borderRadius: '2rem', color: '#203170', textTransform: 'none', boxShadow: 'none',
-                                            '&:hover': {
-                                                background: '#A9B2C0',
+                                {selectedEvent && selectedEvent.extendedProps.status === 'posted' && (
+                                    <Stack direction='row' gap={2} sx={{ p: '2rem 2rem 0rem' }}>
+                                    </Stack>
+                                )}
+
+                                {selectedEvent && selectedEvent.extendedProps.status !== 'posted' && (
+                                    <Stack direction='row' gap={2} sx={{ p: '2rem 2rem 0rem' }}>
+                                        <Button
+                                            variant="contained"
+                                            sx={{
+                                                background: '#C3CBD8',
+                                                borderRadius: '2rem',
+                                                color: '#203170',
+                                                textTransform: 'none',
                                                 boxShadow: 'none',
-                                            },
-                                        }}
-                                    >
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        sx={{
-                                            background: '#C3CBD8', borderRadius: '2rem', color: '#203170', textTransform: 'none', boxShadow: 'none',
-                                            '&:hover': {
-                                                background: '#A9B2C0',
+                                                '&:hover': {
+                                                    background: '#A9B2C0',
+                                                    boxShadow: 'none',
+                                                },
+                                            }}
+                                        >
+                                            Edit
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            onClick={() => handleDelete(selectedEvent.extendedProps.jobId)}
+                                            sx={{
+                                                background: '#C3CBD8',
+                                                borderRadius: '2rem',
+                                                color: '#203170',
+                                                textTransform: 'none',
                                                 boxShadow: 'none',
-                                            },
-                                        }}
-                                    >
-                                        Delete
-                                    </Button>
-                                </Stack>
+                                                '&:hover': {
+                                                    background: '#A9B2C0',
+                                                    boxShadow: 'none',
+                                                },
+                                            }}
+                                        >
+                                            Delete
+                                        </Button>
+                                    </Stack>
+                                )}
 
                                 <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
                                     {renderEventPreview()}
                                 </Box>
 
                                 <Box p='0 2rem'>
-                                    <Typography fontWeight='bold'>
-                                        Details
-                                    </Typography>
+                                    <Typography fontWeight='bold'>Details</Typography>
                                     <Typography fontSize='12px'>
                                         {selectedEvent && selectedEvent.extendedProps.status === 'posted' ? 'Posted Time:' : 'Scheduled Time:'}
                                     </Typography>
@@ -844,8 +886,6 @@ const FullPageCalendar = () => {
                         </>
                     )}
                 </Box>
-
-
 
             </Box>
 
@@ -896,6 +936,26 @@ const FullPageCalendar = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={3000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            >
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity="success"
+                    sx={{ backgroundColor: 'white', color: 'green' }}
+                    icon={false}
+                >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                        <CheckCircleIcon sx={{ mr: 1 }} />
+                        Post deleted successfully
+                    </span>
+                </Alert>
+            </Snackbar>
 
             <style jsx global>{`
                 .fc-timegrid-slot {
