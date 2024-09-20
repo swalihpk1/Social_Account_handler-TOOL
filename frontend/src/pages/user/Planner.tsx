@@ -26,6 +26,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../app/store';
 import { Snackbar, } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CreatePost from './CreatePost';
 
 const muiTheme = createTheme({
     palette: {
@@ -36,7 +37,7 @@ const muiTheme = createTheme({
 });
 
 
-const FullPageCalendar = () => {
+const Planner = () => {
     const [events, setEvents] = useState([]);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [calendarApi, setCalendarApi] = useState(null);
@@ -47,6 +48,7 @@ const FullPageCalendar = () => {
     const [draggingEvent, setDraggingEvent] = useState(null);
     const [openPreviewDrawer, setOpenPreviewDrawer] = useState(false);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [openEditModal, setOpenEditModal] = useState(false);
     const calendarRef = useRef(null);
 
 
@@ -133,6 +135,14 @@ const FullPageCalendar = () => {
             }, 650);
         }
     }, [openPreviewDrawer, calendarApi]);
+
+    const handleEdit = () => {
+        setOpenEditModal(true);  // Open modal when edit button is clicked
+    };
+
+    const handleCloseModal = () => {
+        setOpenEditModal(false);  // Close modal
+    };
 
 
     const handleDelete = async (jobId: string) => {
@@ -617,7 +627,7 @@ const FullPageCalendar = () => {
 
                     <Divider orientation="vertical" flexItem />
 
-                    <Box sx={{ display: 'flex', gap: 1, background: '#C3CBD8' }}>
+                    <Box sx={{ display: 'flex', gap: 1, background: '#CCDFFF' }}>
                         <IconButton
                             onClick={() => onViewChange('dayGridMonth')}
                             size="small"
@@ -835,6 +845,7 @@ const FullPageCalendar = () => {
                                     <Stack direction='row' gap={2} sx={{ p: '2rem 2rem 0rem' }}>
                                         <Button
                                             variant="contained"
+                                            onClick={handleEdit}
                                             sx={{
                                                 background: '#C3CBD8',
                                                 borderRadius: '2rem',
@@ -957,6 +968,36 @@ const FullPageCalendar = () => {
                 </Alert>
             </Snackbar>
 
+
+            <Dialog
+                open={openEditModal}
+                onClose={handleCloseModal}
+                maxWidth="lg"
+                fullWidth
+                PaperProps={{
+                    style: {
+                        height: '100vh',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        margin: 0,
+                    },
+                }}
+            >
+                <DialogContent
+                    style={{
+                        flex: 1,
+                        overflowY: 'auto',
+                        padding: 0,
+                    }}
+                >
+                    <CreatePost
+                        event={selectedEvent || undefined}
+                        onClose={handleCloseModal}
+                        style={{ height: '100%', width: '100%' }}
+                    />
+                </DialogContent>
+            </Dialog>
+
             <style jsx global>{`
                 .fc-timegrid-slot {
                     height: 120px !important;
@@ -997,4 +1038,4 @@ const FullPageCalendar = () => {
     );
 };
 
-export default FullPageCalendar;
+export default Planner;

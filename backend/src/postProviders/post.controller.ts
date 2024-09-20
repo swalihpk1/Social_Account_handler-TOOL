@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Post, Put, Query, Req, Res, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Query, Req, Res, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { PostService } from "./post.service";
 import { Request, Response } from 'express';
@@ -12,6 +12,7 @@ import { BullQueueService } from "src/config/taskSheduler/bullQueue";
 import { ScheduledPost, ScheduledPostDocument } from "src/schemas/shedulePost.shcema";
 import { diskStorage } from "multer";
 import { PostDocument } from "src/schemas/post.schema";
+import { AwsS3Service } from "src/config/aws/aws-s3.service";
 
 
 @Controller('post')
@@ -23,6 +24,7 @@ export class PostController {
         , private readonly globalStateService: GlobalStateService
         , private readonly bullQueueService: BullQueueService
         , @InjectModel('Post') private postModel: Model<PostDocument>
+        , private awsS3Service: AwsS3Service
 
     ) { }
 
@@ -254,6 +256,58 @@ export class PostController {
             );
         }
     }
-}
 
+
+    @Put('edit/:jobId')
+    @UseInterceptors(FileInterceptor('image'))
+    async updateScheduledPostContent(
+        @Param('jobId') jobId: string,
+        @UploadedFile() file: Express.Multer.File,
+        @Body() updateData: { platform: string; content: string }
+    ) {
+        console.log("JOBID:", jobId);
+        console.log("Platform:", updateData.platform);
+        console.log("Updated content:", updateData.content);
+        console.log("Uploaded file:", file);
+
+        const platform = updateData.platform;
+        const contentUpdate = JSON.parse(updateData.content)[platform];
+
+        let updateObject: any = {
+            $set: {
+                [`content.${platform}`]: contentUpdate
+            }
+        };
+
+        // Add platform to the platforms array if it's not already there
+        updateObject.$addToSet = { platforms: platform };
+
+        // Update the image if a new one is uploaded
+        if (file) {
+            try {
+                const imageUrl = await this.awsS3Service.uploadFile(file);
+                updateObject.$set.image = imageUrl;
+            } catch (error) {
+                console.error('Error uploading image to S3:', error);
+                throw new Error('Failed to upload image to S3');
+            }
+        }
+
+        const result = await this.scheduledPostModel.updateOne(
+            { jobId: jobId },
+            updateObject,
+            { new: true, runValidators: true }
+        );
+
+        if (result.matchedCount === 0) {
+            throw new Error('Scheduled post not found');
+        }
+
+        // Fetch the updated document
+        const updatedPost = await this.scheduledPostModel.findOne({ jobId });
+        console.log('updatedPost', updatedPost);
+        return updatedPost;
+    }
+
+}
 

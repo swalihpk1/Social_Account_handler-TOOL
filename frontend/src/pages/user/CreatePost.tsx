@@ -47,19 +47,19 @@ import FacebookPreview from './FacebookPreview';
 import LinkedInPreview from './LinkedInPreview';
 import XPreview from './XPreview';
 import InstagramPreview from './InstagramPreview';
-import { useGetCharacterLimitsQuery } from '../../api/ApiSlice';
+import { useEditPostMutation, useGetCharacterLimitsQuery } from '../../api/ApiSlice';
 import { useCreatePostMutation } from '../../api/ApiSlice';
 import HashtagGenerator from '../../components/HashtagGenerator';
 import ImageCropModal from '../../components/imageCropModal';
 import EditIcon from '@mui/icons-material/Edit';
 import SocialPlatformUploader from '../../components/LoadingAnimation/uploadLoading';
 import SchedulePicker from '../../components/SchedulePicker';
-import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import { useShedulePostMutation } from '../../api/ApiSlice';
+import { hi } from 'date-fns/locale';
 
 
 
-const CreatePost: React.FC = () => {
+const CreatePost: React.FC = ({ event, onClose }) => {
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [selectedToggle, setSelectedToggle] = useState<string | null>('Initial content');
     const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -96,6 +96,32 @@ const CreatePost: React.FC = () => {
     const [uploading, setUpLoading] = useState(false);
     const [schedulePickerOpen, setSchedulePickerOpen] = useState(false);
     const [scheduledTime, setScheduledTime] = useState<string | null>(null);
+    const eventImage = event?.extendedProps?.imageUrl;
+    const isEditing = Boolean(event);
+    const [editPost] = useEditPostMutation();
+
+
+    useEffect(() => {
+        if (event) {
+            setSelectedOptions(event.extendedProps.platform ? [event.extendedProps.platform] : []);
+        }
+    }, [event]);
+
+    useEffect(() => {
+        if (event) {
+            const eventContent = event.extendedProps.content || event.title || '';
+            setInitialContent(eventContent);
+            setText(prevText => ({
+                ...prevText,
+                [event.extendedProps.platform]: eventContent,
+            }));
+            setSelectedToggle(event.extendedProps.platform);
+
+            if (eventImage) {
+                setSelectedLibraryImage({ src: eventImage, alt: 'Event image' });
+            }
+        }
+    }, [event, eventImage]);
 
 
     useEffect(() => {
@@ -109,12 +135,105 @@ const CreatePost: React.FC = () => {
     }, [text, selectedToggle]);
 
 
-
     useEffect(() => {
         if (characterLimits && selectedToggle !== 'Initial content') {
             setCharacterLimit(characterLimits[selectedToggle]);
         }
     }, [characterLimits, selectedToggle]);
+
+    const handleEdit = async () => {
+        if (!event) {
+            setSnackbarMessage("No event selected for editing!");
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+            return;
+        }
+
+        const platform = event.extendedProps.platform;
+        const newContent = text[platform];
+        const originalContent = event.title;
+        const jobId = event.extendedProps.jobId;
+
+        if (!newContent || newContent.trim() === '') {
+            setSnackbarMessage("Content cannot be empty!");
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+            return;
+        }
+
+        if (platform === 'instagram' && !selectedLocalImage && !selectedLibraryImage && !event.extendedProps.imageUrl) {
+            setSnackbarMessage("Instagram posts require an image!");
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+            return;
+        }
+
+        setUpLoading(true);
+
+        const formData = new FormData();
+        let contentChanged = false;
+        let imageChanged = false;
+        let imageDeleted = false;
+
+        // Check if content has changed
+        if (newContent !== originalContent) {
+            formData.append('content', JSON.stringify({ [platform]: newContent }));
+            contentChanged = true;
+        }
+
+        // Handle image changes
+        if (selectedLocalImage) {
+            formData.append('image', selectedLocalImage);
+            formData.append('imageType', 'local');
+            imageChanged = true;
+        } else if (selectedLibraryImage && selectedLibraryImage.src !== event.extendedProps.imageUrl) {
+            const file = await urlToFile(selectedLibraryImage.src, 'library-image.jpg', 'image/jpeg');
+            formData.append('image', file);
+            formData.append('imageType', 'library');
+            imageChanged = true;
+        } else if (!selectedLocalImage && !selectedLibraryImage && event.extendedProps.imageUrl) {
+            formData.append('imageDeleted', 'true');
+            imageDeleted = true;
+        }
+
+        if (!contentChanged && !imageChanged && !imageDeleted) {
+            setSnackbarMessage('No changes detected.');
+            setSnackbarSeverity('info');
+            setSnackbarOpen(true);
+            setUpLoading(false);
+            return;
+        }
+
+        // Append platform and jobId to formData
+        formData.append('platform', platform);
+        formData.append('jobId', jobId);
+
+        try {
+            const editRequest = {
+                jobId,
+                formData,
+                platforms: [platform],
+            };
+
+            console.log('Edit request:', editRequest);
+
+            await editPost(editRequest).unwrap();
+
+            setSnackbarMessage('Post updated successfully!');
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
+            onClose();
+        } catch (error) {
+            console.error('Failed to update post:', error);
+            setSnackbarMessage('Failed to update post.');
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+        } finally {
+            setUpLoading(false);
+        }
+    };
+
+
 
     const toggleHashtagGenerator = () => {
         setShowHashtagGenerator(!showHashtagGenerator);
@@ -343,13 +462,6 @@ const CreatePost: React.FC = () => {
         twitter: <XIcon sx={{ color: '#000000', fontSize: '12px', background: 'white', borderRadius: '20px' }} />,
     };
 
-    // const normalProviderIcons: { [key: string]: React.ReactNode } = {
-    //     facebook: <FacebookRoundedIcon />,
-    //     twitter: <XIcon />,
-    //     instagram: <InstagramIcon />,
-    //     linkedin: <LinkedInIcon />,
-    // };
-
     const handleEmojiClick = (emojiObject) => {
         if (!emojiObject || !emojiObject.emoji || typeof emojiObject.emoji !== 'string') {
             console.error("Invalid emoji object:", emojiObject);
@@ -409,7 +521,7 @@ const CreatePost: React.FC = () => {
                 paddingLeft: { xs: '1rem', md: '1.5rem' },
                 color: '#343434'
             }}>
-                New Post
+                {isEditing ? 'Edit Post' : 'New Post'}
             </Typography>
             <Divider style={{ height: '2.5px', backgroundColor: '#e5e5e5' }} />
             <Stack sx={{
@@ -662,10 +774,9 @@ const CreatePost: React.FC = () => {
                                 }}
                             />
 
-                            <Box >
+                            <Box>
                                 <Box display='flex' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
                                     <Stack direction="row" spacing={1} justifyContent='center' alignItems='center'>
-
                                         {selectedToggle !== 'Initial content' && (
                                             <Typography sx={{ color: text[selectedToggle].length >= characterLimit ? 'red' : 'grey', fontSize: '14px', fontWeight: '100' }}>
                                                 {text[selectedToggle].length} / {characterLimit}
@@ -676,9 +787,8 @@ const CreatePost: React.FC = () => {
                                                 width: '1.4rem', height: '1.4rem', backgroundColor: '#203170', borderRadius: '12px',
                                                 display: 'flex', justifyContent: 'center', alignItems: 'center'
                                             }}>
-                                            <RefreshIcon loading={isLoading} />
+                                            <RefreshIcon />
                                         </Box>
-
                                     </Stack>
 
                                     {shortenedLinks.length > 0 && (
@@ -687,11 +797,9 @@ const CreatePost: React.FC = () => {
                                                 display: 'flex', justifyContent: 'center', alignItems: 'center',
                                                 fontSize: '14px', cursor: 'pointer', textDecoration: 'none',
                                                 color: '#000'
-                                            }}> {shortenedLinks.length}.<HttpIcon loading={TypeLoading} />Shortened with bit.ly</Link>
+                                            }}> {shortenedLinks.length}.<HttpIcon />Shortened with bit.ly</Link>
                                         </Stack>
                                     )}
-
-
 
                                     <Stack direction="row" spacing={1} alignItems='center' marginBottom='.5rem'>
                                         <EmojiEmotionsOutlinedIcon
@@ -705,7 +813,6 @@ const CreatePost: React.FC = () => {
                                     </Stack>
                                 </Box>
                                 <Divider style={{ height: '2.5px', backgroundColor: '#e5e5e5' }} />
-
                             </Box>
                             <Box
                                 sx={{
@@ -819,8 +926,8 @@ const CreatePost: React.FC = () => {
                                     {selectedLibraryImage ? (
                                         <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
                                             <img
-                                                src={selectedLibraryImage.src}
-                                                alt={selectedLibraryImage.alt}
+                                                src={selectedLocalImage ? URL.createObjectURL(selectedLocalImage) : eventImage}
+                                                alt={selectedLibraryImage?.alt || 'Event Image'}
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                             />
                                             {isLibraryImageHover && (
@@ -851,7 +958,7 @@ const CreatePost: React.FC = () => {
                                                     />
                                                     <EditIcon
                                                         onClick={() => {
-                                                            setCropImageSrc(selectedLibraryImage.src);
+                                                            setCropImageSrc(selectedLibraryImage?.src || eventImage);
                                                             setCropImageType('library');
                                                             setIsCropModalOpen(true);
                                                         }}
@@ -866,7 +973,6 @@ const CreatePost: React.FC = () => {
                                                             color: 'white',
                                                             padding: '4px',
                                                             zIndex: 1,
-
                                                         }}
                                                     />
                                                 </>
@@ -925,19 +1031,18 @@ const CreatePost: React.FC = () => {
                 >
                     {showEmojiPicker && (
                         <Box
-                            position='absolute'
-                            left='67%'
-                            top='29%'
-                            transform='translate(-50%, -50%)'
                             sx={{
-                                zIndex: '1',
-                                boxShadow: '0px 4px 8px rgba(2, 0.6,0.5, 0.5)',
+                                position: 'absolute',
+                                left: '75%',
+                                top: '40%',
+                                transform: 'translate(-50%, -50%)',
+                                zIndex: 1,
+                                boxShadow: '0px 4px 8px rgba(2, 0.6, 0.5, 0.5)',
                                 borderRadius: '8px',
                             }}
                         >
                             <Picker
-                                skinTonePickerLocation={'false'}
-                                width='300'
+                                width={300}
                                 onEmojiClick={handleEmojiClick}
                             />
                         </Box>
@@ -1050,75 +1155,70 @@ const CreatePost: React.FC = () => {
             </Stack >
             <Divider style={{ height: '2.5px', backgroundColor: '#e5e5e5' }} />
             <Stack direction='row' display='flex' gap={2} justifyContent='end' sx={{ alignItems: 'center', padding: '13px' }}>
-                <Link
-                    sx={{
-                        textDecoration: 'none',
-                        cursor: 'pointer',
-                        fontWeight: '600',
-                        color: '#203170',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                    onClick={() => setSchedulePickerOpen(true)}
-                >
-                    {scheduledTime ? (
-                        <Box
-                            sx={{
-                                background: '#2196f340',
-                                p: '8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: '4px',
-                                cursor: 'text',
-                            }}
+                {isEditing ? (
+                    <>
+                        <Link
+                            sx={{ textDecoration: 'none', cursor: 'pointer', fontWeight: '600', color: '#203170' }}
+                            onClick={onClose}
                         >
-                            {scheduledTime}
-                            <CancelRoundedIcon
-                                sx={{
-                                    marginLeft: '1rem',
-                                    color: '#3f51b59c',
-                                    border: '1px solid black',
-                                    borderRadius: '3rem',
-                                    cursor: 'pointer',
-                                }}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setScheduledTime(null);
-                                }}
-                            />
-                        </Box>
-                    ) : (
-                        'Schedule for later'
-                    )}
-                </Link>
-                <Button
-                    variant="contained"
-                    sx={{
-                        color: '#203170',
-                        fontWeight: '600',
-                        backgroundColor: '#EAB52F',
-                        textTransform: 'none',
-                        marginRight: '1rem',
-                        '&:hover': {
-                            backgroundColor: '#e5a500'
-                        }
-                    }}
-                    onClick={handleSubmit}
-                >
-                    {scheduledTime ? 'Schedule' : 'Post now'}
-                </Button>
-                <SocialPlatformUploader
-                    open={uploading}
-                    handleClose={() => {
-                        setUpLoading(false);
-                        setPostSuccessModal(false);
-                        window.location.reload();
-                    }}
-                    selectedPlatforms={selectedOptions}
-                    scheduledTime={scheduledTime}
-                />
+                            <Box sx={{ p: '8px', borderRadius: '4px', color: '#203170' }}>
+                                Cancel
+                            </Box>
+                        </Link>
+                        <Button
+                            variant="contained"
+                            sx={{
+                                color: '#203170',
+                                fontWeight: '600',
+                                backgroundColor: '#EAB52F',
+                                textTransform: 'none',
+                                marginRight: '1rem',
+                                '&:hover': {
+                                    backgroundColor: '#e5a500',
+                                },
+                            }}
+                            onClick={handleEdit}
+                        >
+                            Save
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                        <Link
+                            sx={{ textDecoration: 'none', cursor: 'pointer', fontWeight: '600', color: '#203170' }}
+                            onClick={() => setSchedulePickerOpen(true)}
+                        >
+                            Schedule for later
+                        </Link>
+                        <Button
+                            variant="contained"
+                            sx={{
+                                color: '#203170',
+                                fontWeight: '600',
+                                backgroundColor: '#EAB52F',
+                                textTransform: 'none',
+                                marginRight: '1rem',
+                                '&:hover': {
+                                    backgroundColor: '#e5a500',
+                                },
+                            }}
+                            onClick={handleSubmit}
+                        >
+                            Post now
+                        </Button>
+                        <SocialPlatformUploader
+                            open={uploading}
+                            handleClose={() => {
+                                setUpLoading(false);
+                                setPostSuccessModal(false);
+                                window.location.reload();
+                            }}
+                            selectedPlatforms={selectedOptions}
+                            scheduledTime={scheduledTime}
+                        />
+                    </>
+
+                )}
             </Stack>
 
 
