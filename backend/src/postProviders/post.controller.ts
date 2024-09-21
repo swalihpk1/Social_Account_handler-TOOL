@@ -13,6 +13,7 @@ import { ScheduledPost, ScheduledPostDocument } from "src/schemas/shedulePost.sh
 import { diskStorage } from "multer";
 import { PostDocument } from "src/schemas/post.schema";
 import { AwsS3Service } from "src/config/aws/aws-s3.service";
+import { unlink } from 'fs/promises';
 
 
 @Controller('post')
@@ -257,53 +258,70 @@ export class PostController {
         }
     }
 
-
     @Put('edit/:jobId')
     @UseInterceptors(FileInterceptor('image'))
     async updateScheduledPostContent(
         @Param('jobId') jobId: string,
         @UploadedFile() file: Express.Multer.File,
-        @Body() updateData: { platform: string; content: string }
+        @Body() updateData: { platform: string; content: string; imageUrl?: string }
     ) {
         console.log("JOBID:", jobId);
         console.log("Platform:", updateData.platform);
         console.log("Updated content:", updateData.content);
         console.log("Uploaded file:", file);
+        console.log("Image URL from library:", updateData.imageUrl);
 
-        const platform = updateData.platform;
-        const contentUpdate = JSON.parse(updateData.content)[platform];
+        const post = await this.scheduledPostModel.findOne({ jobId });
+        if (!post) {
+            throw new Error('Scheduled post not found');
+        }
 
-        let updateObject: any = {
-            $set: {
-                [`content.${platform}`]: contentUpdate
-            }
-        };
+        let updateObject: any = {};
 
-        // Add platform to the platforms array if it's not already there
-        updateObject.$addToSet = { platforms: platform };
-
-        // Update the image if a new one is uploaded
-        if (file) {
+        if (updateData.platform && updateData.content) {
             try {
-                const imageUrl = await this.awsS3Service.uploadFile(file);
-                updateObject.$set.image = imageUrl;
+                const contentUpdate = JSON.parse(updateData.content)[updateData.platform];
+                updateObject[`content.${updateData.platform}`] = contentUpdate;
             } catch (error) {
-                console.error('Error uploading image to S3:', error);
-                throw new Error('Failed to upload image to S3');
+                console.error('Error parsing content:', error);
+                throw new Error('Invalid content format');
             }
+        }
+
+        let newImageUrl: string | undefined;
+
+        if (file) {
+
+            try {
+                newImageUrl = await this.awsS3Service.uploadFile(file);
+                await unlink(file.path); 
+            } catch (error) {
+                console.error('Error uploading image to S3 or deleting temp file:', error);
+                throw new Error('Failed to process uploaded image');
+            }
+        } else if (updateData.imageUrl) {
+            newImageUrl = updateData.imageUrl;
+        }
+
+        if (newImageUrl) {
+            updateObject.image = newImageUrl;
+        }
+
+        if (updateData.platform && !post.platforms.includes(updateData.platform)) {
+            updateObject.$addToSet = { platforms: updateData.platform };
         }
 
         const result = await this.scheduledPostModel.updateOne(
             { jobId: jobId },
-            updateObject,
+            { $set: updateObject },
             { new: true, runValidators: true }
         );
 
         if (result.matchedCount === 0) {
-            throw new Error('Scheduled post not found');
+            throw new Error('Failed to update post');
         }
 
-        // Fetch the updated document
+
         const updatedPost = await this.scheduledPostModel.findOne({ jobId });
         console.log('updatedPost', updatedPost);
         return updatedPost;

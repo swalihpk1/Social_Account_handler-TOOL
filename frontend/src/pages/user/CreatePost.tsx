@@ -141,6 +141,7 @@ const CreatePost: React.FC = ({ event, onClose }) => {
         }
     }, [characterLimits, selectedToggle]);
 
+
     const handleEdit = async () => {
         if (!event) {
             setSnackbarMessage("No event selected for editing!");
@@ -891,7 +892,6 @@ const CreatePost: React.FC = ({ event, onClose }) => {
                                                             color: 'white',
                                                             padding: '4px',
                                                             zIndex: 1,
-
                                                         }}
                                                     />
                                                 </>
@@ -926,8 +926,8 @@ const CreatePost: React.FC = ({ event, onClose }) => {
                                     {selectedLibraryImage ? (
                                         <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
                                             <img
-                                                src={selectedLocalImage ? URL.createObjectURL(selectedLocalImage) : eventImage}
-                                                alt={selectedLibraryImage?.alt || 'Event Image'}
+                                                src={selectedLibraryImage.src}
+                                                alt={selectedLibraryImage.alt || 'Event Image'}
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                             />
                                             {isLibraryImageHover && (
@@ -961,7 +961,7 @@ const CreatePost: React.FC = ({ event, onClose }) => {
                                                             setCropImageSrc(selectedLibraryImage?.src || eventImage);
                                                             setCropImageType('library');
                                                             setIsCropModalOpen(true);
-                                                        }}
+                                                        }}         
                                                         sx={{
                                                             position: 'absolute',
                                                             bottom: '10%',

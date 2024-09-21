@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { ThemeProvider as MUIThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText, Drawer, Paper, Alert } from '@mui/material';
+import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText, Alert } from '@mui/material';
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -137,7 +137,7 @@ const Planner = () => {
     }, [openPreviewDrawer, calendarApi]);
 
     const handleEdit = () => {
-        setOpenEditModal(true);  // Open modal when edit button is clicked
+        setOpenEditModal(true); 
     };
 
     const handleCloseModal = () => {
