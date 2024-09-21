@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { User, UserDocument } from "src/schemas/user.schema";
 import { Model } from 'mongoose';
 import { InjectModel } from "@nestjs/mongoose";
@@ -11,8 +11,11 @@ const OAuth = require('oauth-1.0a');
 const crypto = require('crypto');
 import * as FormData from 'form-data';
 import * as path from 'path';
+import { ScheduledPost, ScheduledPostDocument } from "src/schemas/shedulePost.shcema";
 const fs = require('fs');
-
+import { unlink } from 'fs/promises';
+import { BullQueueService } from "src/config/taskSheduler/bullQueue";
+import { GlobalStateService } from "src/utils/global-state.service";
 
 
 @Injectable()
@@ -22,8 +25,11 @@ export class PostService {
         @InjectModel(PostConfiguration.name) private postConfigurationModel: Model<PostConfigurationDocument>,
         @InjectModel(Post.name) private postModel: Model<PostDocument>,
         @InjectModel(User.name) private userModel: Model<UserDocument>,
+        @InjectModel(ScheduledPost.name) private scheduledPostModel: Model<ScheduledPostDocument>,
         private awsS3Service: AwsS3Service,
         private httpService: HttpService,
+        private readonly bullQueueService: BullQueueService,
+        private readonly globalStateService: GlobalStateService
     ) { }
 
     async fetchCharacterLimits() {
@@ -48,6 +54,58 @@ export class PostService {
         };
         const response = await lastValueFrom(this.httpService.get(url, { headers }));
         return response.data.data.map((item: any) => item.hashtag);
+    }
+
+
+    async handleCreatePost(file: Express.Multer.File, body: any) {
+        try {
+            const userId = this.globalStateService.getUserId();
+            const foundUser = await this.userModel.findById(userId);
+
+            if (!foundUser) {
+                throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+            }
+
+            const socialAccessTokens = foundUser.socialAccessTokens;
+            const content = JSON.parse(body.content);
+
+            let imageUrl = null;
+            if (file) {
+                imageUrl = await this.uploadImageToS3(file);
+            }
+
+            const results = await this.createPost(content, file, socialAccessTokens);
+
+            // Save the new post to the database
+            const newPost = new this.postModel({
+                userId,
+                content,
+                platforms: results.map(result => ({
+                    platform: result.platform,
+                    response: result.response || result.error,
+                })),
+                image: imageUrl,
+                createdAt: new Date(),
+            });
+            await newPost.save();
+
+            // Delete the uploaded file from the server
+            if (file) {
+                const filePath = path.join(process.cwd(), 'public', 'postImages', file.filename);
+                fs.unlink(filePath, (err) => {
+                    if (err) {
+                        console.error('Failed to delete the file:', err.message);
+                    } else {
+                        console.log('File deleted successfully');
+                    }
+                });
+            }
+
+            return results.map(result => result.response || result.error);
+        } catch (error) {
+            console.error('Error while creating post:', error);
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     async createPost(content: any, file: Express.Multer.File | string | null, socialAccessTokens: Map<string, string>) {
@@ -422,4 +480,176 @@ export class PostService {
         console.log('All platform posting completed. Results:', results);
         return results;
     }
+
+
+    async schedulePost(file: Express.Multer.File, body: any) {
+        try {
+            const userId = this.globalStateService.getUserId();
+            const foundUser = await this.userModel.findById(userId);
+
+            if (!foundUser) {
+                throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+            }
+
+            const socialAccessTokens = foundUser.socialAccessTokens;
+            const content = JSON.parse(body.content);
+            const scheduledTime = new Date(body.scheduledTime);
+
+            let imageUrl = null;
+            if (file) {
+                imageUrl = await this.uploadImageToS3(file);
+            }
+
+            const platforms = Object.keys(content);
+
+            const scheduledPost = new this.scheduledPostModel({
+                userId,
+                content,
+                platforms,
+                image: imageUrl,
+                scheduledTime,
+                status: 'scheduled',
+            });
+
+            await scheduledPost.save();
+
+            const jobData = {
+                _id: scheduledPost._id,
+                userId,
+                content,
+                fileUrl: imageUrl,
+                socialAccessTokens,
+                scheduledTime,
+            };
+
+            const jobId = await this.bullQueueService.addPostToQueue(jobData);
+            scheduledPost.jobId = jobId;
+            await scheduledPost.save();
+
+        } catch (error) {
+            console.error('Error scheduling post:', error);
+            throw new HttpException('Failed to schedule post', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    async getAllPosts() {
+        try {
+            const userId = this.globalStateService.getUserId();
+            console.log('userId', userId);
+
+            const scheduledPosts = await this.scheduledPostModel.find({ userId }).exec();
+            console.log('Scheduled posts', scheduledPosts);
+
+            const postedPosts = await this.postModel.find({ userId }).exec();
+            console.log('Posted posts', postedPosts);
+
+            const mergedPosts = [...scheduledPosts, ...postedPosts];
+
+            return mergedPosts;
+        } catch (error) {
+            console.error('Error fetching posts:', error.message);
+            throw new HttpException('Error fetching posts', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    async reschedulePost(jobId: string, scheduledTime: string): Promise<{ message: string; jobId?: string }> {
+        const newScheduledTime = new Date(scheduledTime);
+
+        if (newScheduledTime <= new Date()) {
+            throw new HttpException('Scheduled time must be in the future.', HttpStatus.BAD_REQUEST);
+        }
+
+        const updatedJobId = await this.bullQueueService.reschedulePost(jobId, newScheduledTime);
+
+        return {
+            message: 'Post successfully rescheduled.',
+            jobId: updatedJobId
+        };
+    }
+
+
+    async deleteScheduledPost(jobId: string): Promise<{ message: string }> {
+        const scheduledPost = await this.scheduledPostModel.findOne({ jobId });
+
+        if (!scheduledPost) {
+            throw new HttpException('Scheduled post not found', HttpStatus.NOT_FOUND);
+        }
+
+        const job = await this.bullQueueService.postScheduleQueue.getJob(jobId);
+
+        if (job) {
+            await job.remove();
+            console.log(`Job ${jobId} removed from the queue`);
+        } else {
+            console.log(`Job ${jobId} not found in the queue`);
+        }
+
+        await this.scheduledPostModel.findByIdAndDelete(scheduledPost._id);
+        console.log(`Scheduled post with jobId ${jobId} deleted from database`);
+
+        return { message: 'Scheduled post deleted successfully' };
+    }
+
+
+    async updateSchedulePost(
+        jobId: string,
+        updateData: { platform: string; content: string; imageUrl?: string },
+        file: Express.Multer.File
+    ) {
+        const post = await this.scheduledPostModel.findOne({ jobId });
+        if (!post) {
+            throw new Error('Scheduled post not found');
+        }
+
+        let updateObject: any = {};
+
+        if (updateData.platform && updateData.content) {
+            try {
+                const contentUpdate = JSON.parse(updateData.content)[updateData.platform];
+                updateObject[`content.${updateData.platform}`] = contentUpdate;
+            } catch (error) {
+                console.error('Error parsing content:', error);
+                throw new Error('Invalid content format');
+            }
+        }
+
+        let newImageUrl: string | undefined;
+        if (file) {
+            try {
+                newImageUrl = await this.awsS3Service.uploadFile(file);
+                await unlink(file.path);
+            } catch (error) {
+                console.error('Error uploading image to S3 or deleting temp file:', error);
+                throw new Error('Failed to process uploaded image');
+            }
+        } else if (updateData.imageUrl) {
+            newImageUrl = updateData.imageUrl;
+        }
+
+        if (newImageUrl) {
+            updateObject.image = newImageUrl;
+        }
+
+        if (updateData.platform && !post.platforms.includes(updateData.platform)) {
+            updateObject.$addToSet = { platforms: updateData.platform };
+        }
+
+        const result = await this.scheduledPostModel.updateOne(
+            { jobId: jobId },
+            { $set: updateObject },
+            { new: true, runValidators: true }
+        );
+
+        if (result.matchedCount === 0) {
+            throw new Error('Failed to update post');
+        }
+
+        const updatedPost = await this.scheduledPostModel.findOne({ jobId });
+        return updatedPost;
+    }
+
+
+
 }
