@@ -3,7 +3,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText, Alert } from '@mui/material';
+import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText, Alert, TextField } from '@mui/material';
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -27,6 +27,9 @@ import { Snackbar, } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CreatePost from './CreatePost';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';  // Using AdapterDateFns
 
 
 const Planner = () => {
@@ -58,9 +61,6 @@ const Planner = () => {
         profilePicture,
         userPages,
     }));
-
-
-    console.log("DAta", data);
 
     useEffect(() => {
         if (data) {
@@ -556,20 +556,39 @@ const Planner = () => {
             fontSize: isPreviewOpen ? '0.8rem' : '1rem',
         };
 
+        const isMonthView = currentView === 'dayGridMonth';
+        const isWeekView = currentView === 'timeGridWeek';
+        const isDayView = currentView === 'timeGridDay';
+
+        const onDateChange = (date: Date | null) => {
+            setSelectedDate(date);
+        };
+
+        const formatDateRange = (date, view) => {
+            if (view === 'timeGridWeek') {
+                const start = new Date(date);
+                start.setDate(start.getDate() - start.getDay());
+                const end = new Date(start);
+                end.setDate(end.getDate() + 6);
+                return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+            } else if (view === 'timeGridDay') {
+                return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            } else {
+                return `${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
+            }
+        };
+
         return (
             <Box sx={{ backgroundColor: '#fff' }}>
                 <Box sx={{ borderBottom: '1px solid #e0e0e0', padding: 1 }}>
-                    <Typography variant="h6" fontWeight='bold' fontSize={isPreviewOpen ? '1.1rem' : '1.25rem'}>Planner</Typography>
+                    <Typography variant="h6" fontWeight="bold" fontSize={isPreviewOpen ? '1.1rem' : '1.25rem'}>
+                        Planner
+                    </Typography>
                 </Box>
 
-                <Box sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    backgroundColor: '#fff',
-                    ...containerStyle
-                }}>
-                    <FormControl sx={selectStyle}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '1rem 3rem' }}>
+                    {/* Platform filter */}
+                    <FormControl sx={{ minWidth: 120 }}>
                         <Select
                             value={platformFilter}
                             onChange={(e) => setPlatformFilter(e.target.value)}
@@ -594,104 +613,141 @@ const Planner = () => {
 
                     <Divider orientation="vertical" flexItem />
 
-                    <FormControl sx={selectStyle}>
-                        <Select value={selectedMonth} onChange={onMonthChange} size="small" sx={{
-                            background: '#ccdfff', borderRadius: '2rem', color: '#203170',
-                            '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                            '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                        }}>
-                            {months.map((month, index) => (
-                                <MenuItem key={index} value={index}>{month}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+
+                    {/* Date selection */}
+                    {isMonthView ? (
+                        <>
+                            <FormControl sx={{ minWidth: 120 }}>
+                                <Select
+                                    value={selectedDate.getMonth()}
+                                    onChange={(e) => onDateChange(new Date(selectedDate.setMonth(e.target.value)))}
+                                    size="small"
+                                    sx={{
+                                        background: '#ccdfff',
+                                        borderRadius: '2rem',
+                                        color: '#203170',
+                                        '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                        '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                    }}
+                                >
+                                    {Array.from({ length: 12 }, (_, i) => (
+                                        <MenuItem key={i} value={i}>
+                                            {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
+                            <FormControl sx={{ minWidth: 100 }}>
+                                <Select
+                                    value={selectedDate.getFullYear()}
+                                    onChange={(e) => onDateChange(new Date(selectedDate.setFullYear(e.target.value)))}
+                                    size="small"
+                                    sx={{
+                                        background: '#ccdfff',
+                                        borderRadius: '2rem',
+                                        color: '#203170',
+                                        '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                        '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                    }}
+                                >
+                                    {Array.from({ length: 10 }, (_, i) => (
+                                        <MenuItem key={i} value={new Date().getFullYear() - 5 + i}>
+                                            {new Date().getFullYear() - 5 + i}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </>
+                    ) : (
+                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                            <DatePicker
+                                value={selectedDate}
+                                onChange={onDateChange}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        size="small"
+                                        sx={{
+                                            '& .MuiInputBase-root': {
+                                                background: '#ccdfff',
+                                                borderRadius: '2rem',
+                                                color: '#203170',
+                                                '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                                '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                            },
+                                        }}
+                                    />
+                                )}
+                            />
+                        </LocalizationProvider>
+                    )}
 
                     <Divider orientation="vertical" flexItem />
 
-                    <FormControl sx={{ ...selectStyle, minWidth: isPreviewOpen ? 60 : 80, maxWidth: isPreviewOpen ? 80 : 100 }}>
-                        <Select value={selectedYear} onChange={onYearChange} size="small" sx={{
-                            background: '#ccdfff', borderRadius: '2rem', color: '#203170',
-                            '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                            '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                        }}>
-                            {yearRange.map((year) => (
-                                <MenuItem key={year} value={year}>{year}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-
-                    <Divider orientation="vertical" flexItem />
-
+                    {/* Navigation */}
                     <Box sx={{ display: 'flex', gap: isPreviewOpen ? 0.5 : 1 }}>
-                        <IconButton onClick={onPrev} size="small"><ArrowBackIosNewIcon fontSize={isPreviewOpen ? "small" : "medium"} /></IconButton>
+                        <IconButton onClick={onPrev} size="small">
+                            <ArrowBackIosNewIcon fontSize={isPreviewOpen ? 'small' : 'medium'} />
+                        </IconButton>
                         <Box sx={{ textAlign: 'center', minWidth: isPreviewOpen ? 120 : 150 }}>
-                            <Typography variant="h6" fontWeight='bold' fontSize={isPreviewOpen ? '0.9rem' : '1rem'}>
-                                {`${new Date(selectedDate).toLocaleString('default', { month: 'long' })} ${new Date(selectedDate).getFullYear()}`}
+                            <Typography variant="h6" fontWeight="bold" fontSize={isPreviewOpen ? '0.9rem' : '1rem'}>
+                                {formatDateRange(selectedDate, currentView)}
                             </Typography>
                         </Box>
-                        <IconButton onClick={onNext} size="small"><ArrowForwardIosIcon fontSize={isPreviewOpen ? "small" : "medium"} /></IconButton>
+                        <IconButton onClick={onNext} size="small">
+                            <ArrowForwardIosIcon fontSize={isPreviewOpen ? 'small' : 'medium'} />
+                        </IconButton>
                     </Box>
 
                     <Divider orientation="vertical" flexItem />
 
-                    <FormControl sx={selectStyle}>
-                        <Select defaultValue="" displayEmpty size="small" sx={{
-                            background: '#ccdfff', borderRadius: '2rem', color: '#203170',
-                            '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                            '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                        }}>
-                            <MenuItem value="">All posts</MenuItem>
-                            <MenuItem value="facebook">Drafts</MenuItem>
-                        </Select>
-                    </FormControl>
-
-                    <Divider orientation="vertical" flexItem />
-
+                    {/* View selection */}
                     <Box sx={{ display: 'flex', gap: 1, background: '#CCDFFF' }}>
                         <IconButton
                             onClick={() => onViewChange('dayGridMonth')}
                             size="small"
                             sx={{
-                                backgroundColor: currentView === 'dayGridMonth' ? '#203170' : 'transparent',
-                                color: currentView === 'dayGridMonth' ? '#fff' : 'inherit',
+                                backgroundColor: isMonthView ? '#203170' : 'transparent',
+                                color: isMonthView ? '#fff' : 'inherit',
                                 borderRadius: '0',
-                                '&:hover': { backgroundColor: '#2031703d' }
+                                '&:hover': { backgroundColor: '#2031703d' },
                             }}
                         >
-                            <CalendarViewMonthIcon fontSize={isPreviewOpen ? "small" : "medium"} />
+                            <CalendarViewMonthIcon fontSize={isPreviewOpen ? 'small' : 'medium'} />
                         </IconButton>
 
                         <IconButton
                             onClick={() => onViewChange('timeGridWeek')}
                             size="small"
                             sx={{
-                                backgroundColor: currentView === 'timeGridWeek' ? '#203170' : 'transparent',
-                                color: currentView === 'timeGridWeek' ? '#fff' : 'inherit',
+                                backgroundColor: isWeekView ? '#203170' : 'transparent',
+                                color: isWeekView ? '#fff' : 'inherit',
                                 borderRadius: '0',
-                                '&:hover': { backgroundColor: '#2031703d' }
+                                '&:hover': { backgroundColor: '#2031703d' },
                             }}
                         >
-                            <CalendarViewWeekIcon fontSize={isPreviewOpen ? "small" : "medium"} />
+                            <CalendarViewWeekIcon fontSize={isPreviewOpen ? 'small' : 'medium'} />
                         </IconButton>
 
                         <IconButton
                             onClick={() => onViewChange('timeGridDay')}
                             size="small"
                             sx={{
-                                backgroundColor: currentView === 'timeGridDay' ? '#203170' : 'transparent',
-                                color: currentView === 'timeGridDay' ? '#fff' : 'inherit',
+                                backgroundColor: isDayView ? '#203170' : 'transparent',
+                                color: isDayView ? '#fff' : 'inherit',
                                 borderRadius: '0',
-                                '&:hover': { backgroundColor: '#2031703d' }
+                                '&:hover': { backgroundColor: '#2031703d' },
                             }}
                         >
-                            <CalendarViewDayIcon fontSize={isPreviewOpen ? "small" : "medium"} />
+                            <CalendarViewDayIcon fontSize={isPreviewOpen ? 'small' : 'medium'} />
                         </IconButton>
+
                     </Box>
 
-                    <Divider orientation="vertical" flexItem />
 
                     <FormControl sx={selectStyle}>
                         <Select
@@ -708,7 +764,7 @@ const Planner = () => {
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             }}
                         >
-                            <MenuItem value="">All status</MenuItem>
+                            <MenuItem value="">Post status</MenuItem>
                             <MenuItem value="scheduled">Scheduled</MenuItem>
                             <MenuItem value="posted">Posted</MenuItem>
                         </Select>
