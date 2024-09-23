@@ -44,8 +44,8 @@ const Planner = () => {
     const calendarRef = useRef(null);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'info' | 'warning' | 'error'>('success');
-
-
+    const [platformFilter, setPlatformFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
 
     const { data } = useFetchPostsQuery(undefined);
     const [reschedulePost] = useReschedulePostMutation();
@@ -67,48 +67,42 @@ const Planner = () => {
             const formattedEvents = data.flatMap((post) => {
                 const isScheduled = post.status === 'scheduled';
 
-                if (isScheduled) {
-                    return post.platforms.map((platform) => {
-                        const platformContent = post.content[platform] || '';
-
-                        return {
-                            id: `${post._id}-${platform}`,
-                            title: platformContent || 'No content available',
-                            start: new Date(post.scheduledTime),
-                            extendedProps: {
-                                imageUrl: post.image,
-                                platform: platform,
-                                userId: post.userId,
-                                status: post.status,
-                                jobId: post.jobId,
-                            },
-                        };
-                    });
-                }
-
-                return post.platforms.map((platformObj) => {
-                    const platform = platformObj.platform;
-                    const platformContent = post.content[platform] || '';
-
-                    return {
-                        id: `${post._id}-${platform}`,
-                        title: platformContent || 'No content available',
-                        start: new Date(post.timestamp),
-                        extendedProps: {
-                            imageUrl: post.image,
-                            platform: platform,
-                            userId: post.userId,
-                            status: post.status,
-                            response: platformObj.response,
-                        },
-                    };
+                const createEvent = (platform, content, timestamp) => ({
+                    id: `${post._id}-${platform}`,
+                    title: content || 'No content available',
+                    start: new Date(timestamp),
+                    extendedProps: {
+                        imageUrl: post.image,
+                        platform: platform,
+                        userId: post.userId,
+                        status: post.status,
+                        ...(isScheduled ? { jobId: post.jobId } : { response: post.platforms.find(p => p.platform === platform)?.response }),
+                    },
                 });
+
+                if (isScheduled) {
+                    return post.platforms.map(platform =>
+                        createEvent(platform, post.content[platform], post.scheduledTime)
+                    );
+                } else {
+                    return post.platforms.map(platformObj =>
+                        createEvent(platformObj.platform, post.content[platformObj.platform], post.timestamp)
+                    );
+                }
             });
 
             console.log("Formatted Events", formattedEvents);
-            setEvents((prevEvents) => [...prevEvents, ...formattedEvents]);
+
+            // Filter events based on the selected platform and status
+            const filteredEvents = formattedEvents.filter(event => {
+                const platformMatch = !platformFilter || event.extendedProps.platform === platformFilter;
+                const statusMatch = !statusFilter || event.extendedProps.status === statusFilter;
+                return platformMatch && statusMatch;
+            });
+
+            setEvents(filteredEvents);
         }
-    }, [data]);
+    }, [data, platformFilter, statusFilter]);
 
     useEffect(() => {
         if (calendarRef.current) {
@@ -565,7 +559,7 @@ const Planner = () => {
         return (
             <Box sx={{ backgroundColor: '#fff' }}>
                 <Box sx={{ borderBottom: '1px solid #e0e0e0', padding: 1 }}>
-                    <Typography variant="h6" fontWeight='bold' fontSize={isPreviewOpen ? '1.1rem' : '1.25rem'}>Calendar</Typography>
+                    <Typography variant="h6" fontWeight='bold' fontSize={isPreviewOpen ? '1.1rem' : '1.25rem'}>Planner</Typography>
                 </Box>
 
                 <Box sx={{
@@ -576,17 +570,24 @@ const Planner = () => {
                     ...containerStyle
                 }}>
                     <FormControl sx={selectStyle}>
-                        <Select defaultValue="" displayEmpty size="small"
+                        <Select
+                            value={platformFilter}
+                            onChange={(e) => setPlatformFilter(e.target.value)}
+                            displayEmpty
+                            size="small"
                             sx={{
-                                background: '#ccdfff', borderRadius: '2rem', color: '#203170',
+                                background: '#ccdfff',
+                                borderRadius: '2rem',
+                                color: '#203170',
                                 '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
                                 '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             }}
                         >
-                            <MenuItem value="">Social accounts</MenuItem>
+                            <MenuItem value="">All accounts</MenuItem>
                             <MenuItem value="facebook">Facebook</MenuItem>
                             <MenuItem value="instagram">Instagram</MenuItem>
+                            <MenuItem value="twitter">TwitterX</MenuItem>
                             <MenuItem value="linkedin">LinkedIn</MenuItem>
                         </Select>
                     </FormControl>
@@ -693,15 +694,23 @@ const Planner = () => {
                     <Divider orientation="vertical" flexItem />
 
                     <FormControl sx={selectStyle}>
-                        <Select defaultValue="" displayEmpty size="small" sx={{
-                            background: '#ccdfff', borderRadius: '2rem', color: '#203170',
-                            '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                            '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                        }}>
-                            <MenuItem value="">Post status</MenuItem>
-                            <MenuItem value="active">Active</MenuItem>
-                            <MenuItem value="inactive">Inactive</MenuItem>
+                        <Select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            displayEmpty
+                            size="small"
+                            sx={{
+                                background: '#ccdfff',
+                                borderRadius: '2rem',
+                                color: '#203170',
+                                '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                            }}
+                        >
+                            <MenuItem value="">All status</MenuItem>
+                            <MenuItem value="scheduled">Scheduled</MenuItem>
+                            <MenuItem value="posted">Posted</MenuItem>
                         </Select>
                     </FormControl>
                 </Box>
