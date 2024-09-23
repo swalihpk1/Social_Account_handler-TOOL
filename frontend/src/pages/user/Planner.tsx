@@ -3,7 +3,6 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { ThemeProvider as MUIThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText, Alert } from '@mui/material';
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
@@ -27,14 +26,7 @@ import { RootState } from '../../app/store';
 import { Snackbar, } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CreatePost from './CreatePost';
-
-const muiTheme = createTheme({
-    palette: {
-        background: {
-            default: '#fff',
-        },
-    },
-});
+import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
 
 
 const Planner = () => {
@@ -50,6 +42,9 @@ const Planner = () => {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [openEditModal, setOpenEditModal] = useState(false);
     const calendarRef = useRef(null);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'info' | 'warning' | 'error'>('success');
+
 
 
     const { data } = useFetchPostsQuery(undefined);
@@ -137,22 +132,49 @@ const Planner = () => {
     }, [openPreviewDrawer, calendarApi]);
 
     const handleEdit = () => {
-        setOpenEditModal(true); 
+        setOpenEditModal(true);
     };
 
     const handleCloseModal = () => {
-        setOpenEditModal(false);  // Close modal
+        setOpenEditModal(false);
+    };
+
+    const showSnackbar = (message: string, severity: 'success' | 'info' | 'warning' | 'error') => {
+        setSnackbarMessage(message);
+        setSnackbarSeverity(severity);
+        setSnackbarOpen(true);
+    };
+
+    const updateEventsAfterChange = (updatedEvent, action) => {
+        console.log("Updating events:", updatedEvent, action);
+
+        setEvents((prevEvents) => {
+            if (action === 'edit') {
+                const updatedEvents = prevEvents.map(event =>
+                    event.id === updatedEvent.id ? { ...event, ...updatedEvent } : event
+                );
+
+                if (selectedEvent && selectedEvent.id === updatedEvent.id) {
+                    setSelectedEvent({ ...selectedEvent, ...updatedEvent });
+                }
+
+                return updatedEvents;
+            } else if (action === 'delete') {
+                return prevEvents.filter(event => event.extendedProps.jobId !== updatedEvent.jobId);
+            }
+            return prevEvents;
+        });
     };
 
 
     const handleDelete = async (jobId: string) => {
         try {
             await deleteSchedulePost({ jobId }).unwrap();
-            setEvents((prevEvents) => prevEvents.filter((event) => event.extendedProps.jobId !== jobId));
-            setSnackbarOpen(true);
+            updateEventsAfterChange({ jobId }, 'delete');
+            showSnackbar('Post deleted successfully!', 'success');
         } catch (error) {
             console.error('Error deleting post:', error);
-            setSnackbarOpen(true);
+            showSnackbar('Failed to delete post.', 'error');
         }
     };
 
@@ -725,7 +747,7 @@ const Planner = () => {
 
 
     return (
-        <MUIThemeProvider theme={muiTheme}>
+        < >
             <CssBaseline />
             <Box sx={{
                 display: 'flex',
@@ -957,17 +979,16 @@ const Planner = () => {
             >
                 <Alert
                     onClose={handleCloseSnackbar}
-                    severity="success"
-                    sx={{ backgroundColor: 'white', color: 'green' }}
+                    severity={snackbarSeverity}
+                    sx={{ backgroundColor: 'white', color: snackbarSeverity === 'success' ? 'green' : 'red' }}
                     icon={false}
                 >
                     <span style={{ display: 'flex', alignItems: 'center' }}>
-                        <CheckCircleIcon sx={{ mr: 1 }} />
-                        Post deleted successfully
+                        {snackbarSeverity === 'success' ? <CheckCircleIcon sx={{ mr: 1 }} /> : <ReportGmailerrorredIcon sx={{ mr: 1 }} />}
+                        {snackbarMessage}
                     </span>
                 </Alert>
             </Snackbar>
-
 
             <Dialog
                 open={openEditModal}
@@ -991,9 +1012,10 @@ const Planner = () => {
                     }}
                 >
                     <CreatePost
-                        event={selectedEvent || undefined}
+                        event={selectedEvent}
                         onClose={handleCloseModal}
-                        style={{ height: '100%', width: '100%' }}
+                        triggerSnackbar={showSnackbar}
+                        updateEvents={updateEventsAfterChange}
                     />
                 </DialogContent>
             </Dialog>
@@ -1034,7 +1056,7 @@ const Planner = () => {
                     color: inherit;
                 }
             `}</style>
-        </MUIThemeProvider >
+        </ >
     );
 };
 

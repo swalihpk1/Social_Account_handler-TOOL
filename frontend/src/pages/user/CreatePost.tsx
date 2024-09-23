@@ -55,11 +55,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import SocialPlatformUploader from '../../components/LoadingAnimation/uploadLoading';
 import SchedulePicker from '../../components/SchedulePicker';
 import { useShedulePostMutation } from '../../api/ApiSlice';
-import { hi } from 'date-fns/locale';
 
 
 
-const CreatePost: React.FC = ({ event, onClose }) => {
+const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [selectedToggle, setSelectedToggle] = useState<string | null>('Initial content');
     const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -176,13 +175,11 @@ const CreatePost: React.FC = ({ event, onClose }) => {
         let imageChanged = false;
         let imageDeleted = false;
 
-        // Check if content has changed
         if (newContent !== originalContent) {
             formData.append('content', JSON.stringify({ [platform]: newContent }));
             contentChanged = true;
         }
 
-        // Handle image changes
         if (selectedLocalImage) {
             formData.append('image', selectedLocalImage);
             formData.append('imageType', 'local');
@@ -205,7 +202,6 @@ const CreatePost: React.FC = ({ event, onClose }) => {
             return;
         }
 
-        // Append platform and jobId to formData
         formData.append('platform', platform);
         formData.append('jobId', jobId);
 
@@ -220,20 +216,18 @@ const CreatePost: React.FC = ({ event, onClose }) => {
 
             await editPost(editRequest).unwrap();
 
-            setSnackbarMessage('Post updated successfully!');
-            setSnackbarSeverity('success');
-            setSnackbarOpen(true);
+            const updatedEvent = { ...event, title: newContent };
+            updateEvents(updatedEvent, 'edit');
+            window.location.reload();
+
+            triggerSnackbar('Post updated successfully!', 'success');
             onClose();
-        } catch (error) {
-            console.error('Failed to update post:', error);
-            setSnackbarMessage('Failed to update post.');
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            console.error('Failed to update post:', Error);
+            triggerSnackbar('Failed to update post.', 'error');
         } finally {
             setUpLoading(false);
         }
     };
-
 
 
     const toggleHashtagGenerator = () => {
@@ -961,7 +955,7 @@ const CreatePost: React.FC = ({ event, onClose }) => {
                                                             setCropImageSrc(selectedLibraryImage?.src || eventImage);
                                                             setCropImageType('library');
                                                             setIsCropModalOpen(true);
-                                                        }}         
+                                                        }}
                                                         sx={{
                                                             position: 'absolute',
                                                             bottom: '10%',

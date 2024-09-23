@@ -3,7 +3,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProvidersModule } from './connectProviders/provider.module';
-import { customConfigModule } from './config/config.module';
+import { CustomConfigModule } from './config/customConfig.module';
 import { UserModule } from './schemas/user.module';
 import * as session from 'express-session';
 import { PostModule } from './postProviders/post.module';
@@ -25,7 +25,7 @@ import { GlobalStateModule } from './utils/global-state.module';
     }),
     AuthModule,
     ProvidersModule,
-    customConfigModule,
+    CustomConfigModule,
     UserModule,
     PostModule,
     GlobalStateModule

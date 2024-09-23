@@ -14,7 +14,7 @@ import * as path from 'path';
 import { ScheduledPost, ScheduledPostDocument } from "src/schemas/shedulePost.shcema";
 const fs = require('fs');
 import { unlink } from 'fs/promises';
-import { BullQueueService } from "src/config/taskSheduler/bullQueue";
+import { BullQueueService } from "src/config/taskSheduler/bullQueue.service";
 import { GlobalStateService } from "src/utils/global-state.service";
 
 

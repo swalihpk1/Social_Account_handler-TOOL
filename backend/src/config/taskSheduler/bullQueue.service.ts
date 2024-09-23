@@ -1,10 +1,10 @@
 import { Queue, Worker } from 'bullmq';
 import Redis from 'ioredis';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Post } from '@nestjs/common';
 import { PostService } from 'src/postProviders/post.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ScheduledPostDocument } from 'src/schemas/shedulePost.shcema';
+import { ScheduledPost, ScheduledPostDocument } from 'src/schemas/shedulePost.shcema';
 import { PostDocument } from 'src/schemas/post.schema';
 
 
@@ -14,16 +14,19 @@ export class BullQueueService {
     public postScheduleQueue: Queue;
 
     constructor(
+        @Inject(forwardRef(() => PostService))
         private readonly postService: PostService,
-        @InjectModel('ScheduledPost') private scheduledPostModel: Model<ScheduledPostDocument>,
-        @InjectModel('Post') private postModel: Model<PostDocument>
+        @Inject('ScheduledPostModel')
+        private scheduledPostModel: Model<ScheduledPostDocument>,
+        @Inject('PostModel')
+        private postModel: Model<PostDocument>
     ) {
         this.connection = new Redis({
             host: '127.0.0.1',
             port: 6379,
             maxRetriesPerRequest: null,
         });
-
+        
         this.postScheduleQueue = new Queue('postSchedule', { connection: this.connection });
 
         new Worker('postSchedule', async (job) => {

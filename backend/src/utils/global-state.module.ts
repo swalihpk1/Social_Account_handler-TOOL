@@ -3,6 +3,6 @@ import { GlobalStateService } from './global-state.service';
 
 @Module({
     providers: [GlobalStateService],
-    exports: [GlobalStateService], 
+    exports: [GlobalStateService],
 })
 export class GlobalStateModule { }

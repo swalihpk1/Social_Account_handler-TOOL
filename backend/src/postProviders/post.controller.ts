@@ -2,16 +2,7 @@ import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, 
 import { FileInterceptor } from "@nestjs/platform-express";
 import { PostService } from "./post.service";
 import { Request, Response } from 'express';
-import { InjectModel } from "@nestjs/mongoose";
-import { User, UserDocument } from "src/schemas/user.schema";
-import { Model } from 'mongoose';
-import { GlobalStateService } from "src/utils/global-state.service";
-import * as path from 'path';
-import * as fs from 'fs';
-import { BullQueueService } from "src/config/taskSheduler/bullQueue";
-import { ScheduledPost, ScheduledPostDocument } from "src/schemas/shedulePost.shcema";
-import { diskStorage } from "multer";
-import { PostDocument } from "src/schemas/post.schema";
+
 
 
 
@@ -19,11 +10,7 @@ import { PostDocument } from "src/schemas/post.schema";
 export class PostController {
     constructor(
         private readonly postService: PostService
-        , @InjectModel(User.name) private userModel: Model<UserDocument>
-        , @InjectModel(ScheduledPost.name) private scheduledPostModel: Model<ScheduledPostDocument>
-        , private readonly globalStateService: GlobalStateService
-        , private readonly bullQueueService: BullQueueService
-        , @InjectModel('Post') private postModel: Model<PostDocument>
+
 
     ) { }
 
