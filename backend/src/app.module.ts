@@ -8,6 +8,7 @@ import { UserModule } from './schemas/user.module';
 import * as session from 'express-session';
 import { PostModule } from './postProviders/post.module';
 import { GlobalStateModule } from './utils/global-state.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { GlobalStateModule } from './utils/global-state.module';
     CustomConfigModule,
     UserModule,
     PostModule,
-    GlobalStateModule
+    GlobalStateModule,
+    AnalyticsModule
   ],
 })
 export class AppModule implements NestModule {

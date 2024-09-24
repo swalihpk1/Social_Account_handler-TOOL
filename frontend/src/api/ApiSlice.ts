@@ -3,7 +3,7 @@ import { AuthResponse, CharacterLimits, UserData, UserInfo } from '../types/Type
 
 const USER_URL = 'api/user';
 const POST_URL = 'api/post';
-
+const ANALYTICS_URL = 'api/analytics';
 
 const baseQuery = fetchBaseQuery({ baseUrl: '' });
 
@@ -95,17 +95,18 @@ export const apiSlice = createApi({
         editPost: builder.mutation<void, { jobId: string; formData: FormData; platforms: string[] }>({
             query: ({ jobId, formData, platforms }) => {
                 platforms.forEach(platform => formData.append('platforms[]', platform));
-
-                // Log the request before returning it
-                console.log('Sending request with jobId:', jobId);
-                console.log('Sending request with formData:', formData);
-
                 return {
                     url: `${POST_URL}/edit/${jobId}`,
                     method: 'PUT',
                     body: formData,
                 };
             },
+        }),
+        fetchAnalytics: builder.mutation<any, void>({
+            query: () => ({
+                url: `${ANALYTICS_URL}`,
+                method: 'GET',
+            }),
         }),
     }),
 });
@@ -124,4 +125,5 @@ export const {
     useReschedulePostMutation,
     useDeleteShedulePostMutation,
     useEditPostMutation,
+    useFetchAnalyticsMutation,
 } = apiSlice;

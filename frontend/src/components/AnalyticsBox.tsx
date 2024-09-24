@@ -1,7 +1,74 @@
+import React from 'react';
 import { Box, Typography, Grid, Button } from '@mui/material';
 import PrintIcon from '@mui/icons-material/Print';
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { useFetchAnalyticsMutation } from '../api/ApiSlice';
+
+const CustomChart = ({ data, color }) => (
+    <ResponsiveContainer width="100%" height={40}>
+        <LineChart data={data}>
+            <XAxis dataKey="time" hide />
+            <YAxis hide />
+            <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} />
+        </LineChart>
+    </ResponsiveContainer>
+);
+
 
 const AnalyticsBox = ({ platform, icon, color }) => {
+    const [fetchAnalytics, { data: analyticsData, isLoading, isError }] = useFetchAnalyticsMutation();
+
+    React.useEffect(() => {
+        fetchAnalytics();
+    }, [fetchAnalytics]);
+
+    const getMetricValue = (metricName) => {
+        if (!analyticsData) return '0';
+
+        switch (metricName) {
+            case 'Posts':
+                return analyticsData.totalPostCounts.find(item => item._id === platform.toLowerCase())?.count.toString() || '0';
+            case 'Scheduled Posts':
+                return analyticsData.scheduledPostCount.find(item => item._id === platform.toLowerCase())?.count.toString() || '0';
+            case 'Engagement Rate':
+                const rate = analyticsData.platformEngagement.find(item => item.platform === platform.toLowerCase())?.engagementRate || 0;
+                return rate.toFixed(1) + '%';
+            case 'Best Posting Time':
+                const bestTimes = analyticsData.getBestPostingTime.find(item => item.platform === platform.toLowerCase())?.bestTimes || [];
+                return bestTimes.length > 0 ? `${bestTimes[0].day} ${bestTimes[0].hour}` : 'N/A';
+            default:
+                return '0';
+        }
+    };
+
+    const generateChartData = (metricName) => {
+        if (!analyticsData) return [];
+
+        switch (metricName) {
+            case 'Posts':
+            case 'Scheduled Posts':
+                const postsData = metricName === 'Posts' ? analyticsData.totalPostCounts : analyticsData.scheduledPostCount;
+                return postsData.slice(-7).map((item, index) => ({
+                    time: `Day ${index + 1}`,
+                    value: item.count
+                }));
+            case 'Engagement Rate':
+                return analyticsData.platformEngagement.map((item, index) => ({
+                    time: `Day ${index + 1}`,
+                    value: item.engagementRate
+                }));
+            default:
+                return [];
+        }
+    };
+
+    const metricsData = [
+        { name: 'Posts', value: getMetricValue('Posts'), data: generateChartData('Posts') },
+        { name: 'Scheduled Posts', value: getMetricValue('Scheduled Posts'), data: generateChartData('Scheduled Posts') },
+        { name: 'Engagement Rate', value: getMetricValue('Engagement Rate'), data: generateChartData('Engagement Rate') },
+        { name: 'Best Posting Time', value: getMetricValue('Best Posting Time'), data: [] }, // No chart for Best Posting Time
+    ];
+
     return (
         <Box
             sx={{
@@ -21,35 +88,41 @@ const AnalyticsBox = ({ platform, icon, color }) => {
                 {icon}
                 {platform} Insights
             </Typography>
-            <Grid container spacing={4} alignItems="center">
-                {['Followers', 'Mentions', 'Posts', 'Post Impression'].map((item, index) => (
-                    <Grid item xs={6} sm={3} key={item}>
-                        <Box
-                            sx={{
-                                background: '#FFFFFF',
-                                borderRadius: '12px',
-                                p: 2,
-                                height: '100%',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-                            }}
-                        >
-                            <Typography variant="h4" fontWeight="bold" color="primary">
-                                {index === 0 ? '30' : index === 1 ? '0' : index === 2 ? '1' : '0%'}
-                            </Typography>
-                            <Typography variant="body2" color="textSecondary" textAlign="center">
-                                {item}
-                            </Typography>
-                            <Box sx={{ height: 40, width: '100%', mt: 2, backgroundColor: '#F0F2F5', borderRadius: '8px' }}>
-                                {/* Placeholder for chart */}
+            {isLoading && <Typography>Loading...</Typography>}
+            {isError && <Typography>Error fetching data</Typography>}
+            {!isLoading && !isError && (
+                <Grid container spacing={4} alignItems="center">
+                    {metricsData.map((item) => (
+                        <Grid item xs={6} sm={3} key={item.name}>
+                            <Box
+                                sx={{
+                                    background: '#FFFFFF',
+                                    borderRadius: '12px',
+                                    p: 2,
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+                                }}
+                            >
+                                <Typography variant="h4" fontWeight="bold" color="primary">
+                                    {item.value}
+                                </Typography>
+                                <Typography variant="body2" color="textSecondary" textAlign="center">
+                                    {item.name}
+                                </Typography>
+                                {item.name !== 'Best Posting Time' && (
+                                    <Box sx={{ height: 40, width: '100%', mt: 2 }}>
+                                        <CustomChart data={item.data} color={color} />
+                                    </Box>
+                                )}
                             </Box>
-                        </Box>
-                    </Grid>
-                ))}
-            </Grid>
+                        </Grid>
+                    ))}
+                </Grid>
+            )}
             <Box mt={4} textAlign="center">
                 <Button
                     variant="outlined"
@@ -73,5 +146,6 @@ const AnalyticsBox = ({ platform, icon, color }) => {
         </Box>
     );
 };
+
 
 export default AnalyticsBox;

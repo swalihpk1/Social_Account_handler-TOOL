@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Box, Drawer, Typography, IconButton, Stack, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -13,6 +13,11 @@ import AnalyticsBox from '../../components/AnalyticsBox';
 const Analytics: React.FC = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(true);
+    const facebookRef = useRef(null);
+    const instagramRef = useRef(null);
+    const linkedInRef = useRef(null);
+    const twitterRef = useRef(null);
+
     const expandedWidth = 240;
     const collapsedWidth = 64;
 
@@ -24,11 +29,37 @@ const Analytics: React.FC = () => {
         setIsExpanded(!isExpanded);
     };
 
+    const scrollToRef = (ref) => {
+        ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    const handleIconClick = (platform) => {
+        switch (platform) {
+            case 'Facebook':
+                scrollToRef(facebookRef);
+                break;
+            case 'Instagram':
+                scrollToRef(instagramRef);
+                break;
+            case 'LinkedIn':
+                scrollToRef(linkedInRef);
+                break;
+            case 'TwitterX':
+                scrollToRef(twitterRef);
+                break;
+            default:
+                break;
+        }
+    };
+
+
+
     const socialMediaItems = [
         { icon: <FacebookRoundedIcon sx={{ color: '#1877F2', fontSize: '24px', background: 'white', borderRadius: '50%' }} />, name: 'Facebook' },
+        { icon: <InstagramIcon sx={{ color: '#EE1973', fontSize: '24px', background: 'white', borderRadius: '50%' }} />, name: 'Instagram' },
         { icon: <LinkedInIcon sx={{ color: '#1877F2', fontSize: '24px', background: 'white', borderRadius: '50%' }} />, name: 'LinkedIn' },
         { icon: <XIcon sx={{ color: '#000000', fontSize: '24px', background: 'white', borderRadius: '50%' }} />, name: 'TwitterX' },
-        { icon: <InstagramIcon sx={{ color: '#EE1973', fontSize: '24px', background: 'white', borderRadius: '50%' }} />, name: 'Instagram' },
+       
     ];
 
     const sidebarContent = (
@@ -77,7 +108,7 @@ const Analytics: React.FC = () => {
                             disablePadding
                             button
                             sx={{ mb: 1 }}
-                            onClick={() => handleIconClick(item)}
+                            onClick={() => handleIconClick(item.name)}
                         >
                             <ListItemIcon
                                 sx={{
@@ -163,27 +194,36 @@ const Analytics: React.FC = () => {
                     <MenuIcon />
                 </IconButton>
 
+
                 <Box sx={{ p: 6 }}>
-                    <AnalyticsBox
-                        platform="Facebook"
-                        icon={<FacebookRoundedIcon sx={{ fontSize: 32, mr: 1 }} />}
-                        color="#1877F2"
-                    />
-                    <AnalyticsBox
-                        platform="Instagram"
-                        icon={<InstagramIcon sx={{ fontSize: 32, mr: 1 }} />}
-                        color="#E4405F"
-                    />
-                    <AnalyticsBox
-                        platform="LinkedIn"
-                        icon={<LinkedInIcon sx={{ fontSize: 32, mr: 1 }} />}
-                        color="#0A66C2"
-                    />
-                    <AnalyticsBox
-                        platform="Twitter"
-                        icon={<XIcon sx={{ fontSize: 32, mr: 1 }} />}
-                        color="#000000"
-                    />
+                    <div ref={facebookRef}>
+                        <AnalyticsBox
+                            platform="Facebook"
+                            icon={<FacebookRoundedIcon sx={{ fontSize: 32, mr: 1 }} />}
+                            color="#1877F2"
+                        />
+                    </div>
+                    <div ref={instagramRef}>
+                        <AnalyticsBox
+                            platform="Instagram"
+                            icon={<InstagramIcon sx={{ fontSize: 32, mr: 1 }} />}
+                            color="#E4405F"
+                        />
+                    </div>
+                    <div ref={linkedInRef}>
+                        <AnalyticsBox
+                            platform="LinkedIn"
+                            icon={<LinkedInIcon sx={{ fontSize: 32, mr: 1 }} />}
+                            color="#0A66C2"
+                        />
+                    </div>
+                    <div ref={twitterRef}>
+                        <AnalyticsBox
+                            platform="Twitter"
+                            icon={<XIcon sx={{ fontSize: 32, mr: 1 }} />}
+                            color="#000000"
+                        />
+                    </div>
                 </Box>
             </Box>
         </Box>
