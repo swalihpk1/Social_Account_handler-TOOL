@@ -16,7 +16,7 @@ const reducedDrawerWidth = 80;
 const expandedDrawerWidth = 400;
 
 const Sidebar: React.FC<any> = ({ setOpen }) => {
-    const [open, setOpenState] = useState(false); // Set to false for initially reduced width
+    const [open, setOpenState] = useState(false); 
     const [profileView, setProfileView] = useState(false);
 
     const handleDrawerToggle = () => {
