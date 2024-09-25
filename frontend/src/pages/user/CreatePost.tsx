@@ -55,6 +55,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import SocialPlatformUploader from '../../components/LoadingAnimation/uploadLoading';
 import SchedulePicker from '../../components/SchedulePicker';
 import { useShedulePostMutation } from '../../api/ApiSlice';
+import { useNavigate } from 'react-router-dom';
 
 
 
@@ -98,7 +99,7 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
     const eventImage = event?.extendedProps?.imageUrl;
     const isEditing = Boolean(event);
     const [editPost] = useEditPostMutation();
-
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (event) {
@@ -1179,10 +1180,47 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
                 ) : (
                     <>
                         <Link
-                            sx={{ textDecoration: 'none', cursor: 'pointer', fontWeight: '600', color: '#203170' }}
+                            sx={{
+                                textDecoration: 'none',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                color: '#203170',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
                             onClick={() => setSchedulePickerOpen(true)}
                         >
-                            Schedule for later
+                            {scheduledTime ? (
+                                <Box
+                                    sx={{
+                                        background: '#2196f340',
+                                        p: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        borderRadius: '4px',
+                                        cursor: 'text',
+                                    }}
+                                >
+                                    {scheduledTime}
+                                    <CloseIcon
+                                        sx={{
+                                            marginLeft: '1rem',
+                                            color: '#3f51b59c',
+                                            border: '1px solid black',
+                                            borderRadius: '3rem',
+                                            cursor: 'pointer',
+                                        }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setScheduledTime(null);
+                                        }}
+                                    />
+                                </Box>
+                            ) : (
+                                'Schedule for later'
+                            )}
                         </Link>
                         <Button
                             variant="contained"
@@ -1198,14 +1236,14 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
                             }}
                             onClick={handleSubmit}
                         >
-                            Post now
+                            {scheduledTime ? 'Schedule' : 'Post now'}
                         </Button>
                         <SocialPlatformUploader
                             open={uploading}
                             handleClose={() => {
                                 setUpLoading(false);
                                 setPostSuccessModal(false);
-                                window.location.reload();
+                                navigate('/planner'); // Use navigate for redirection
                             }}
                             selectedPlatforms={selectedOptions}
                             scheduledTime={scheduledTime}

@@ -30,7 +30,8 @@ import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';  // Using AdapterDateFns
-
+import { Global } from '@emotion/react';
+import { plannerStyles } from './Styles';
 
 const Planner = () => {
     const [events, setEvents] = useState([]);
@@ -176,10 +177,6 @@ const Planner = () => {
         setSnackbarOpen(false);
     };
 
-    const updateToolbarState = (date) => {
-        setSelectedDate(date);
-    };
-
     const handleEventClick = (eventInfo) => {
         setSelectedEvent(eventInfo.event);
         setOpenPreviewDrawer(true);
@@ -244,44 +241,66 @@ const Planner = () => {
         setRescheduleInfo(null);
     };
 
-    const handleViewChange = (view) => {
+
+    const onViewChange = (view) => {
         setCurrentView(view);
         if (calendarApi) {
             calendarApi.changeView(view);
-            updateToolbarState(calendarApi.getDate());
         }
+    };
+
+    const handleViewChange = (view) => {
+        onViewChange(view);
     };
 
     const handlePrev = () => {
         if (calendarApi) {
             calendarApi.prev();
-            updateToolbarState(calendarApi.getDate());
+            setSelectedDate(calendarApi.getDate());
         }
     };
+
 
     const handleNext = () => {
         if (calendarApi) {
             calendarApi.next();
-            updateToolbarState(calendarApi.getDate());
+            setSelectedDate(calendarApi.getDate());
         }
     };
 
-    const handleMonthChange = (event) => {
-        const newMonth = event.target.value;
+    const handleMonthChange = (newMonth) => {
         const newDate = new Date(selectedDate.getFullYear(), newMonth, 1);
-        handleDateChange(newDate);
+        setSelectedDate(newDate);
+
+        if (calendarApi) {
+            calendarApi.gotoDate(newDate);
+        }
     };
 
-    const handleYearChange = (event) => {
-        const newYear = event.target.value;
+    const handleYearChange = (newYear) => {
         const newDate = new Date(newYear, selectedDate.getMonth(), 1);
-        handleDateChange(newDate);
+        setSelectedDate(newDate);
+
+        if (calendarApi) {
+            calendarApi.gotoDate(newDate);
+        }
     };
 
-    const handleDateChange = (date) => {
+    const onDateChange = (date) => {
         setSelectedDate(date);
         if (calendarApi) {
             calendarApi.gotoDate(date);
+            switch (currentView) {
+                case 'dayGridMonth':
+                    calendarApi.changeView('dayGridMonth', date);
+                    break;
+                case 'timeGridWeek':
+                    calendarApi.changeView('timeGridWeek', date);
+                    break;
+                case 'timeGridDay':
+                    calendarApi.changeView('timeGridDay', date);
+                    break;
+            }
         }
     };
 
@@ -539,16 +558,12 @@ const Planner = () => {
     };
 
     const CustomToolbar = ({
-        currentView, onViewChange, onPrev, onNext, onMonthChange, onYearChange,
-        selectedMonth, selectedYear, selectedDate, isPreviewOpen
+        currentView, onViewChange, onPrev, onNext, onMonthChange, onYearChange, selectedDate, isPreviewOpen, onDateChange
     }) => {
         const yearRange = [2023, 2024, 2025];
-        const months = Array.from({ length: 12 }, (_, i) => new Date(0, i).toLocaleString('default', { month: 'long' }));
-
-        const containerStyle = {
-            padding: isPreviewOpen ? 1 : 2,
-            fontSize: isPreviewOpen ? '0.9rem' : '1rem',
-        };
+        const months = Array.from({ length: 12 }, (_, i) =>
+            new Date(0, i).toLocaleString('default', { month: 'long' })
+        );
 
         const selectStyle = {
             minWidth: isPreviewOpen ? 80 : 120,
@@ -560,9 +575,6 @@ const Planner = () => {
         const isWeekView = currentView === 'timeGridWeek';
         const isDayView = currentView === 'timeGridDay';
 
-        const onDateChange = (date: Date | null) => {
-            setSelectedDate(date);
-        };
 
         const formatDateRange = (date, view) => {
             if (view === 'timeGridWeek') {
@@ -613,14 +625,12 @@ const Planner = () => {
 
                     <Divider orientation="vertical" flexItem />
 
-
-                    {/* Date selection */}
                     {isMonthView ? (
                         <>
                             <FormControl sx={{ minWidth: 120 }}>
                                 <Select
                                     value={selectedDate.getMonth()}
-                                    onChange={(e) => onDateChange(new Date(selectedDate.setMonth(e.target.value)))}
+                                    onChange={(e) => onMonthChange(e.target.value)}
                                     size="small"
                                     sx={{
                                         background: '#ccdfff',
@@ -631,9 +641,9 @@ const Planner = () => {
                                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
                                     }}
                                 >
-                                    {Array.from({ length: 12 }, (_, i) => (
-                                        <MenuItem key={i} value={i}>
-                                            {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                                    {months.map((month, index) => (
+                                        <MenuItem key={index} value={index}>
+                                            {month}
                                         </MenuItem>
                                     ))}
                                 </Select>
@@ -642,7 +652,7 @@ const Planner = () => {
                             <FormControl sx={{ minWidth: 100 }}>
                                 <Select
                                     value={selectedDate.getFullYear()}
-                                    onChange={(e) => onDateChange(new Date(selectedDate.setFullYear(e.target.value)))}
+                                    onChange={(e) => onYearChange(e.target.value)}
                                     size="small"
                                     sx={{
                                         background: '#ccdfff',
@@ -653,9 +663,9 @@ const Planner = () => {
                                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
                                     }}
                                 >
-                                    {Array.from({ length: 10 }, (_, i) => (
-                                        <MenuItem key={i} value={new Date().getFullYear() - 5 + i}>
-                                            {new Date().getFullYear() - 5 + i}
+                                    {yearRange.map((year) => (
+                                        <MenuItem key={year} value={year}>
+                                            {year}
                                         </MenuItem>
                                     ))}
                                 </Select>
@@ -688,7 +698,6 @@ const Planner = () => {
 
                     <Divider orientation="vertical" flexItem />
 
-                    {/* Navigation */}
                     <Box sx={{ display: 'flex', gap: isPreviewOpen ? 0.5 : 1 }}>
                         <IconButton onClick={onPrev} size="small">
                             <ArrowBackIosNewIcon fontSize={isPreviewOpen ? 'small' : 'medium'} />
@@ -705,7 +714,6 @@ const Planner = () => {
 
                     <Divider orientation="vertical" flexItem />
 
-                    {/* View selection */}
                     <Box sx={{ display: 'flex', gap: 1, background: '#CCDFFF' }}>
                         <IconButton
                             onClick={() => onViewChange('dayGridMonth')}
@@ -748,7 +756,6 @@ const Planner = () => {
 
                     </Box>
 
-
                     <FormControl sx={selectStyle}>
                         <Select
                             value={statusFilter}
@@ -764,7 +771,7 @@ const Planner = () => {
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
                             }}
                         >
-                            <MenuItem value="">Post status</MenuItem>
+                            <MenuItem value="">All status</MenuItem>
                             <MenuItem value="scheduled">Scheduled</MenuItem>
                             <MenuItem value="posted">Posted</MenuItem>
                         </Select>
@@ -773,6 +780,8 @@ const Planner = () => {
             </Box>
         );
     };
+
+
 
     const renderDayHeader = (info) => {
         if (info.view.type === 'timeGridWeek') {
@@ -810,9 +819,13 @@ const Planner = () => {
         return info.text;
     };
 
+    const handleDatesSet = (dateInfo) => {
+        setSelectedDate(dateInfo.start);
+    };
 
     return (
-        < >
+        <>
+            <Global styles={plannerStyles} />
             <CssBaseline />
             <Box sx={{
                 display: 'flex',
@@ -837,16 +850,16 @@ const Planner = () => {
                         onNext={handleNext}
                         onMonthChange={handleMonthChange}
                         onYearChange={handleYearChange}
-                        selectedMonth={selectedDate.getMonth()}
-                        selectedYear={selectedDate.getFullYear()}
                         selectedDate={selectedDate}
                         isPreviewOpen={openPreviewDrawer}
+                        onDateChange={onDateChange}
                     />
                     <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
                         <FullCalendar
                             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                             initialView={currentView}
                             editable
+                            initialDate={selectedDate}
                             events={events}
                             eventClick={handleEventClick}
                             eventDragStart={handleEventDragStart}
@@ -884,9 +897,7 @@ const Planner = () => {
                                 },
                             }}
                             ref={calendarRef}
-                            datesSet={(dateInfo) => {
-                                updateToolbarState(dateInfo.start);
-                            }}
+                            datesSet={handleDatesSet}
                         />
                     </Box>
                 </Box>
@@ -1084,44 +1095,7 @@ const Planner = () => {
                     />
                 </DialogContent>
             </Dialog>
-
-            <style jsx global>{`
-                .fc-timegrid-slot {
-                    height: 120px !important;
-                }
-                .fc-event {
-                    border: none !important;
-                    background: transparent !important;
-                }
-                .fc-daygrid-day-events {
-                    max-height: 8rem;
-                    overflow-y: auto;
-                }
-                .fc-direction-ltr .fc-timegrid-col-events {
-                    margin: 0px;
-                    width: 100%;
-                }
-                .fc .fc-daygrid-day.fc-day-today,
-                .fc .fc-timegrid-col.fc-day-today {
-                    background-color: #efefef !important;
-                }
-                .fc-view-harness {
-                    background-color: #efefef !important;
-                }
-                .fc .fc-col-header-cell-cushion{
-                    background: aliceblue !important;
-                    width:100%
-                }
-                .fc .fc-timegrid-axis {
-                    background-color: #efefef;
-                }
-                .fc-dayGridMonth-view .fc-col-header-cell,
-                .fc-timeGridDay-view .fc-col-header-cell {
-                    background-color: inherit;
-                    color: inherit;
-                }
-            `}</style>
-        </ >
+        </>
     );
 };
 
