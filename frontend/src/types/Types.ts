@@ -74,12 +74,20 @@ export interface LoadingIconProps {
     loading: boolean;
 }
 
+export interface Account {
+    provider: string;
+    userPages?: Array<{ pageName: string; pageImage: string }>;
+    profileName: string;
+    profilePicture: string;
+}
+
+
 export interface SocialPreviewProps {
     text: string;
-    account: SocialAccount
-    selectedLocalImage?: File | null;
-    selectedLibraryImage?: { src: string, alt: string } | null;
-    shortenedLinks: string[];
+    account: Account;
+    selectedLocalImage: File | null;
+    selectedLibraryImage: { src: string; alt: string } | null;
+    shortenedLinks: Record<string, string>;
 }
 
 export interface CharacterLimits {

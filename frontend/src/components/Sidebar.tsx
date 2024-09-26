@@ -7,7 +7,6 @@ import SearchIcon from './icons/SearchIcon';
 import CalendarIcon from './icons/CalendarIcon';
 import AnalyticIcon from './icons/AnalyticIcon';
 import ProfileIcon from './icons/ProfileIcon';
-import HelpIcon from './icons/HelpIcon';
 import StyledListItem from '../pages/user/Themes/StyledListItem';
 import ProfileDetails from './ProfileDetails';
 
@@ -16,7 +15,7 @@ const reducedDrawerWidth = 80;
 const expandedDrawerWidth = 400;
 
 const Sidebar: React.FC<any> = ({ setOpen }) => {
-    const [open, setOpenState] = useState(false); 
+    const [open, setOpenState] = useState(false);
     const [profileView, setProfileView] = useState(false);
 
     const handleDrawerToggle = () => {
@@ -87,13 +86,6 @@ const Sidebar: React.FC<any> = ({ setOpen }) => {
                 <List sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     {!profileView && (
                         <>
-                            <StyledListItem
-                                icon={<HelpIcon />}
-                                text="Help"
-                                open={open}
-                                to="/help"
-                                size="small"
-                            />
                             <StyledListItem
                                 icon={<ProfileIcon />}
                                 text="Profile"

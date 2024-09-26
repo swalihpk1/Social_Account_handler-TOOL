@@ -32,6 +32,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';  // Using AdapterDateFns
 import { Global } from '@emotion/react';
 import { plannerStyles } from './Styles';
+import { SocialPreviewProps } from '../../types/Types';
 
 const Planner = () => {
     const [events, setEvents] = useState([]);
@@ -311,15 +312,21 @@ const Planner = () => {
     const renderEventPreview = () => {
         if (!selectedEvent) return null;
 
-        console.log('selectedEvent', selectedEvent)
+        console.log('selectedEvent', selectedEvent);
 
         const account = userSocialAccounts.find(acc => acc.provider === selectedEvent.extendedProps.platform);
-        const eventData = {
+        const eventData: SocialPreviewProps = {
             text: selectedEvent.title,
-            account: account || { provider: selectedEvent.extendedProps.platform, profileName: 'User Name' },
+            account: account || {
+                provider: selectedEvent.extendedProps.platform,
+                profileName: 'User Name',
+                profilePicture: ''
+            },
             selectedLocalImage: null,
-            selectedLibraryImage: selectedEvent.extendedProps.imageUrl ? { src: selectedEvent.extendedProps.imageUrl, alt: 'Event Image' } : null,
-            shortenedLinks: [],
+            selectedLibraryImage: selectedEvent.extendedProps.imageUrl
+                ? { src: selectedEvent.extendedProps.imageUrl, alt: 'Event Image' }
+                : null,
+            shortenedLinks: {},
         };
 
         switch (selectedEvent.extendedProps.platform) {

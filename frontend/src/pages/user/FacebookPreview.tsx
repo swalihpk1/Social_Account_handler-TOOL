@@ -1,4 +1,3 @@
-
 import { Avatar, Box, Divider, Skeleton, Stack, Typography } from '@mui/material';
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -8,6 +7,7 @@ import { faShare } from '@fortawesome/free-solid-svg-icons';
 import React from 'react';
 import { SocialPreviewProps } from '../../types/Types';
 import ReplaceLinksAndHashtags from '../../components/ReplaceLinkAndHashtags';
+
 
 const FacebookPreview: React.FC<SocialPreviewProps> = ({ text, account, selectedLocalImage, selectedLibraryImage, shortenedLinks }) => {
     return (
