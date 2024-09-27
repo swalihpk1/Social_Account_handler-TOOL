@@ -14,6 +14,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { useFetchAnalyticsMutation } from '../../api/ApiSlice';
 import RocketIcon from '@mui/icons-material/Rocket';
 import CarouselComponent from '../../components/CarouselComponent';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
     const score = 76;
@@ -24,6 +25,7 @@ const Dashboard = () => {
 
     ];
 
+    const navigate = useNavigate();
     // const [fetchAnalytics, { data: analyticsData, isLoading, isError }] = useFetchAnalyticsMutation();
 
     // useEffect(() => {
@@ -262,23 +264,33 @@ const Dashboard = () => {
                         </Box>
                         <Button
                             variant="outlined"
-                            startIcon={<img src="/Compose.svg" alt="Compose" />}
+                            startIcon={
+                                <img
+                                    src="/Compose.svg"
+                                    alt="Compose"
+                                    style={{
+                                        filter: 'invert(55%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)'
+                                    }}
+                                />
+                            }
+                            onClick={() => navigate('/create')}
                             sx={{
                                 width: '100%',
-                                fontSize: '1rem',
+                                fontSize: '15px',
                                 mt: 1,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: '#d32f2f', // Red text color
-                                borderColor: '#d32f2f', // Red border color
+                                fontWeight: 'bold',
+                                color: 'black',
+                                borderColor: '#9C9C9C',
                                 '&:hover': {
-                                    borderColor: '#b71c1c', // Darker red border on hover
-                                    backgroundColor: 'rgba(211, 47, 47, 0.04)', // Light red background on hover
+                                    borderColor: '#203170',
                                 },
+                                textTransform: 'none',
                             }}
                         >
-                            Schedule Post
+                            Schedule post
                         </Button>
                     </Grid>
                 </Grid >

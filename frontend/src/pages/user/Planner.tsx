@@ -3,7 +3,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText, Alert, TextField } from '@mui/material';
+import { CssBaseline, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Stack, Button, IconButton, Select, MenuItem, FormControl, Divider, DialogContentText, Alert, TextField, Skeleton } from '@mui/material';
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -52,7 +52,7 @@ const Planner = () => {
     const [platformFilter, setPlatformFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
 
-    const { data } = useFetchPostsQuery(undefined);
+    const { data, error, isLoading } = useFetchPostsQuery(undefined);
     const [reschedulePost] = useReschedulePostMutation();
     const [deleteSchedulePost] = useDeleteShedulePostMutation();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
@@ -64,7 +64,10 @@ const Planner = () => {
         userPages,
     }));
 
+    
+
     useEffect(() => {
+
         if (data) {
             const formattedEvents = data.flatMap((post) => {
                 const isScheduled = post.status === 'scheduled';
@@ -95,7 +98,6 @@ const Planner = () => {
 
             console.log("Formatted Events", formattedEvents);
 
-            // Filter events based on the selected platform and status
             const filteredEvents = formattedEvents.filter(event => {
                 const platformMatch = !platformFilter || event.extendedProps.platform === platformFilter;
                 const statusMatch = !statusFilter || event.extendedProps.status === statusFilter;
@@ -343,8 +345,85 @@ const Planner = () => {
         }
     };
 
+
+    const generateSkeletonEvents = () => {
+        const events = [];
+        const startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+
+        for (let i = 0; i < 30; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+
+            const numEvents = Math.floor(Math.random() * 3) + 1; // 1 to 3 events per day
+
+            for (let j = 0; j < numEvents; j++) {
+                const hourOffset = Math.floor(Math.random() * 12) + 6; // Random hour between 6 AM and 6 PM
+                const startTime = new Date(date);
+                startTime.setHours(hourOffset, 0, 0, 0);
+
+                events.push({
+                    start: startTime,
+                    end: new Date(startTime.getTime() + 60 * 60 * 1000), // 1 hour duration
+                    extendedProps: { isLoading: true }
+                });
+            }
+        }
+
+        return events;
+    };
+
+    const renderSkeletonEvent = (eventInfo) => {
+        const { view } = eventInfo;
+
+        if (view.type === 'dayGridMonth') {
+            return (
+                <Box
+                    sx={{
+                        padding: '4px',
+                        backgroundColor: '#fff',
+                        borderRadius: '8px',
+                        width: '100%',
+                        margin: '3px 10px',
+                        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                    }}
+                >
+                    <Stack direction="column" spacing={0.5} sx={{ width: '100%' }}>
+                        <Skeleton variant="text" width="60%" height={20} />
+                        <Skeleton variant="text" width="40%" height={15} />
+                    </Stack>
+                    <Skeleton variant="rectangular" width="100%" height={30} sx={{ mt: 1 }} />
+                    <Skeleton variant="text" width="40%" height={15} sx={{ mt: 1 }} />
+                </Box>
+            );
+        } else if (view.type === 'timeGridWeek' || view.type === 'timeGridDay') {
+            return (
+                <Box
+                    sx={{
+                        height: '100%',
+                        padding: '4px',
+                        backgroundColor: '#fff',
+                        borderRadius: '8px',
+                        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                    }}
+                >
+                    <Skeleton variant="text" width="60%" height={20} />
+                    <Skeleton variant="text" width="40%" height={15} />
+                    <Skeleton variant="rectangular" width="100%" height={30} sx={{ mt: 1 }} />
+                    <Skeleton variant="text" width="40%" height={15} sx={{ mt: 1 }} />
+                </Box>
+            );
+        }
+    };
+
     const renderEventContent = (eventInfo) => {
+
         const { event, view } = eventInfo;
+
+        if (event.extendedProps.isLoading) {
+            return renderSkeletonEvent(eventInfo);
+        }
+
         const platform = event.extendedProps.platform;
 
         const getPlatformIcon = (platform) => {
@@ -867,7 +946,7 @@ const Planner = () => {
                             initialView={currentView}
                             editable
                             initialDate={selectedDate}
-                            events={events}
+                            events={isLoading ? generateSkeletonEvents() : events}
                             eventClick={handleEventClick}
                             eventDragStart={handleEventDragStart}
                             eventDrop={handleEventDrop}

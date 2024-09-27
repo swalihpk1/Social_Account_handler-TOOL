@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import { Box } from '@mui/material';
 
 const InstagramCallback: React.FC = () => {
     const navigate = useNavigate();
@@ -30,11 +32,17 @@ const InstagramCallback: React.FC = () => {
     }, [navigate]);
 
     return (
-        <div>
-
-            Processing Instagram callback...
-
-        </div>
+        <Box
+            sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                width: '100vw',
+            }}
+        >
+            <InstagramIcon sx={{ fontSize: 64, color: '#E1306C' }} />
+        </Box>
     );
 };
 

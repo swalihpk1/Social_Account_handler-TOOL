@@ -71,8 +71,10 @@ const Sidebar: React.FC<any> = ({ setOpen }) => {
                         <List sx={{ color: 'white', flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 0 }}>
                             <StyledListItem icon={<DashboardOutlinedIcon />} text="Dashboard" open={open} to="/dashboard" />
                             <StyledListItem icon={<SearchIcon />} text="Search" open={open} to="/search" />
-                            <StyledListItem icon={<img src="/Compose.svg" alt="Compose" />} text="Create Post" open={open} to="/create" iconStyles={{ paddingTop: '2px' }} />
-                            <StyledListItem icon={<CalendarIcon />} text="Calendar" open={open} to="/planner" />
+                            <StyledListItem icon={<img src="/Compose.svg" alt="Compose" style={{ filter: 'brightness(0) invert(1)' }} />} text="Create Post" open={open} to="/create" iconStyles={{ paddingTop: '2px' }} />
+                            <StyledListItem icon={<CalendarIcon />} text="Calendar" open={open} to="/planner" onClick={() => {
+                                window.location.href = '/planner';
+                            }} />
                             <StyledListItem icon={<AnalyticIcon />} text="Analytics" open={open} to="/analytics" />
                         </List>
                     )}

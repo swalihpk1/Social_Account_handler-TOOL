@@ -3,6 +3,7 @@ import { Box, Typography, Grid, Button } from '@mui/material';
 import PrintIcon from '@mui/icons-material/Print';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { useFetchAnalyticsMutation } from '../api/ApiSlice';
+import AnalyticsLoading from './LoadingAnimation/anlyticsLoading';
 
 const CustomChart = ({ data, color }) => (
     <ResponsiveContainer width="100%" height={40}>
@@ -66,7 +67,7 @@ const AnalyticsBox = ({ platform, icon, color }) => {
         { name: 'Posts', value: getMetricValue('Posts'), data: generateChartData('Posts') },
         { name: 'Scheduled Posts', value: getMetricValue('Scheduled Posts'), data: generateChartData('Scheduled Posts') },
         { name: 'Engagement Rate', value: getMetricValue('Engagement Rate'), data: generateChartData('Engagement Rate') },
-        { name: 'Best Posting Time', value: getMetricValue('Best Posting Time'), data: [] }, // No chart for Best Posting Time
+        { name: 'Best Posting Time', value: getMetricValue('Best Posting Time'), data: [] },
     ];
 
     return (
@@ -88,7 +89,11 @@ const AnalyticsBox = ({ platform, icon, color }) => {
                 {icon}
                 {platform} Insights
             </Typography>
-            {isLoading && <Typography>Loading...</Typography>}
+            {isLoading && (
+                <Box display="flex" justifyContent="center" alignItems="center" height="200px">
+                    <AnalyticsLoading color={color} />
+                </Box>
+            )}
             {isError && <Typography>Error fetching data</Typography>}
             {!isLoading && !isError && (
                 <Grid container spacing={4} alignItems="center">
