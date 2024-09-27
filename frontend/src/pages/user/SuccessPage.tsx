@@ -115,7 +115,7 @@ const SuccessPage: React.FC = () => {
                         backgroundColor: 'transparent',
                     },
                 }}
-                href='/create'
+                href='/dashboard'
             >
                 Lets go! &#8250;
             </Button>

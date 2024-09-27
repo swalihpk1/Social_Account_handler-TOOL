@@ -52,7 +52,7 @@ const Planner = () => {
     const [platformFilter, setPlatformFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
 
-    const { data, error, isLoading } = useFetchPostsQuery(undefined);
+    const { data, isLoading } = useFetchPostsQuery(undefined);
     const [reschedulePost] = useReschedulePostMutation();
     const [deleteSchedulePost] = useDeleteShedulePostMutation();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
@@ -64,7 +64,7 @@ const Planner = () => {
         userPages,
     }));
 
-    
+
 
     useEffect(() => {
 

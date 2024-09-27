@@ -1,15 +1,20 @@
 import { Controller, Get } from "@nestjs/common";
 import { AnalyticService } from "./analytics.service";
+import { GlobalStateService } from "src/utils/global-state.service"; 
 
 @Controller('analytics')
 export class AnalyticsController {
-    constructor(private readonly analyticService: AnalyticService) { }
+    constructor(
+        private readonly analyticService: AnalyticService,
+        private readonly globalStateService: GlobalStateService,
+    ) { }
 
     @Get()
     async getAllAnalytics() {
-        console.log('vann')
-        const data = await this.analyticService.getAllAnalytics();
-        console.log("Analytics Data:", data);
-        return data;
+        const userId = this.globalStateService.getUserId();
+        if (!userId) {
+            throw new Error('User ID is not defined.');
+        }
+        return await this.analyticService.getAllAnalytics(userId);
     }
 }

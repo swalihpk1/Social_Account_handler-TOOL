@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Box,
     Typography,
@@ -11,41 +11,70 @@ import {
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import AddIcon from '@mui/icons-material/Add';
-import { useFetchAnalyticsMutation } from '../../api/ApiSlice';
 import RocketIcon from '@mui/icons-material/Rocket';
 import CarouselComponent from '../../components/CarouselComponent';
 import { useNavigate } from 'react-router-dom';
 
+const score = 76;
+
 const Dashboard = () => {
-    const score = 76;
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+
+
     const scoreBreakdown = [
         { label: 'Total posts', value: 28 },
         { label: 'Total scheduled posts', value: 43 },
         { label: 'Engagement', value: 61 },
-
     ];
 
-    const navigate = useNavigate();
-    // const [fetchAnalytics, { data: analyticsData, isLoading, isError }] = useFetchAnalyticsMutation();
+    const slides = [
+        { image: 'Logo.jpg', description: 'This is the first slide description' },
+        { image: 'FbDashboard.jpg', description: 'This is the second slide description' },
+        { image: 'IgDashboard.jpg', description: 'This is the third slide description' },
+    ];
 
-    // useEffect(() => {
-    //     fetchAnalytics();
-    // }, [fetchAnalytics]);
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            setCurrentSlide((prevSlide) => (prevSlide + 1) % slides.length);
+        }, 3000);
 
-    // console.log("DATA", analyticsData);
+        return () => clearInterval(intervalId);
+    }, [slides.length]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, []);
+
 
     const ScoreBreakdown = ({ label, value }) => (
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{
+            mb: 2,
+            opacity: loading ? 0 : 1,
+            transform: `translateY(${loading ? '20px' : '0'})`,
+            transition: 'opacity 0.5s ease-out, transform 0.5s ease-out'
+        }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant="body2">{label}</Typography>
-                <Typography variant="body2" fontWeight="bold">{value}%</Typography>
+                <Typography variant="body2" fontWeight="bold">
+                    {loading ? '0%' : `${value}%`}
+                </Typography>
             </Box>
-
-            <Box sx={{ position: 'relative', height: 10, borderRadius: 5, mt: 1, bgcolor: '#D5D5D5' }}>
-                {/* Foreground progress layer */}
+            <Box sx={{
+                position: 'relative',
+                height: 10,
+                borderRadius: 5,
+                mt: 1,
+                bgcolor: '#D5D5D5'
+            }}>
                 <LinearProgress
                     variant="determinate"
-                    value={value}
+                    value={loading ? 0 : value}
                     sx={{
                         position: 'absolute',
                         width: '100%',
@@ -54,6 +83,7 @@ const Dashboard = () => {
                         background: '#BEBEBE',
                         '& .MuiLinearProgress-bar': {
                             bgcolor: '#522070',
+                            transition: 'width 1s ease-out',
                         },
                     }}
                 />
@@ -61,11 +91,8 @@ const Dashboard = () => {
         </Box>
     );
 
-
-
     return (
         <>
-            {/* Top section */}
             <Box
                 sx={{
                     bgcolor: '#203170',
@@ -99,7 +126,6 @@ const Dashboard = () => {
                 </Box>
             </Box>
 
-            {/* Main content */}
             <Box
                 sx={{
                     width: '85vw',
@@ -112,73 +138,103 @@ const Dashboard = () => {
                 }}
             >
                 <Grid container columnSpacing={7} sx={{ height: '100%' }}>
-                    {/* Left section */}
                     <Grid item xs={12} md={8.5}>
                         <Box sx={{ height: '100%' }} boxShadow={3}>
                             <Grid container sx={{ height: '100%' }}>
                                 <Grid item xs={12} md={4} sx={{ height: '100%' }}>
                                     <Box sx={{ bgcolor: '#D5D5D5', height: '100%', p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        <Box sx={{ bgcolor: '#D5D5D5', height: '100%', p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                            <Box sx={{ position: 'relative', display: 'inline-flex', width: '210px', height: '210px' }}>
-                                                {/* Background Circle */}
-                                                <CircularProgress
-                                                    variant="determinate"
-                                                    value={100}
-                                                    size="100%"
-                                                    thickness={3}
-                                                    sx={{
-                                                        color: '#BEBEBE',
-                                                        position: 'absolute',
-                                                        left: 0,
-                                                        '& .MuiCircularProgress-circle': {
-                                                            strokeLinecap: 'round',
-                                                        },
-                                                    }}
-                                                />
-                                                {/* Progress Circle */}
-                                                <CircularProgress
-                                                    variant="determinate"
-                                                    value={score}
-                                                    size="100%"
-                                                    thickness={3}
-                                                    sx={{
-                                                        color: '#522070',
-                                                        position: 'absolute',
-                                                        left: 0,
-                                                        transform: 'rotate(100deg)!important',
-                                                        '& .MuiCircularProgress-circle': {
-                                                            strokeLinecap: 'round',
-                                                        },
-                                                    }}
-                                                />
-                                                <Box
-                                                    sx={{
-                                                        top: 0,
-                                                        left: 0,
-                                                        bottom: 0,
-                                                        right: 0,
-                                                        position: 'absolute',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                    }}
-                                                >
-                                                    <Typography variant="h2" color="text.secondary" sx={{ fontWeight: 'bold', pl: '2rem' }}>
-                                                        {score}%
-                                                    </Typography>
-                                                </Box>
+                                        <Box sx={{
+                                            position: 'relative',
+                                            display: 'inline-flex',
+                                            width: '210px',
+                                            height: '210px',
+                                            opacity: loading ? 0 : 1,
+                                            transform: `scale(${loading ? 0.9 : 1})`,
+                                            transition: 'opacity 0.5s ease-out, transform 0.5s ease-out'
+                                        }}>
+                                            <CircularProgress
+                                                variant="determinate"
+                                                value={100}
+                                                size="100%"
+                                                thickness={3}
+                                                sx={{
+                                                    color: '#BEBEBE',
+                                                    position: 'absolute',
+                                                    left: 0,
+                                                    '& .MuiCircularProgress-circle': {
+                                                        strokeLinecap: 'round',
+                                                    },
+                                                }}
+                                            />
+                                            <CircularProgress
+                                                variant="determinate"
+                                                value={loading ? 0 : score}
+                                                size="100%"
+                                                thickness={3}
+                                                sx={{
+                                                    color: '#522070',
+                                                    position: 'absolute',
+                                                    left: 0,
+                                                    transform: 'rotate(100deg)!important',
+                                                    '& .MuiCircularProgress-circle': {
+                                                        strokeLinecap: 'round',
+                                                        transition: 'stroke-dashoffset 1s ease-out',
+                                                    },
+                                                }}
+                                            />
+                                            <Box
+                                                sx={{
+                                                    top: 0,
+                                                    left: 0,
+                                                    bottom: 0,
+                                                    right: 0,
+                                                    position: 'absolute',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                }}
+                                            >
+                                                <Typography variant="h2" color="text.secondary" sx={{ fontWeight: 'bold', pl: '2rem' }}>
+                                                    {loading ? '0%' : `${score}%`}
+                                                </Typography>
                                             </Box>
+                                        </Box>
 
-                                            <Typography variant="button" sx={{ mt: 2, bgcolor: '#52207036', fontWeight: 'bold', px: 2, py: 0.5, borderRadius: 5, color: '#522070' }}>
-                                                KEEP IT UP
+                                        <Typography
+                                            variant="button"
+                                            sx={{
+                                                mt: 2,
+                                                bgcolor: '#52207036',
+                                                fontWeight: 'bold',
+                                                px: 2,
+                                                py: 0.5,
+                                                borderRadius: 5,
+                                                color: '#522070',
+                                                opacity: loading ? 0 : 1,
+                                                transform: `translateY(${loading ? '20px' : '0'})`,
+                                                transition: 'opacity 0.5s ease-out, transform 0.5s ease-out'
+                                            }}
+                                        >
+                                            KEEP IT UP
+                                        </Typography>
+
+                                        <Box sx={{ width: '100%', mt: 3 }}>
+                                            <Typography
+                                                variant="subtitle1"
+                                                sx={{
+                                                    mb: 1,
+                                                    fontWeight: 'bold',
+                                                    color: '#394A88',
+                                                    opacity: loading ? 0 : 1,
+                                                    transform: `translateY(${loading ? '20px' : '0'})`,
+                                                    transition: 'opacity 0.5s ease-out, transform 0.5s ease-out'
+                                                }}
+                                            >
+                                                Score breakdown
                                             </Typography>
-
-                                            <Box sx={{ width: '100%', mt: 3 }}>
-                                                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold', color: '#394A88' }}>Score breakdown</Typography>
-                                                {scoreBreakdown.map((item, index) => (
-                                                    <ScoreBreakdown key={index} label={item.label} value={item.value} />
-                                                ))}
-                                            </Box>
+                                            {scoreBreakdown.map((item, index) => (
+                                                <ScoreBreakdown key={index} label={item.label} value={item.value} />
+                                            ))}
                                         </Box>
                                     </Box>
                                 </Grid>
@@ -228,40 +284,24 @@ const Dashboard = () => {
                                                         alt="Analytics Background"
                                                         style={{ width: '100%', height: '140px', display: 'block', marginBottom: '5px', objectFit: 'cover' }}
                                                     />
-                                                    <Typography variant="subtitle1" sx={{ mb: 0.5, color: '#203170' }}>About Facebook</Typography>
+                                                    <Typography variant="subtitle1" sx={{ mb: 0.5, color: '#203170' }}>About Instagram</Typography>
                                                     <Typography variant='subtitle2' color='grey' sx={{ mb: 1 }}>
                                                         Your social media presence is performing well compared to others.
                                                     </Typography>
                                                     <Button variant="outlined" color="primary" size="small" sx={{ fontSize: '0.75rem', p: 1 }}>
-                                                        Get more likes on Facebook
+                                                        Get more followers on Instagram
                                                     </Button>
                                                 </Box>
-
                                             </Grid>
                                         </Grid>
                                     </Box>
                                 </Grid>
                             </Grid>
                         </Box>
-                    </Grid >
+                    </Grid>
 
-                    {/* Right section */}
-                    <Grid item xs={12} md={3.5} sx={{ height: '100%' }}>
-                        <Box
-                            sx={{
-                                bgcolor: '#E7E5E5',
-                                height: '60%',
-                            }}
-                        >
-                            <CarouselComponent
-                                images={['Logo.jpg', 'LoginImage.jpg', 'analyticsBG.jpg']}
-                                content={[
-                                    { description: 'Description for the first slide' },
-                                    { description: 'Description for the second slide' },
-                                    { description: 'Description for the third slide' },
-                                ]}
-                            />
-                        </Box>
+                    <Grid item xs={12} md={3.5} height='60%' sx={{ background: '' }}>
+                        <CarouselComponent slides={slides} interval={5000} />
                         <Button
                             variant="outlined"
                             startIcon={
@@ -293,8 +333,8 @@ const Dashboard = () => {
                             Schedule post
                         </Button>
                     </Grid>
-                </Grid >
-            </Box >
+                </Grid>
+            </Box>
         </>
     );
 };

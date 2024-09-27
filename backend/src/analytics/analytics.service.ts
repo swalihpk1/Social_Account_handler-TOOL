@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { Post, PostDocument } from "src/schemas/post.schema";
 import { ScheduledPost, ScheduledPostDocument } from "src/schemas/shedulePost.shcema";
 
+
 @Injectable()
 export class AnalyticService {
     constructor(
@@ -11,11 +12,11 @@ export class AnalyticService {
         @InjectModel(ScheduledPost.name) private scheduledPostModel: Model<ScheduledPostDocument>,
     ) { }
 
-    async getAllAnalytics() {
-        const totalPostCounts = await this.getPostsByPlatform();
-        const scheduledPostCount = await this.getScheduledPosted();
-        const getBestPostingTime = await this.getBestPostingTime();
-        const platformEngagement = await this.getPlatformEngagement();
+    async getAllAnalytics(userId: string) {
+        const totalPostCounts = await this.getPostsByPlatform(userId);
+        const scheduledPostCount = await this.getScheduledPosted(userId);
+        const getBestPostingTime = await this.getBestPostingTime(userId);
+        const platformEngagement = await this.getPlatformEngagement(userId);
         return {
             totalPostCounts,
             scheduledPostCount,
@@ -24,8 +25,9 @@ export class AnalyticService {
         };
     }
 
-    private async getPostsByPlatform() {
+    private async getPostsByPlatform(userId: string) {
         return await this.postModel.aggregate([
+            { $match: { userId } }, // Filter by userId
             { $unwind: "$platforms" },
             {
                 $group: {
@@ -36,8 +38,9 @@ export class AnalyticService {
         ]).exec();
     }
 
-    private async getScheduledPosted() {
+    private async getScheduledPosted(userId: string) {
         return await this.scheduledPostModel.aggregate([
+            { $match: { userId } }, // Filter by userId
             { $unwind: "$platforms" },
             {
                 $group: {
@@ -48,9 +51,9 @@ export class AnalyticService {
         ]).exec();
     }
 
-    private async getPlatformEngagement() {
-        const totalPosts = await this.postModel.countDocuments();
-        const platformCounts = await this.getPostsByPlatform();
+    private async getPlatformEngagement(userId: string) {
+        const totalPosts = await this.postModel.countDocuments({ userId }); // Filter by userId
+        const platformCounts = await this.getPostsByPlatform(userId);
 
         return platformCounts.map(platform => ({
             platform: platform._id,
@@ -58,8 +61,9 @@ export class AnalyticService {
         }));
     }
 
-    private async getBestPostingTime() {
+    private async getBestPostingTime(userId: string) {
         const data = await this.postModel.aggregate([
+            { $match: { userId } }, // Filter by userId
             { $unwind: "$platforms" },
             {
                 $group: {

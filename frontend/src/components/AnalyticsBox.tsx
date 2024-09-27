@@ -94,7 +94,7 @@ const AnalyticsBox = ({ platform, icon, color }) => {
                     <AnalyticsLoading color={color} />
                 </Box>
             )}
-            {isError && <Typography>Error fetching data</Typography>}
+            {isError && <Typography textAlign='center' color='grey'>No data found</Typography>}
             {!isLoading && !isError && (
                 <Grid container spacing={4} alignItems="center">
                     {metricsData.map((item) => (
