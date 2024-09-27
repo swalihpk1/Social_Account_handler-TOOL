@@ -8,18 +8,32 @@ import {
     LinearProgress,
     Button,
 } from '@mui/material';
-import FacebookIcon from '@mui/icons-material/Facebook';
+import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import InstagramIcon from '@mui/icons-material/Instagram';
-import AddIcon from '@mui/icons-material/Add';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import XIcon from '@mui/icons-material/X';
 import RocketIcon from '@mui/icons-material/Rocket';
 import CarouselComponent from '../../components/CarouselComponent';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
+import { RootState } from '../../app/store';
+import AddSocialModal from '../../components/AddSocialModal';
 
 const score = 76;
+
+
+
 
 const Dashboard = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [openModal, setOpenModal] = useState(false);
+
+    const handleOpenModal = () => setOpenModal(true);
+    const handleCloseModal = () => setOpenModal(false);
+
+    const userInfo = useSelector((state: RootState) => state.auth.userInfo);
     const navigate = useNavigate();
 
 
@@ -51,6 +65,45 @@ const Dashboard = () => {
         return () => clearTimeout(timer);
     }, []);
 
+    const smallProviderIcons: { [key: string]: React.ReactNode } = {
+        facebook: <FacebookRoundedIcon sx={{ color: '#1877F2', fontSize: '12px', background: 'white', borderRadius: '20px' }} />,
+        instagram: <InstagramIcon sx={{ color: '#EE1973', fontSize: '12px', background: 'white', borderRadius: '20px' }} />,
+        linkedin: <LinkedInIcon sx={{ color: '#1877F2', fontSize: '12px', background: 'white', borderRadius: '20px' }} />,
+        twitter: <XIcon sx={{ color: '#000000', fontSize: '12px', background: 'white', borderRadius: '20px' }} />,
+    };
+
+    const ProfileAvatar = ({ provider, profileName, profilePicture }) => (
+        <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+
+        }}>
+            <Avatar sx={{
+                bgcolor: 'white',
+                width: 40,
+                height: 40,
+                mt: '1rem',
+                border: '2px #CE9500 solid'
+            }}>
+                {profilePicture ? (
+                    <img src={profilePicture} alt={profileName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                    smallProviderIcons[provider]
+                )}
+            </Avatar>
+            <Typography variant="caption" sx={{
+                color: 'white',
+                textAlign: 'center',
+                maxWidth: 80,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+            }}>
+                {profileName}
+            </Typography>
+        </Box>
+    );
 
     const ScoreBreakdown = ({ label, value }) => (
         <Box sx={{
@@ -101,7 +154,7 @@ const Dashboard = () => {
                     display: 'flex',
                     flexDirection: 'column',
                     pl: '7rem',
-                    pt: '4rem',
+                    pt: '2.5rem',
                 }}
             >
                 <Box
@@ -114,15 +167,27 @@ const Dashboard = () => {
                     <Typography variant="subtitle1" sx={{ color: 'white', mr: 2, fontWeight: 'bold' }}>
                         Selected profiles to post ✨
                     </Typography>
-                    <Avatar sx={{ bgcolor: '#4267B2' }}>
-                        <FacebookIcon />
+                    {Object.entries(userInfo.socialAccounts).map(([provider, account]) => {
+                        if (account) {
+                            return (
+                                <ProfileAvatar
+                                    key={provider}
+                                    provider={provider}
+                                    profileName={account.profileName || (provider === 'facebook' ? account.userPages[0]?.pageName : '')}
+                                    profilePicture={account.profilePicture || (provider === 'facebook' ? account.userPages[0]?.pageImage : undefined)}
+                                />
+                            );
+                        }
+                        return null;
+                    })}
+                    <Avatar sx={{ bgcolor: '#ebebeb9c', width: 40, height: 40 }} onClick={handleOpenModal}>
+                        <PersonAddAltIcon sx={{ color: 'black' }} />
                     </Avatar>
-                    <Avatar sx={{ bgcolor: '#E1306C' }}>
-                        <InstagramIcon />
-                    </Avatar>
-                    <Avatar sx={{ bgcolor: 'grey' }}>
-                        <AddIcon />
-                    </Avatar>
+
+                    <AddSocialModal
+                        open={openModal}
+                        handleClose={handleCloseModal}
+                    />
                 </Box>
             </Box>
 

@@ -197,8 +197,10 @@ export class ProviderController {
 
     // ==================== Twitter-X ======================
     @Get('twitter')
-    async twitterLogin(@Res() res): Promise<void> {
+    async twitterLogin(@Query('redirectUri') redirectUri: string, @Req() req, @Res() res): Promise<void> {
         try {
+            req.session.redirectUri = redirectUri;
+
             const { oauthToken } = await this.twitterStrategy.getRequestToken();
             res.redirect(`https://api.twitter.com/oauth/authenticate?oauth_token=${oauthToken}`);
         } catch (error) {
@@ -209,7 +211,13 @@ export class ProviderController {
 
 
     @Get('twitter/callback')
-    async twitterLoginCallback(@Query('oauth_token') oauthToken: string, @Query('oauth_verifier') oauthVerifier: string, @Req() req, @Res() res, @Session() session): Promise<any> {
+    async twitterLoginCallback(
+        @Query('oauth_token') oauthToken: string,
+        @Query('oauth_verifier') oauthVerifier: string,
+        @Req() req,
+        @Res() res,
+        @Session() session
+    ): Promise<any> {
         try {
             const { accessToken, accessTokenSecret } = await this.twitterStrategy.getAccessToken(
                 oauthToken,
@@ -217,15 +225,9 @@ export class ProviderController {
                 oauthVerifier
             );
 
-            console.log("Access", accessToken);
-
             const twitterUser = await this.twitterStrategy.getUserProfile(accessToken, accessTokenSecret);
-            console.log("USER", twitterUser);
-
             if (!twitterUser) {
-                return res.status(400).json({
-                    message: 'Twitter user data not found',
-                });
+                return res.status(400).json({ message: 'Twitter user data not found' });
             }
 
             const userId = session?.user?.id;
@@ -235,7 +237,9 @@ export class ProviderController {
 
             const twitterData = await this.providerService.handleTwitterLoginCallback(userId, twitterUser, accessToken);
 
-            res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(twitterData))}`);
+            const redirectPath = req.session.redirectUri ? `/${req.session.redirectUri}` : '/connect';
+            console.log("Redirect", redirectPath);
+            res.redirect(`http://localhost:3000${redirectPath}?user=${encodeURIComponent(JSON.stringify(twitterData))}`);
         } catch (error) {
             res.status(500).json({ message: 'Internal server error' });
         }

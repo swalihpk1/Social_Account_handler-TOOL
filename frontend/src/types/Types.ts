@@ -107,3 +107,15 @@ export interface PostData {
     image?: string;
 }
 
+
+export interface SnackbarProps {
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info' | 'warning';
+    onClose: () => void;
+}
+
+export interface AddSocialModalProps {
+    open: boolean;
+    handleClose: () => void;
+}

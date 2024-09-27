@@ -11,10 +11,9 @@ import { updatePages, updateUser } from '../../features/auth/CredSlice';
 import { RootState } from '../../app/store';
 import SocialAccountBox from '../../components/SocialAccountBox';
 import { useNavigate } from 'react-router-dom';
-// import { SocialAccount } from '../../types/Types';
 import axios from 'axios';
-import FBAccountListModal from './FBAccountListModal';
-// import { useRedirect } from '../../components/RedirectProvider';
+import FBAccountListModal from '../../components/FBAccountListModal';
+
 
 const Connect: React.FC = () => {
     const dispatch = useDispatch();
@@ -331,8 +330,6 @@ const Connect: React.FC = () => {
                         </Stack>
                     </Box>
 
-
-
                     <FBAccountListModal
                         open={openFbPagesModal}
                         onClose={handleModalClose}
@@ -340,7 +337,6 @@ const Connect: React.FC = () => {
                         onConfirm={handleModalConfirm}
                         fbUser={fbUserData}
                     />
-
 
                     <Button
                         variant="contained"

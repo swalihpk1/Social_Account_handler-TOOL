@@ -24,7 +24,7 @@ export class PostController {
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: error.message });
         }
     }
-    
+
 
     @Post('create')
     @UseInterceptors(FileInterceptor('image'))
@@ -95,7 +95,6 @@ export class PostController {
     @Delete('delete-schedule-post')
     async deleteScheduledPost(@Body() body: { jobId: string }) {
         const { jobId } = body;
-
         try {
             const result = await this.postService.deleteScheduledPost(jobId);
             return result;

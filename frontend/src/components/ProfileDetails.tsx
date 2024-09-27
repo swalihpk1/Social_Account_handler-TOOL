@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, IconButton, Stack, Snackbar, Alert, Dialog, CircularProgress, DialogContent, TextField } from '@mui/material';
+import { Box, Typography, IconButton, Stack, Dialog, CircularProgress, DialogContent, TextField } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -14,10 +14,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import { useNavigate } from 'react-router-dom';
-import { useRemoveSocialAccountMutation, useUpdateUserNameMutation, } from '../api/ApiSlice';
+import { useRemoveSocialAccountMutation, useUpdateUserNameMutation } from '../api/ApiSlice';
 import { removeSocialAccount, logout, updateUserName as updateUserNameAction } from '../features/auth/CredSlice';
 import { UserInfo } from '../types/Types';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import Snackbar from '../components/Snackbar';
+import AddSocialModal from './AddSocialModal';
 
 interface ProfileDetailsProps {
     onClose: () => void;
@@ -28,6 +30,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
     const dispatch = useDispatch();
     const [removeSocialAccountApi] = useRemoveSocialAccountMutation();
     const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarProps, setSnackbarProps] = useState({
+        message: '',
+        severity: 'info',
+    });
     const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
 
@@ -35,6 +41,16 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
     const [updateUserName] = useUpdateUserNameMutation();
     const userInfo: UserInfo = useSelector((state: RootState) => state.auth.userInfo);
     const [name, setName] = useState(userInfo?.name || '');
+
+    const [isAddSocialModalOpen, setIsAddSocialModalOpen] = useState(false);
+
+    const handleAddAccountClick = () => {
+        setIsAddSocialModalOpen(true);
+    };
+
+    const handleAddSocialModalClose = () => {
+        setIsAddSocialModalOpen(false);
+    };
 
     const handleEditClick = () => {
         setIsEditing(true);
@@ -47,21 +63,44 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
             const result = await updateUserName({ name }).unwrap();
             dispatch(updateUserNameAction(result.name));
             setIsEditing(false);
+
+            setSnackbarProps({
+                message: 'Name updated successfully',
+                severity: 'success',
+            });
+            setSnackbarOpen(true);
         } catch (error) {
             console.error("Failed to update user name:", error);
+            setSnackbarProps({
+                message: 'Failed to update user name',
+                severity: 'error',
+            });
+            setSnackbarOpen(true);
         }
     };
-
-
 
     const handleRemove = async (provider: string) => {
         try {
             await removeSocialAccountApi({ provider }).unwrap();
             dispatch(removeSocialAccount(provider));
+
+            setSnackbarProps({
+                message: `${provider} account removed successfully`,
+                severity: 'success',
+            });
             setSnackbarOpen(true);
         } catch (error) {
             console.error('Failed to remove social account:', error);
+            setSnackbarProps({
+                message: `Failed to remove ${provider} account`,
+                severity: 'error',
+            });
+            setSnackbarOpen(true);
         }
+    };
+
+    const handleCloseSnackbar = () => {
+        setSnackbarOpen(false);
     };
 
     const handleLogout = () => {
@@ -80,17 +119,11 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
         }, 2000);
     };
 
-
-    const handleAddAccountClick = () => {
-        navigate('/connect');
-    };
-
     const getIcon = (provider: string) => {
         const commonStyles = {
             fontSize: { xs: '20px', sm: '25px' },
             backgroundColor: 'white',
             borderRadius: '10px',
-
         };
 
         switch (provider) {
@@ -106,11 +139,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
                 return null;
         }
     };
-
-    const handleCloseSnackbar = () => {
-        setSnackbarOpen(false);
-    };
-
 
     return (
         <Stack sx={{ height: '97vh' }}>
@@ -237,31 +265,39 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
                             </Typography>
                         </Box>
                     </ConnectedBTN>
+
+                    {/* AddSocialModal component */}
+                    <AddSocialModal
+                        open={isAddSocialModalOpen}
+                        handleClose={handleAddSocialModalClose}
+                    />
                 </Box>
             </Box>
-            <ConnectedBTN
-                variant="contained"
-                onClick={handleLogout}
-                sx={{
-                    width: '100%',
-                    height: '2.5rem',
-                    background: '#ffff !important',
-                    border: '1px solid white',
-                    display: 'flex',
-                    marginLeft: '1rem',
-                    '&:hover': {
-                        background: '#e0dfdf !important',
-                    },
-                    mt: 'auto',
-                }}
-            >
-                <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
-                    <ExitToAppIcon sx={{ color: 'red' }} />
-                    <Typography sx={{ marginLeft: '0.5rem', color: '#ff3737' }}>
-                        Log Out
-                    </Typography>
-                </Box>
-            </ConnectedBTN>
+            <Box sx={{ p: '2rem' }}>
+                <ConnectedBTN
+                    variant="contained"
+                    onClick={handleLogout}
+                    sx={{
+                        width: '100%',
+                        height: '2.5rem',
+                        background: '#ffff !important',
+                        border: '1px solid white',
+                        display: 'flex',
+                        marginLeft: '1rem',
+                        '&:hover': {
+                            background: '#e0dfdf !important',
+                        },
+                        mt: 'auto',
+                    }}
+                >
+                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
+                        <ExitToAppIcon sx={{ color: 'red' }} />
+                        <Typography sx={{ marginLeft: '0.5rem', color: '#ff3737' }}>
+                            Log Out
+                        </Typography>
+                    </Box>
+                </ConnectedBTN>
+            </Box>
 
             <Dialog open={logoutDialogOpen} onClose={() => setLogoutDialogOpen(false)}>
                 <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '300px', padding: '2rem' }}>
@@ -278,11 +314,12 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
                 </DialogContent>
             </Dialog>
 
-            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-                <Alert onClose={handleCloseSnackbar} severity="success">
-                    Social account removed successfully!
-                </Alert>
-            </Snackbar>
+            <Snackbar
+                open={snackbarOpen}
+                message={snackbarProps.message}
+                severity={snackbarProps.severity}
+                onClose={handleCloseSnackbar}
+            />
         </Stack>
     );
 };
