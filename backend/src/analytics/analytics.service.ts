@@ -133,4 +133,13 @@ export class AnalyticService {
         const formattedHour = hour % 12 || 12;
         return `${formattedHour} ${period}`;
     }
+
+    async getBestPosts(userId: string) {
+        const allPosts = await this.postModel.find({ userId }).exec();
+
+        const shuffledPosts = allPosts.sort(() => 0.5 - Math.random());
+        const bestPosts = shuffledPosts.slice(0, 5); 
+
+        return bestPosts;
+    }
 }

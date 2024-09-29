@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/user/Login';
 import Signup from './pages/user/Signup';
 import Connect from './pages/user/Connect';
@@ -14,32 +14,26 @@ import Analytics from './pages/user/Analytics';
 import Search from './pages/user/Search';
 import InstagramCallback from './components/InstagramCallback';
 
-
-// import { RedirectProvider } from './components/RedirectProvider';
-
 const App: React.FC = () => (
-
     <Router>
-        {/* <RedirectProvider> */}
         <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route element={<PrivateRoute />}>
                 <Route path="/connect" element={<Connect />} />
                 <Route path="/connect/instagram/callback" element={<InstagramCallback />} />
-                <Route path="/success" element={< SuccessPage />} />
-                <Route element={< SidebarLayout />} >
-                    <Route path='/create' element={< CreatePost />} />
-                    <Route path='/dashboard' element={< Dashboard />} />
-                    <Route path='/planner' element={< Planner />} />
-                    <Route path='/analytics' element={< Analytics />} />
-                    <Route path='/search' element={< Search />} />
+                <Route path="/success" element={<SuccessPage />} />
+                <Route element={<SidebarLayout />} >
+                    <Route path='/create' element={<CreatePost />} />
+                    <Route path='/dashboard' element={<Dashboard />} />
+                    <Route path='/planner' element={<Planner />} />
+                    <Route path='/analytics' element={<Analytics />} />
+                    <Route path='/search' element={<Search />} />
                 </Route>
             </Route>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
-        {/* </RedirectProvider> */}
     </Router>
-
 );
 
 export default App;

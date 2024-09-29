@@ -17,4 +17,13 @@ export class AnalyticsController {
         }
         return await this.analyticService.getAllAnalytics(userId);
     }
+
+    @Get('best-posts')
+    async getBestPosts() {
+        const userId = this.globalStateService.getUserId();
+        if (!userId) {
+            throw new Error('User ID is not defined.');
+        }
+        return await this.analyticService.getBestPosts(userId);
+    }
 }

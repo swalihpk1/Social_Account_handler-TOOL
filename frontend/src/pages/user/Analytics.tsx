@@ -52,8 +52,6 @@ const Analytics: React.FC = () => {
         }
     };
 
-
-
     const socialMediaItems = [
         { icon: <FacebookRoundedIcon sx={{ color: '#1877F2', fontSize: '24px', background: 'white', borderRadius: '50%' }} />, name: 'Facebook' },
         { icon: <InstagramIcon sx={{ color: '#EE1973', fontSize: '24px', background: 'white', borderRadius: '50%' }} />, name: 'Instagram' },

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
     Box,
     Typography,
@@ -19,43 +19,109 @@ import { useSelector } from 'react-redux';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import { RootState } from '../../app/store';
 import AddSocialModal from '../../components/AddSocialModal';
-
-const score = 76;
-
-
-
+import { useFetchAnalyticsMutation, useFetchBestPostsQuery } from '../../api/ApiSlice';
+import React from 'react';
 
 const Dashboard = () => {
-    const [currentSlide, setCurrentSlide] = useState(0);
     const [loading, setLoading] = useState(true);
     const [openModal, setOpenModal] = useState(false);
+    const [score, setScore] = useState(0);
+    const [engagement, setEngagement] = useState(0);
 
     const handleOpenModal = () => setOpenModal(true);
     const handleCloseModal = () => setOpenModal(false);
 
+    const { data: bestPosts, error, isLoading } = useFetchBestPostsQuery();
+    const [fetchAnalytics, { data: analyticsData }] = useFetchAnalyticsMutation();
+
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
     const navigate = useNavigate();
 
+    const [totalPosts, setTotalPosts] = useState(0);
+    const [totalScheduledPosts, setTotalScheduledPosts] = useState(0);
 
-    const scoreBreakdown = [
-        { label: 'Total posts', value: 28 },
-        { label: 'Total scheduled posts', value: 43 },
-        { label: 'Engagement', value: 61 },
-    ];
+    // console.log('analyticsData updated:', analyticsData);
 
-    const slides = [
-        { image: 'Logo.jpg', description: 'This is the first slide description' },
-        { image: 'FbDashboard.jpg', description: 'This is the second slide description' },
-        { image: 'IgDashboard.jpg', description: 'This is the third slide description' },
-    ];
+    const calculateScore = (analyticsData) => {
+        if (!analyticsData) return 0;
+        const totalPosts = analyticsData.totalPostCounts.reduce((sum, item) => sum + item.count, 0);
+        const scheduledPosts = analyticsData.scheduledPostCount.reduce((sum, item) => sum + item.count, 0);
+        let score = 0;
+        score += Math.min(totalPosts * 2, 40);
+        score += Math.min(scheduledPosts * 3, 30);
+        return Math.min(score, 100);
+    };
+    const getStatusMessage = (score) => {
+        if (score <= 40) {
+            return "Needs Improvement";
+        } else if (score <= 70) {
+            return "Good Job!";
+        } else {
+            return "Excellent Work!";
+        }
+    };
+
+    const getHeaderAndContent = (score) => {
+        if (score <= 40) {
+            return {
+                header: "Needs Improvement",
+                content: "Your social media performance needs attention. Consider revising your strategy and posting more frequently."
+            };
+        } else if (score <= 70) {
+            return {
+                header: "Good Job!",
+                content: "You're doing well! Keep up the good work and try to engage more with your audience."
+            };
+        } else {
+            return {
+                header: "Excellent Work!",
+                content: "Fantastic job! Your social media presence is strong. Continue to build on this momentum."
+            };
+        }
+    };
 
     useEffect(() => {
-        const intervalId = setInterval(() => {
-            setCurrentSlide((prevSlide) => (prevSlide + 1) % slides.length);
-        }, 3000);
+        fetchAnalytics();
+    }, [fetchAnalytics]);
 
-        return () => clearInterval(intervalId);
-    }, [slides.length]);
+    useEffect(() => {
+        if (analyticsData) {
+            const totalPostsSum = analyticsData.totalPostCounts.reduce((sum, item) => sum + item.count, 0);
+            const totalScheduledPostsSum = analyticsData.scheduledPostCount.reduce((sum, item) => sum + item.count, 0);
+
+            setTotalPosts(totalPostsSum);
+            setTotalScheduledPosts(totalScheduledPostsSum);
+
+            const calculatedScore = calculateScore(analyticsData);
+            setScore(calculatedScore);
+
+            const totalEngagement = analyticsData.platformEngagement.reduce((sum, item) => {
+                const platformPostCount = analyticsData.totalPostCounts.find(post => post._id === item.platform)?.count || 0;
+                return sum + (item.engagementRate * platformPostCount);
+            }, 0);
+
+            const totalEngagementPosts = totalPostsSum || 1;
+            setEngagement(totalEngagement / totalEngagementPosts);
+        }
+    }, [analyticsData]);
+
+    const statusMessage = getStatusMessage(score);
+    const { header, content } = getHeaderAndContent(score);
+
+    const scoreBreakdown = [
+        { label: 'Total posts', value: totalPosts },
+        { label: 'Total scheduled posts', value: totalScheduledPosts },
+        { label: 'Engagement', value: engagement.toFixed(2) },
+    ];
+
+    const slides = useMemo(() => {
+        if (!bestPosts) return [];
+
+        return bestPosts.slice(0, 5).map(post => ({
+            image: post.image,
+            description: post.content.facebook || post.content.twitter || 'No description available'
+        }));
+    }, [bestPosts]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -115,7 +181,7 @@ const Dashboard = () => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant="body2">{label}</Typography>
                 <Typography variant="body2" fontWeight="bold">
-                    {loading ? '0%' : `${value}%`}
+                    {loading ? '0' : value}
                 </Typography>
             </Box>
             <Box sx={{
@@ -143,6 +209,8 @@ const Dashboard = () => {
             </Box>
         </Box>
     );
+
+
 
     return (
         <>
@@ -275,12 +343,9 @@ const Dashboard = () => {
                                                 py: 0.5,
                                                 borderRadius: 5,
                                                 color: '#522070',
-                                                opacity: loading ? 0 : 1,
-                                                transform: `translateY(${loading ? '20px' : '0'})`,
-                                                transition: 'opacity 0.5s ease-out, transform 0.5s ease-out'
                                             }}
                                         >
-                                            KEEP IT UP
+                                            {statusMessage} {/* Display the status message */}
                                         </Typography>
 
                                         <Box sx={{ width: '100%', mt: 3 }}>
@@ -313,11 +378,11 @@ const Dashboard = () => {
                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                 <RocketIcon />
                                                 <Typography variant="h6" sx={{ ml: 1 }}>
-                                                    Keep it up
+                                                    {header} {/* Display the dynamic header */}
                                                 </Typography>
                                             </Box>
-                                            <Typography variant="body2" fontFamily='inherit' fontWeight='300' >
-                                                Great job! Your social media is performing better than many businesses. To boost it further, plan your content for the next week and track which posts perform best.
+                                            <Typography variant="body2" fontFamily='inherit' fontWeight='300'>
+                                                {content} {/* Display the dynamic content */}
                                             </Typography>
                                         </Box>
 
@@ -335,9 +400,15 @@ const Dashboard = () => {
                                                     />
                                                     <Typography variant="subtitle1" sx={{ mb: 0.5, color: '#203170' }}>About Facebook</Typography>
                                                     <Typography variant='subtitle2' color='grey' sx={{ mb: 1 }}>
-                                                        Your social media presence is performing well compared to others.
+                                                        Facebook is a powerful platform for connecting with friends and promoting your brand.
                                                     </Typography>
-                                                    <Button variant="outlined" color="primary" size="small" sx={{ fontSize: '0.75rem', p: 1 }}>
+                                                    <Button
+                                                        variant="outlined"
+                                                        color="primary"
+                                                        size="small"
+                                                        sx={{ fontSize: '0.75rem', p: 1, width: '100%' }} // Updated for full width
+                                                        onClick={() => window.open('https://buffer.com/resources/how-to-get-more-followers-on-facebook/', '_blank')}
+                                                    >
                                                         Get more likes on Facebook
                                                     </Button>
                                                 </Box>
@@ -351,10 +422,16 @@ const Dashboard = () => {
                                                     />
                                                     <Typography variant="subtitle1" sx={{ mb: 0.5, color: '#203170' }}>About Instagram</Typography>
                                                     <Typography variant='subtitle2' color='grey' sx={{ mb: 1 }}>
-                                                        Your social media presence is performing well compared to others.
+                                                        Instagram is ideal for visual storytelling. Use high-quality images and videos.
                                                     </Typography>
-                                                    <Button variant="outlined" color="primary" size="small" sx={{ fontSize: '0.75rem', p: 1 }}>
-                                                        Get more followers on Instagram
+                                                    <Button
+                                                        variant="outlined"
+                                                        color="primary"
+                                                        size="small"
+                                                        sx={{ fontSize: '0.75rem', p: 1, width: '100%' }} // Updated for full width
+                                                        onClick={() => window.open('https://buffer.com/library/instagram-growth/', '_blank')}
+                                                    >
+                                                        Learn about instagram
                                                     </Button>
                                                 </Box>
                                             </Grid>
@@ -366,7 +443,13 @@ const Dashboard = () => {
                     </Grid>
 
                     <Grid item xs={12} md={3.5} height='60%' sx={{ background: '' }}>
-                        <CarouselComponent slides={slides} interval={5000} />
+                        {isLoading ? (
+                            <CircularProgress />
+                        ) : error ? (
+                            <Typography color="error">Error loading best posts</Typography>
+                        ) : (
+                            <CarouselComponent slides={slides} interval={5000} />
+                        )}
                         <Button
                             variant="outlined"
                             startIcon={

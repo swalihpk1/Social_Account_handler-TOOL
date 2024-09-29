@@ -108,6 +108,11 @@ export const apiSlice = createApi({
                 method: 'GET',
             }),
         }),
+        fetchBestPosts: builder.query<any, void>({
+            query: () => ({
+                url: `${ANALYTICS_URL}/best-posts`, 
+            }),
+        }),
     }),
 });
 
@@ -126,4 +131,5 @@ export const {
     useDeleteShedulePostMutation,
     useEditPostMutation,
     useFetchAnalyticsMutation,
+    useFetchBestPostsQuery,
 } = apiSlice;

@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updatePages, updateUser } from '../../features/auth/CredSlice';
 import { RootState } from '../../app/store';
 import SocialAccountBox from '../../components/SocialAccountBox';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import FBAccountListModal from '../../components/FBAccountListModal';
 
@@ -24,7 +24,11 @@ const Connect: React.FC = () => {
     const [openFbPagesModal, setOpenFbPagesModal] = useState(false);
     const [userPages, setUserPages] = useState([]);
     const [fbUserData, setFbUserData] = useState(null);
+    const location = useLocation();
 
+
+
+    const isFromSignup = location.state && location.state.fromSignup;
 
     const handleSocialLogin = (provider: string) => {
         console.log("asdfadsf");
@@ -89,6 +93,17 @@ const Connect: React.FC = () => {
             navigate('/connect');
         }
     };
+
+    const handleNext = () => {
+        if (isNextButtonEnabled) {
+            if (isFromSignup) {
+                navigate('/success');
+            } else {
+                navigate('/dashboard');
+            }
+        }
+    };
+
 
 
 
@@ -352,7 +367,7 @@ const Connect: React.FC = () => {
                             pointerEvents: isNextButtonEnabled ? 'auto' : 'none',
                         }}
                         disabled={!isNextButtonEnabled}
-                        href='/success'
+                        onClick={handleNext}
                     >
                         Next
                     </Button>
