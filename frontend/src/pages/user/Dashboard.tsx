@@ -40,8 +40,6 @@ const Dashboard = () => {
     const [totalPosts, setTotalPosts] = useState(0);
     const [totalScheduledPosts, setTotalScheduledPosts] = useState(0);
 
-    // console.log('analyticsData updated:', analyticsData);
-
     const calculateScore = (analyticsData) => {
         if (!analyticsData) return 0;
         const totalPosts = analyticsData.totalPostCounts.reduce((sum, item) => sum + item.count, 0);
@@ -119,7 +117,7 @@ const Dashboard = () => {
 
         return bestPosts.slice(0, 5).map(post => ({
             image: post.image,
-            description: post.content.facebook || post.content.twitter || 'No description available'
+            description: post.content.facebook || post.content.twitter || post.content.instagram || post.content.linkedin || 'No description available'
         }));
     }, [bestPosts]);
 
@@ -442,14 +440,18 @@ const Dashboard = () => {
                         </Box>
                     </Grid>
 
-                    <Grid item xs={12} md={3.5} height='60%' sx={{ background: '' }}>
+                    <Grid item xs={12} md={3.5} height="60%" sx={{ background: '' }}>
                         {isLoading ? (
                             <CircularProgress />
-                        ) : error ? (
-                            <Typography color="error">Error loading best posts</Typography>
                         ) : (
-                            <CarouselComponent slides={slides} interval={5000} />
+                            <CarouselComponent
+                                slides={slides}
+                                interval={5000}
+                                error={error}
+                                noPosts={slides.length === 0}
+                            />
                         )}
+
                         <Button
                             variant="outlined"
                             startIcon={
@@ -457,7 +459,7 @@ const Dashboard = () => {
                                     src="/Compose.svg"
                                     alt="Compose"
                                     style={{
-                                        filter: 'invert(55%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)'
+                                        filter: 'invert(55%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)',
                                     }}
                                 />
                             }

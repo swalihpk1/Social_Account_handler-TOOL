@@ -3,12 +3,12 @@ import { Drawer, List, IconButton, Box, Divider } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; // Replace with your Calendar icon
-import BarChartIcon from '@mui/icons-material/BarChart'; // Replace with your Analytics icon
+import CalendarIcon from './icons/CalendarIcon';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import ProfileIcon from './icons/ProfileIcon';
 import StyledListItem from '../pages/user/Themes/StyledListItem';
 import ProfileDetails from './ProfileDetails';
-import SearchIcon from './icons/SearchIcon'; // Ensure the path is correct
+import SearchIcon from './icons/SearchIcon';
 import SearchModal from '../pages/user/Search';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import ShareIcon from '@mui/icons-material/Share';
@@ -19,6 +19,8 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import XIcon from '@mui/icons-material/X';
 import Edit from '@mui/icons-material/Edit';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import CalendarToday from '@mui/icons-material/CalendarToday';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 const drawerWidth = 200;
 const reducedDrawerWidth = 80;
@@ -91,7 +93,7 @@ const Sidebar: React.FC<any> = ({ setOpen }) => {
                                 <StyledListItem icon={<DashboardOutlinedIcon />} text="Dashboard" open={open} to="/dashboard" />
                                 <StyledListItem icon={<SearchIcon />} text="Search" open={open} onClick={handleSearchClick} />
                                 <StyledListItem icon={<img src='Compose.svg' alt="Compose" style={{ filter: 'brightness(0) invert(1)' }} />} text="Create Post" open={open} to="/create" />
-                                <StyledListItem icon={<CalendarTodayIcon />} text="Planner" open={open} to="/planner" />
+                                <StyledListItem icon={<CalendarIcon />} text="Planner" open={open} to="/planner" />
                                 <StyledListItem icon={<BarChartIcon />} text="Analytics" open={open} to="/analytics" />
                             </List>
                         )}
@@ -123,13 +125,13 @@ const Sidebar: React.FC<any> = ({ setOpen }) => {
                 sidebarOptions={[
                     { name: 'Dashboard', icon: <DashboardOutlinedIcon />, action: () => { window.location.href = '/dashboard'; handleCloseSearchModal(); } },
                     { name: 'Create Post', icon: <img src='Compose.svg' alt="Compose" style={{ fill: 'lightgrey', width: '24px', height: '24px' }} />, action: () => { window.location.href = '/create'; handleCloseSearchModal(); } },
-                    { name: 'Planner', icon: <CalendarTodayIcon />, action: () => { window.location.href = '/planner'; handleCloseSearchModal(); } },
+                    { name: 'Planner', icon: <CalendarToday />, action: () => { window.location.href = '/planner'; handleCloseSearchModal(); } },
                     { name: 'Analytics', icon: <BarChartIcon />, action: () => { window.location.href = '/analytics'; handleCloseSearchModal(); } },
                     { name: 'Facebook', icon: <FacebookRoundedIcon />, action: () => { window.location.href = '/analytics'; handleCloseSearchModal(); } },
                     { name: 'Instagram', icon: <InstagramIcon />, action: () => { window.location.href = '/analytics'; handleCloseSearchModal(); } },
                     { name: 'LinkedIn', icon: <LinkedInIcon />, action: () => { window.location.href = '/analytics'; handleCloseSearchModal(); } },
                     { name: 'X', icon: <XIcon />, action: () => { window.location.href = '/analytics'; handleCloseSearchModal(); } },
-                    { name: 'Profile', icon: <ProfileIcon />, action: handleProfileClick },
+                    { name: 'Profile', icon: < AccountCircleIcon />, action: handleProfileClick },
                     { name: 'Add Social account', icon: <PersonAddAltIcon />, action: handleProfileClick },
                     { name: 'Connect', icon: <ShareIcon />, action: handleProfileClick },
                     { name: 'Sheduled Posts', icon: <CalendarMonthIcon />, action: () => { window.location.href = '/planner'; handleCloseSearchModal(); } },

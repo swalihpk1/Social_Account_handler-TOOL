@@ -135,11 +135,13 @@ export class AnalyticService {
     }
 
     async getBestPosts(userId: string) {
-        const allPosts = await this.postModel.find({ userId }).exec();
-
-        const shuffledPosts = allPosts.sort(() => 0.5 - Math.random());
-        const bestPosts = shuffledPosts.slice(0, 5); 
-
+        const allPostsWithImages = await this.postModel
+            .find({ userId, image: { $exists: true, $ne: '' } })
+            .exec();
+        const shuffledPosts = allPostsWithImages.sort(() => 0.5 - Math.random());
+        const bestPosts = shuffledPosts.slice(0, 5);
+    
         return bestPosts;
     }
+    
 }

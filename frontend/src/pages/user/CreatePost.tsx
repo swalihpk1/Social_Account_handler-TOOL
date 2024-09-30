@@ -21,6 +21,7 @@ import {
     Snackbar,
     Alert,
     Skeleton,
+    SelectChangeEvent,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -492,7 +493,7 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
         setShowEmojiPicker((prevShowEmojiPicker) => !prevShowEmojiPicker);
     };
 
-    const handleTextFieldChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    const handleTextFieldChange = (event: SelectChangeEvent<unknown>) => {
         setSelectedOptions(event.target.value as string[]);
     };
 
@@ -781,7 +782,7 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
                                                 width: '1.4rem', height: '1.4rem', backgroundColor: '#203170', borderRadius: '12px',
                                                 display: 'flex', justifyContent: 'center', alignItems: 'center'
                                             }}>
-                                            <RefreshIcon />
+                                            <RefreshIcon loading={true} />
                                         </Box>
                                     </Stack>
 
@@ -791,7 +792,7 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
                                                 display: 'flex', justifyContent: 'center', alignItems: 'center',
                                                 fontSize: '14px', cursor: 'pointer', textDecoration: 'none',
                                                 color: '#000'
-                                            }}> {shortenedLinks.length}.<HttpIcon />Shortened with bit.ly</Link>
+                                            }}> {shortenedLinks.length}.<HttpIcon loading={true} />Shortened with bit.ly</Link>
                                         </Stack>
                                     )}
 

@@ -1,4 +1,4 @@
-import { Box, Fade, IconButton, Modal, TextField, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Box, Fade, Modal, TextField, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import React, { useState, useEffect, useRef } from 'react';
 
 const SearchModal: React.FC<{ open: boolean; onClose: () => void; sidebarOptions: Array<{ name: string; icon: JSX.Element; action: () => void }> }> = ({ open, onClose, sidebarOptions }) => {
@@ -20,10 +20,14 @@ const SearchModal: React.FC<{ open: boolean; onClose: () => void; sidebarOptions
         }
     }, [open]);
 
-
     const filteredOptions = sidebarOptions.filter(option =>
         option.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const handleOptionClick = (action: () => void) => {
+        action(); // Perform the option's action
+        onClose(); // Close the modal
+    };
 
     return (
         <Modal
@@ -50,7 +54,6 @@ const SearchModal: React.FC<{ open: boolean; onClose: () => void; sidebarOptions
                         ml: 2,
                     }}
                 >
-
                     <TextField
                         inputRef={inputRef}
                         fullWidth
@@ -68,7 +71,7 @@ const SearchModal: React.FC<{ open: boolean; onClose: () => void; sidebarOptions
                     {searchQuery && filteredOptions.length > 0 && (
                         <List>
                             {filteredOptions.map((option, index) => (
-                                <ListItem button key={index} onClick={option.action}>
+                                <ListItem button key={index} onClick={() => handleOptionClick(option.action)}>
                                     <ListItemIcon sx={{ minWidth: 40, color: '#3771C8' }}>
                                         {option.icon}
                                     </ListItemIcon>

@@ -6,18 +6,19 @@ import Connect from './pages/user/Connect';
 import PrivateRoute from './components/PrivateRoute';
 import SuccessPage from './pages/user/SuccessPage';
 import CreatePost from './pages/user/CreatePost';
-import './index.css';
 import SidebarLayout from './components/layouts/SidebarLayout';
 import Dashboard from './pages/user/Dashboard';
 import Planner from './pages/user/Planner';
 import Analytics from './pages/user/Analytics';
 import InstagramCallback from './components/InstagramCallback';
+import Error404 from './pages/user/error404';
 
 const App: React.FC = () => (
     <Router>
         <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/404" element={<Error404 />} />
             <Route element={<PrivateRoute />}>
                 <Route path="/connect" element={<Connect />} />
                 <Route path="/connect/instagram/callback" element={<InstagramCallback />} />
@@ -30,6 +31,7 @@ const App: React.FC = () => (
                 </Route>
             </Route>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
     </Router>
 );

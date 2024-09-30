@@ -1,20 +1,22 @@
-import { useState, useEffect } from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import { useState, useEffect } from 'react';
 
-const CarouselComponent = ({ slides, interval = 5000 }) => {
+const CarouselComponent = ({ slides, interval = 5000, error, noPosts }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState('next');
     const [isHovering, setIsHovering] = useState(false);
 
     useEffect(() => {
-        const timer = setInterval(() => {
-            handleNext();
-        }, interval);
-        return () => clearInterval(timer);
-    }, [currentIndex, interval]);
+        if (!error && !noPosts && slides.length > 0) {
+            const timer = setInterval(() => {
+                handleNext();
+            }, interval);
+            return () => clearInterval(timer);
+        }
+    }, [currentIndex, interval, error, noPosts, slides.length]);
 
     const handleNext = () => {
         setDirection('next');
@@ -26,21 +28,21 @@ const CarouselComponent = ({ slides, interval = 5000 }) => {
         setCurrentIndex((prevIndex) => (prevIndex - 1 + slides.length) % slides.length);
     };
 
-    return (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#E7E5E5' }}>
-            <Box sx={{ p: 1, display: 'flex', alignItems: 'center', pl: 1 }}>
-                <EmojiEventsIcon sx={{ fontSize: '2rem', color: '#e1af30', mr: 1 }} />
-                <Typography variant="h6" fontWeight="bold" sx={{ color: 'black' }}>
-                    Top performing posts
-                </Typography>
-            </Box>
+    const renderCarouselContent = () => {
+        if (error) {
+            return <img
+                src="catError.gif"
+                alt="Error loading best posts"
+                style={{ maxWidth: '100%', maxHeight: '100%' }}
+            />
+        }
 
-            {/* Main Content */}
-            <Box
-                sx={{ flexGrow: 1, position: 'relative', overflow: 'hidden' }}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-            >
+        if (noPosts || slides.length === 0) {
+            return <Typography color="textSecondary">No top performing posts available</Typography>;
+        }
+
+        return (
+            <>
                 {slides.map((slide, index) => (
                     <Box
                         key={index}
@@ -136,6 +138,32 @@ const CarouselComponent = ({ slides, interval = 5000 }) => {
                         </IconButton>
                     </>
                 )}
+            </>
+        );
+    };
+
+    return (
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#E7E5E5' }}>
+            <Box sx={{ p: 1, display: 'flex', alignItems: 'center', pl: 1 }}>
+                <EmojiEventsIcon sx={{ fontSize: '2rem', color: '#e1af30', mr: 1 }} />
+                <Typography variant="h6" fontWeight="bold" sx={{ color: 'black' }}>
+                    Top performing posts
+                </Typography>
+            </Box>
+
+            <Box
+                sx={{
+                    flexGrow: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    overflow: 'hidden',
+                }}
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+            >
+                {renderCarouselContent()}
             </Box>
         </Box>
     );
