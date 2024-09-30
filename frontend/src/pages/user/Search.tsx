@@ -1,62 +1,86 @@
-import React, { useState } from 'react';
-import { TextField, List, ListItem, ListItemIcon, ListItemText, Typography, Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import CreateIcon from '@mui/icons-material/Create';
+import { Box, Fade, IconButton, Modal, TextField, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
 
-const Search = () => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const navigate = useNavigate();
+const SearchModal: React.FC<{ open: boolean; onClose: () => void; sidebarOptions: Array<{ name: string; icon: JSX.Element; action: () => void }> }> = ({ open, onClose, sidebarOptions }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    const sidebarOptions = [
-        { name: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-        { name: 'Planner', icon: <CalendarTodayIcon />, path: '/planner' },
-        { name: 'Analytics', icon: <BarChartIcon />, path: '/analytics' },
-        { name: 'Create Post', icon: <CreateIcon />, path: '/create' },
-    ];
-
-    const filteredOptions = sidebarOptions.filter(option =>
-        option.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const handleOptionClick = (path: string) => {
-        navigate(path);
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(event.target.value);
     };
 
+    useEffect(() => {
+        if (open) {
+            setSearchQuery('');
+            setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.focus();
+                }
+            }, 50);
+        }
+    }, [open]);
+
+
+    const filteredOptions = sidebarOptions.filter(option =>
+        option.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
-        <Box sx={{ padding: 2 }}>
-            <TextField
-                fullWidth
-                variant="outlined"
-                label="Search options"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ marginBottom: 2 }}
-            />
-            <List>
-                {filteredOptions.map((option, index) => (
-                    <ListItem 
-                        key={index} 
-                        button 
-                        onClick={() => handleOptionClick(option.path)}
-                        sx={{ 
-                            '&:hover': { 
-                                backgroundColor: '#f0f0f0',
-                            },
+        <Modal
+            open={open}
+            onClose={onClose}
+            closeAfterTransition
+            BackdropProps={{
+                timeout: 500,
+            }}
+        >
+            <Fade in={open}>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '6rem',
+                        left: '3rem',
+                        width: '80%',
+                        maxWidth: 400,
+                        bgcolor: 'background.paper',
+                        boxShadow: 24,
+                        p: 1,
+                        borderRadius: 1,
+                        mt: 2,
+                        ml: 2,
+                    }}
+                >
+
+                    <TextField
+                        inputRef={inputRef}
+                        fullWidth
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        placeholder="Search..."
+                        variant="standard"
+                        sx={{
+                            '& .MuiInput-underline:before': { borderBottomColor: 'rgba(0, 0, 0, 0.42)' },
+                            '& .MuiInput-underline:after': { borderBottomColor: 'primary.main' },
+                            '& .MuiInputBase-input': { fontSize: '1.1rem' },
                         }}
-                    >
-                        <ListItemIcon>{option.icon}</ListItemIcon>
-                        <ListItemText primary={option.name} />
-                    </ListItem>
-                ))}
-            </List>
-            {searchTerm && filteredOptions.length === 0 && (
-                <Typography>No options found</Typography>
-            )}
-        </Box>
+                    />
+
+                    {searchQuery && filteredOptions.length > 0 && (
+                        <List>
+                            {filteredOptions.map((option, index) => (
+                                <ListItem button key={index} onClick={option.action}>
+                                    <ListItemIcon sx={{ minWidth: 40, color: '#3771C8' }}>
+                                        {option.icon}
+                                    </ListItemIcon>
+                                    <ListItemText sx={{ color: '#004fb4' }} primary={option.name} />
+                                </ListItem>
+                            ))}
+                        </List>
+                    )}
+                </Box>
+            </Fade>
+        </Modal>
     );
 };
 
-export default Search;
+export default SearchModal;

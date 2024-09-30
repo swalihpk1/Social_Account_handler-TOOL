@@ -11,7 +11,6 @@ import SidebarLayout from './components/layouts/SidebarLayout';
 import Dashboard from './pages/user/Dashboard';
 import Planner from './pages/user/Planner';
 import Analytics from './pages/user/Analytics';
-import Search from './pages/user/Search';
 import InstagramCallback from './components/InstagramCallback';
 
 const App: React.FC = () => (
@@ -28,7 +27,6 @@ const App: React.FC = () => (
                     <Route path='/dashboard' element={<Dashboard />} />
                     <Route path='/planner' element={<Planner />} />
                     <Route path='/analytics' element={<Analytics />} />
-                    <Route path='/search' element={<Search />} />
                 </Route>
             </Route>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
