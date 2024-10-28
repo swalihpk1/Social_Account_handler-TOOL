@@ -53,6 +53,7 @@ const Planner = () => {
     const [statusFilter, setStatusFilter] = useState('');
 
     const { data, isLoading } = useFetchPostsQuery(undefined);
+    console.log("data", data);
     const [reschedulePost] = useReschedulePostMutation();
     const [deleteSchedulePost] = useDeleteShedulePostMutation();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
@@ -67,23 +68,30 @@ const Planner = () => {
 
 
     useEffect(() => {
-
         if (data) {
             const formattedEvents = data.flatMap((post) => {
                 const isScheduled = post.status === 'scheduled';
 
-                const createEvent = (platform, content, timestamp) => ({
-                    id: `${post._id}-${platform}`,
-                    title: content || 'No content available',
-                    start: new Date(timestamp),
-                    extendedProps: {
-                        imageUrl: post.image,
-                        platform: platform,
-                        userId: post.userId,
-                        status: post.status,
-                        ...(isScheduled ? { jobId: post.jobId } : { response: post.platforms.find(p => p.platform === platform)?.response }),
-                    },
-                });
+                const createEvent = (platform, content, timestamp) => {
+                    // Convert UTC timestamp to local time for display
+                    const localTime = new Date(timestamp);
+
+                    return {
+                        id: `${post._id}-${platform}`,
+                        title: content || 'No content available',
+                        // Use localTime for display
+                        start: localTime,
+                        extendedProps: {
+                            imageUrl: post.image,
+                            platform: platform,
+                            userId: post.userId,
+                            status: post.status,
+                            // Store original UTC time for reference
+                            originalTime: timestamp,
+                            ...(isScheduled ? { jobId: post.jobId } : { response: post.platforms.find(p => p.platform === platform)?.response }),
+                        },
+                    };
+                };
 
                 if (isScheduled) {
                     return post.platforms.map(platform =>
@@ -96,7 +104,8 @@ const Planner = () => {
                 }
             });
 
-            console.log("Formatted Events", formattedEvents);
+            console.log("formattedEvents", formattedEvents);
+
 
             const filteredEvents = formattedEvents.filter(event => {
                 const platformMatch = !platformFilter || event.extendedProps.platform === platformFilter;
@@ -199,14 +208,14 @@ const Planner = () => {
     };
 
     const handleEventDrop = (info) => {
-
         if (info.event.extendedProps.status === 'posted') {
             info.revert();
             return;
         }
 
         const jobId = info.event.extendedProps.jobId;
-        const reScheduleTime = info.event.start;
+        // Convert local time back to UTC for the API
+        const reScheduleTime = new Date(info.event.start.getTime());
 
         setRescheduleInfo({ jobId, reScheduleTime, originalEvent: draggingEvent });
         setOpenConfirmModal(true);
@@ -217,13 +226,18 @@ const Planner = () => {
         if (rescheduleInfo) {
             const { jobId, reScheduleTime } = rescheduleInfo;
 
-            reschedulePost({ jobId, reScheduleTime: reScheduleTime.toISOString() })
+            // Convert to UTC ISO string for the API
+            const utcTime = reScheduleTime.toISOString();
+
+            reschedulePost({ jobId, reScheduleTime: utcTime })
                 .unwrap()
                 .then(() => {
                     console.log('Post rescheduled successfully');
+                    showSnackbar('Post rescheduled successfully!', 'success');
                 })
                 .catch((error) => {
                     console.error('Error rescheduling post:', error);
+                    showSnackbar('Failed to reschedule post.', 'error');
                     if (calendarApi) {
                         const event = calendarApi.getEventById(rescheduleInfo.originalEvent.id);
                         event.setStart(rescheduleInfo.originalEvent.start);
@@ -308,7 +322,17 @@ const Planner = () => {
     };
 
     const formatTime = (date) => {
-        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+        if (!date) return '';
+
+        // Ensure we're working with a Date object
+        const dateObj = new Date(date);
+
+        return dateObj.toLocaleTimeString([], {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: 'UTC' // Use UTC to prevent double conversion
+        });
     };
 
     const renderEventPreview = () => {

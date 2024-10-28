@@ -20,6 +20,7 @@ async function bootstrap() {
     resave: false,
     saveUninitialized: false,
     cookie: { secure: process.env.NODE_ENV === 'production' },
+
   }));
 
   app.useGlobalPipes(new ValidationPipe());

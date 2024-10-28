@@ -89,9 +89,6 @@ export class ProviderController {
         }
     }
 
-
-
-
     // ====================Instagram======================
     @Get('instagram')
     instagramLogin(@Res() res: Response) {
@@ -181,7 +178,7 @@ export class ProviderController {
                 });
             }
 
-            const userId = req.session?.user?.id;
+            const userId = this.globalStateService.getUserId();
             if (!userId) {
                 return res.status(400).json({ message: 'User ID not found in session' });
             }
@@ -199,6 +196,7 @@ export class ProviderController {
     @Get('twitter')
     async twitterLogin(@Query('redirectUri') redirectUri: string, @Req() req, @Res() res): Promise<void> {
         try {
+            console.log("Vann");
             req.session.redirectUri = redirectUri;
 
             const { oauthToken } = await this.twitterStrategy.getRequestToken();
@@ -219,6 +217,7 @@ export class ProviderController {
         @Session() session
     ): Promise<any> {
         try {
+
             const { accessToken, accessTokenSecret } = await this.twitterStrategy.getAccessToken(
                 oauthToken,
                 req.session.oauthTokenSecret,
@@ -229,8 +228,9 @@ export class ProviderController {
             if (!twitterUser) {
                 return res.status(400).json({ message: 'Twitter user data not found' });
             }
-
-            const userId = session?.user?.id;
+            console.log("session", session);
+            const userId = this.globalStateService.getUserId();
+            console.log("userId", userId);
             if (!userId) {
                 return res.status(400).json({ message: 'User ID not found in session' });
             }

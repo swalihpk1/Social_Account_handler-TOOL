@@ -22,11 +22,11 @@ export class BullQueueService {
         private postModel: Model<PostDocument>
     ) {
         this.connection = new Redis({
-            host: '127.0.0.1',
-            port: 6379,
+            host: process.env.REDIS_HOST || '127.0.0.1',
+            port: parseInt(process.env.REDIS_PORT, 10) || 6379,
             maxRetriesPerRequest: null,
         });
-        
+
         this.postScheduleQueue = new Queue('postSchedule', { connection: this.connection });
 
         new Worker('postSchedule', async (job) => {

@@ -1,20 +1,29 @@
 import React from 'react';
-import { Box, Typography, Grid, Button } from '@mui/material';
-import PrintIcon from '@mui/icons-material/Print';
+import { Box, Typography, Grid } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { useFetchAnalyticsMutation } from '../api/ApiSlice';
 import AnalyticsLoading from './LoadingAnimation/anlyticsLoading';
 
-const CustomChart = ({ data, color }) => (
-    <ResponsiveContainer width="100%" height={40}>
-        <LineChart data={data}>
-            <XAxis dataKey="time" hide />
-            <YAxis hide />
-            <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} />
-        </LineChart>
-    </ResponsiveContainer>
-);
+const CustomChart = ({ data, color }) => {
+    const maxValue = Math.max(...data.map(item => item.value), 1);
 
+    return (
+        <ResponsiveContainer width="100%" height={40}>
+            <LineChart data={data}>
+                <XAxis dataKey="time" hide />
+                <YAxis domain={[0, maxValue]} hide />
+                <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke={color}
+                    strokeWidth={2}
+                    dot={false}
+                    isAnimationActive={false}
+                />
+            </LineChart>
+        </ResponsiveContainer>
+    );
+};
 
 const AnalyticsBox = ({ platform, icon, color }) => {
     const [fetchAnalytics, { data: analyticsData, isLoading, isError }] = useFetchAnalyticsMutation();
@@ -128,29 +137,8 @@ const AnalyticsBox = ({ platform, icon, color }) => {
                     ))}
                 </Grid>
             )}
-            <Box mt={4} textAlign="center">
-                <Button
-                    variant="outlined"
-                    startIcon={<PrintIcon />}
-                    sx={{
-                        borderRadius: '20px',
-                        textTransform: 'none',
-                        px: 3,
-                        py: 1,
-                        borderColor: color,
-                        color: color,
-                        '&:hover': {
-                            backgroundColor: `${color}10`,
-                            borderColor: color,
-                        },
-                    }}
-                >
-                    Print report
-                </Button>
-            </Box>
         </Box>
     );
 };
-
 
 export default AnalyticsBox;

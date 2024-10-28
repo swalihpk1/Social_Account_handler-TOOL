@@ -40,11 +40,10 @@ export class PostController {
             });
         }
     }
-
+    
 
     @Get('hashtags')
     async getHashtags(@Query('keyword') keyword: string): Promise<string[]> {
-        console.log("Ethu");
         return this.postService.fetchHashtags(keyword);
     }
 
