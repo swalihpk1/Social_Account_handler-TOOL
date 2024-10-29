@@ -352,7 +352,7 @@ const Planner = () => {
             selectedLibraryImage: selectedEvent.extendedProps.imageUrl
                 ? { src: selectedEvent.extendedProps.imageUrl, alt: 'Event Image' }
                 : null,
-            shortenedLinks: {},
+            shortenedLinks: [],
         };
 
         switch (selectedEvent.extendedProps.platform) {
@@ -1161,7 +1161,7 @@ const Planner = () => {
                 open={snackbarOpen}
                 autoHideDuration={3000}
                 onClose={handleCloseSnackbar}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' } as const}
             >
                 <Alert
                     onClose={handleCloseSnackbar}

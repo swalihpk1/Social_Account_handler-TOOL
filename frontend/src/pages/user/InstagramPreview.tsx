@@ -1,5 +1,5 @@
 import { Avatar, Box, Skeleton, Stack, Typography } from '@mui/material';
-import { Instagram } from '@mui/icons-material';
+import Instagram from '@mui/icons-material/Instagram';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart } from '@fortawesome/free-regular-svg-icons';
 import BookmarkBorderTwoToneIcon from '@mui/icons-material/BookmarkBorderTwoTone';

@@ -13,27 +13,35 @@ import Analytics from './pages/user/Analytics';
 import InstagramCallback from './components/InstagramCallback';
 import Error404 from './pages/user/error404';
 
-const App: React.FC = () => (
-    <Router>
-        <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/404" element={<Error404 />} />
-            <Route element={<PrivateRoute />}>
-                <Route path="/connect" element={<Connect />} />
-                <Route path="/connect/instagram/callback" element={<InstagramCallback />} />
-                <Route path="/success" element={<SuccessPage />} />
-                <Route element={<SidebarLayout />} >
-                    <Route path='/create' element={<CreatePost />} />
-                    <Route path='/dashboard' element={<Dashboard />} />
-                    <Route path='/planner' element={<Planner />} />
-                    <Route path='/analytics' element={<Analytics />} />
+const App: React.FC = () => {
+    return (
+        <Router>
+            <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/404" element={<Error404 />} />
+
+                <Route element={<PrivateRoute />}>
+                    <Route path="/connect" element={<Connect />} />
+                    <Route
+                        path="/connect/instagram/callback"
+                        element={<InstagramCallback />}
+                    />
+                    <Route path="/success" element={<SuccessPage />} />
+
+                    <Route element={<SidebarLayout />}>
+                        <Route path='/create' element={<CreatePost />} />
+                        <Route path='/dashboard' element={<Dashboard />} />
+                        <Route path='/planner' element={<Planner />} />
+                        <Route path='/analytics' element={<Analytics />} />
+                    </Route>
                 </Route>
-            </Route>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/404" replace />} />
-        </Routes>
-    </Router>
-);
+
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/404" replace />} />
+            </Routes>
+        </Router>
+    );
+};
 
 export default App;

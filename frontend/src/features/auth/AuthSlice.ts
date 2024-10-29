@@ -7,5 +7,10 @@ const baseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> =
 export const authSlice = createApi({
     baseQuery,
     tagTypes: ['User'],
-    endpoints: (builder) => ({})
+    endpoints: (builder) => ({
+        fetchUser: builder.query({
+            query: (id) => `user/${id}`,
+            providesTags: ['User'],
+        }),
+    })
 });

@@ -30,6 +30,7 @@ export class PostController {
     @UseInterceptors(FileInterceptor('image'))
     async createPost(@UploadedFile() file: Express.Multer.File, @Body() body: any, @Res() res: Response) {
         try {
+            console.log('body', body);
             await this.postService.handleCreatePost(file, body);
             return res.status(HttpStatus.CREATED).json({ message: 'Post created successfully on all platforms!' });
         } catch (error) {
@@ -40,7 +41,7 @@ export class PostController {
             });
         }
     }
-    
+
 
     @Get('hashtags')
     async getHashtags(@Query('keyword') keyword: string): Promise<string[]> {

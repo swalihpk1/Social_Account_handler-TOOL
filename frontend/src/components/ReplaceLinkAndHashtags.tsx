@@ -1,6 +1,6 @@
 import { Typography } from "@mui/material";
 
-const ReplaceLinksAndHashtags = (text, shortenedLinks) => {
+const ReplaceLinksAndHashtags = (text: string, shortenedLinks: string[]) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const hashtagRegex = /#(\w+)/g;
     let linkIndex = 0;

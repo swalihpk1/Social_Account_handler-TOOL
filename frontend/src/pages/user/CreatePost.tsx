@@ -55,10 +55,11 @@ import SocialPlatformUploader from '../../components/LoadingAnimation/uploadLoad
 import SchedulePicker from '../../components/SchedulePicker';
 import { useShedulePostMutation } from '../../api/ApiSlice';
 import { useNavigate } from 'react-router-dom';
+import { CreatePostProps } from '../../types/Types';
 
 
 
-const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
+const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar, updateEvents }) => {
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [selectedToggle, setSelectedToggle] = useState<string | null>('Initial content');
     const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -69,12 +70,12 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
     const [isLocalImageHover, setIsLocalImageHover] = useState<boolean>(false);
     const [isLibraryImageHover, setIsLibraryImageHover] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [shortenedLinks, setShortenedLinks] = useState([]);
+    const [shortenedLinks, setShortenedLinks] = useState<string[]>([]);
     const [Linkloading, setLinkloading] = useState<boolean>(false);
     const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'info' | 'warning' | 'error'>('success');
-    const [TypeLoading, setTypeLoading] = useState<boolean>(false);
+    // const [TypeLoading, setTypeLoading] = useState<boolean>(false);
     const [cursorPosition, setCursorPosition] = useState<number>(0);
     const [characterLimit, setCharacterLimit] = useState(0);
     const [initialContent, setInitialContent] = useState('');
@@ -84,14 +85,13 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
         linkedin: '',
         instagram: '',
     });
-    const { data: characterLimits, isLoading } = useGetCharacterLimitsQuery();
+    const { data: characterLimits } = useGetCharacterLimitsQuery();
     const [createPost] = useCreatePostMutation();
     const [shedulePost] = useShedulePostMutation();
     const [showHashtagGenerator, setShowHashtagGenerator] = useState(false);
     const [cropImageType, setCropImageType] = useState<'local' | 'library'>('local');
     const [isCropModalOpen, setIsCropModalOpen] = useState(false);
     const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
-    const [postSuccessModal, setPostSuccessModal] = useState(false);
     const [uploading, setUpLoading] = useState(false);
     const [schedulePickerOpen, setSchedulePickerOpen] = useState(false);
     const [scheduledTime, setScheduledTime] = useState<string | null>(null);
@@ -223,7 +223,9 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
             triggerSnackbar('Post updated successfully!', 'success');
             onClose();
             console.error('Failed to update post:', Error);
-            triggerSnackbar('Failed to update post.', 'error');
+        } catch (error) {
+            triggerSnackbar('Failed to update post', 'error');
+            console.error('Failed to update post:', error);
         } finally {
             setUpLoading(false);
         }
@@ -307,7 +309,6 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
                 return obj;
             }, {});
 
-        console.log('Filtered', filteredContent);
 
         const formData = new FormData();
         formData.append('content', JSON.stringify(filteredContent));
@@ -319,6 +320,8 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
             formData.append('image', file);
         }
 
+        console.log('Form data', Object.fromEntries(formData.entries()));
+
         try {
             if (scheduledTime) {
                 formData.append('scheduledTime', scheduledTime);
@@ -326,9 +329,13 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
             } else {
                 await createPost(formData).unwrap();
             }
-            setPostSuccessModal(true);
         } catch (error) {
             console.error('Failed to create post:', error);
+            setSnackbarMessage('Failed to create post');
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+        } finally {
+            setUpLoading(false);
         }
     };
 
@@ -378,13 +385,54 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
 
     const handleShortenLinks = async () => {
         setLinkloading(true);
-        const shortened = await Promise.all(shortenedLinks.map(shortenUrl));
-        await new Promise((resolve) => setTimeout(resolve, 2300));
-        setShortenedLinks(shortened);
-        setLinkloading(false);
-        setSnackbarMessage('Links successfully shortened');
-        setSnackbarSeverity('success');
-        setSnackbarOpen(true);
+        try {
+
+            const currentText = selectedToggle === 'Initial content' ? initialContent : text[selectedToggle] || '';
+
+            const urlRegex = /https?:\/\/[^\s]+/g;
+            const urls = currentText.match(urlRegex) || [];
+
+            const shortenedUrls = await Promise.all(
+                urls.map(url => shortenUrl(url))
+            );
+
+            const shortenedObject = urls.reduce((acc, originalUrl, index) => {
+                acc[originalUrl] = shortenedUrls[index];
+                return acc;
+            }, {} as Record<string, string>);
+
+            setShortenedLinks(shortenedObject);
+
+            let updatedText = currentText;
+            Object.entries(shortenedObject).forEach(([originalUrl, shortenedUrl]) => {
+                updatedText = updatedText.replace(originalUrl, shortenedUrl);
+            });
+
+            if (selectedToggle === 'Initial content') {
+                setInitialContent(updatedText);
+                setText({
+                    facebook: updatedText,
+                    twitter: updatedText,
+                    linkedin: updatedText,
+                    instagram: updatedText,
+                });
+            } else {
+                setText(prevState => ({
+                    ...prevState,
+                    [selectedToggle]: updatedText
+                }));
+            }
+
+            setSnackbarMessage('Links successfully shortened');
+            setSnackbarSeverity('success');
+        } catch (error) {
+            console.error('Error shortening links:', error);
+            setSnackbarMessage('Failed to shorten links');
+            setSnackbarSeverity('error');
+        } finally {
+            setLinkloading(false);
+            setSnackbarOpen(true);
+        }
     };
 
     const handleCloseSnackbar = () => {
@@ -676,7 +724,7 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
                                 color="primary"
                                 value={selectedToggle}
                                 exclusive
-                                onChange={(event, newToggle) => {
+                                onChange={(_, newToggle) => {
                                     if (newToggle !== null) {
                                         setSelectedToggle(newToggle);
                                     }
@@ -789,10 +837,17 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
                                     {shortenedLinks.length > 0 && (
                                         <Stack direction="row" spacing={1} justifyContent='center' alignItems='center'>
                                             <Link onClick={handleShortenLinks} gap={1} sx={{
-                                                display: 'flex', justifyContent: 'center', alignItems: 'center',
-                                                fontSize: '14px', cursor: 'pointer', textDecoration: 'none',
-                                                color: '#000'
-                                            }}> {shortenedLinks.length}.<HttpIcon loading={true} />Shortened with bit.ly</Link>
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                fontSize: '14px',
+                                                cursor: Linkloading ? 'wait' : 'pointer',
+                                                textDecoration: 'none',
+                                                color: '#000',
+                                                opacity: Linkloading ? 0.7 : 1
+                                            }}>
+                                                {shortenedLinks.length}.<HttpIcon loading={Linkloading} />Shortened with bit.ly
+                                            </Link>
                                         </Stack>
                                     )}
 
@@ -1241,8 +1296,7 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
                             open={uploading}
                             handleClose={() => {
                                 setUpLoading(false);
-                                setPostSuccessModal(false);
-                                navigate('/planner'); // Use navigate for redirection
+                                navigate('/planner');
                             }}
                             selectedPlatforms={selectedOptions}
                             scheduledTime={scheduledTime}
@@ -1259,7 +1313,7 @@ const CreatePost = ({ event, onClose, triggerSnackbar, updateEvents }) => {
                 onSchedule={handleSchedule}
             />
 
-            <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+            <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'center' } as const}>
                 <Alert severity={snackbarSeverity} sx={{ width: '100%' }}>
                     {snackbarMessage}
                 </Alert>

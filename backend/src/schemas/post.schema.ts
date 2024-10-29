@@ -28,7 +28,7 @@ export class Post {
     @Prop({ type: String, default: 'posted' })
     status: string;
 
-    @Prop({ type: Date, default: Date.now })
+    @Prop({ type: Date, required: true })
     timestamp: Date;
 }
 

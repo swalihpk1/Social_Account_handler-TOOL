@@ -1,21 +1,30 @@
 import { Box, Button, Container, TextField, Stack, ThemeProvider, Typography, InputAdornment, IconButton, Link, CircularProgress, Snackbar, SnackbarContent } from "@mui/material";
-import { CheckCircleOutline, ErrorOutline, Visibility, VisibilityOff } from "@mui/icons-material";
+import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
+import ErrorOutline from "@mui/icons-material/ErrorOutline";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import TextFieldsTheme from "./Themes/TextFieldsTheme";
 import { useEffect, useState } from "react";
 import { useSignUpMutation } from "../../api/ApiSlice";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { signupSchema } from "../../utils/validationSchema";
+import * as yup from 'yup';
+import type { InferType } from 'yup';
 import { yupResolver } from "@hookform/resolvers/yup";
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "../../app/store";
 
-interface SignupFormData {
-    email: string;
-    password: string;
-    confirmPassword: string;
-}
+const signupSchema = yup.object({
+    email: yup.string().email('Invalid email').required('Email is required'),
+    password: yup.string().required('Password is required')
+        .min(8, 'Password must be at least 8 characters'),
+    confirmPassword: yup.string()
+        .oneOf([yup.ref('password')], 'Passwords must match')
+        .required('Please confirm your password')
+}).required();
+
+type SignupSchemaType = InferType<typeof signupSchema>;
 
 const Signup: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -34,15 +43,20 @@ const Signup: React.FC = () => {
         }
     }, [navigate, userInfo])
 
-    const { register, handleSubmit, formState: { errors } } = useForm<SignupFormData>({
-        resolver: yupResolver(signupSchema)
+    const { register, handleSubmit, formState: { errors } } = useForm<SignupSchemaType>({
+        resolver: yupResolver(signupSchema),
+        defaultValues: {
+            email: '',
+            password: '',
+            confirmPassword: ''
+        }
     });
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
 
-    const onSubmit: SubmitHandler<SignupFormData> = async (data) => {
+    const onSubmit: SubmitHandler<SignupSchemaType> = async (data) => {
         setIsLoading(true);
 
         setTimeout(async () => {

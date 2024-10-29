@@ -86,8 +86,8 @@ export interface SocialPreviewProps {
     text: string;
     account: Account;
     selectedLocalImage: File | null;
-    selectedLibraryImage: { src: string; alt: string } | null;
-    shortenedLinks: Record<string, string>;
+    selectedLibraryImage: { src: string; alt: string; } | null;
+    shortenedLinks: string[];
 }
 
 export interface CharacterLimits {
@@ -119,3 +119,32 @@ export interface AddSocialModalProps {
     open: boolean;
     handleClose: () => void;
 }
+
+export interface CreatePostProps {
+    event?: Event;
+    onClose?: () => void;
+    triggerSnackbar?: (message: string, severity: 'success' | 'info' | 'warning' | 'error') => void;
+    updateEvents?: (event: Event, action: string) => void;
+}
+
+export interface Event {
+    extendedProps: {
+        platform?: string;
+        content?: string;
+        imageUrl?: string;
+        jobId?: string;
+    };
+    title?: string;
+}
+
+export interface ShortenedLinks {
+    [key: string]: string;
+}
+
+export interface SignupFormData {
+    email: string;
+    password: string;
+    confirmPassword: string;
+}
+
+

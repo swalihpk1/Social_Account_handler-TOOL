@@ -26,7 +26,7 @@ const FBAccountListModal = ({ open, onClose, pages, onConfirm, fbUser }) => {
     return (
         <Dialog
             open={open}
-            onClose={(event, reason) => {
+            onClose={(reason) => {
                 if (reason !== 'backdropClick') {
                     onClose();
                 }
@@ -141,7 +141,7 @@ const FBAccountListModal = ({ open, onClose, pages, onConfirm, fbUser }) => {
                 <Button
                     onClick={handleConfirm}
                     variant="contained"
-                    disabled={selectedPages.length === 0} 
+                    disabled={selectedPages.length === 0}
                     sx={{
                         bgcolor: '#4267B2',
                         '&:hover': { bgcolor: '#365899' },

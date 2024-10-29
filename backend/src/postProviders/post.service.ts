@@ -17,6 +17,8 @@ import { unlink } from 'fs/promises';
 import { BullQueueService } from "src/config/taskSheduler/bullQueue.service";
 import { GlobalStateService } from "src/utils/global-state.service";
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 5000; // 5 seconds
 
 @Injectable()
 export class PostService {
@@ -75,8 +77,8 @@ export class PostService {
             }
 
             const results = await this.createPost(content, file, socialAccessTokens);
-
-            // Save the new post to the database
+            const currentTimeInIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString();
+            console.log('currentTimeInIST', currentTimeInIST);
             const newPost = new this.postModel({
                 userId,
                 content,
@@ -85,11 +87,12 @@ export class PostService {
                     response: result.response || result.error,
                 })),
                 image: imageUrl,
-                createdAt: new Date(),
+                status: 'posted',
+                timestamp: currentTimeInIST,
             });
             await newPost.save();
 
-            // Delete the uploaded file from the server
+
             if (file) {
                 const filePath = path.join(process.cwd(), 'public', 'postImages', file.filename);
                 fs.unlink(filePath, (err) => {
@@ -413,17 +416,34 @@ export class PostService {
         }
     }
 
+    private async retryOperation(operation: () => Promise<any>, platform: string): Promise<any> {
+        let lastError;
+
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                return await operation();
+            } catch (error) {
+                lastError = error;
+                console.log(`Attempt ${attempt} failed for ${platform}:`, error.message);
+
+                if (attempt < MAX_RETRIES) {
+                    console.log(`Retrying ${platform} in ${RETRY_DELAY / 1000} seconds...`);
+                    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+                }
+            }
+        }
+
+        throw lastError;
+    }
 
     async publishToAllPlatforms(
         content: any, localImagePath: string | null, s3ImageUrl: string | null, socialAccessTokens: Map<string, string>) {
 
         console.log('Starting publishToAllPlatforms with:', { content, localImagePath, s3ImageUrl, socialAccessTokens });
 
-
         const platformPromises = [];
 
         for (const [platform, token] of socialAccessTokens.entries()) {
-
             if (!content[platform]) {
                 continue;
             }
@@ -431,7 +451,6 @@ export class PostService {
             platformPromises.push(
                 (async () => {
                     try {
-                        let response;
                         const platformContent = content[platform];
                         let platformImage = null;
 
@@ -450,26 +469,24 @@ export class PostService {
 
                         console.log(`Image path for ${platform}:`, platformImage);
 
-                        switch (platform) {
-                            case 'facebook':
-                                response = await this.postToFacebook(platformContent, platformImage, token);
-                                break;
-                            case 'twitter':
-                                response = await this.postToTwitter(platformContent, platformImage, token);
-                                break;
-                            case 'linkedin':
-                                response = await this.postToLinkedIn(platformContent, platformImage, token);
-                                break;
-                            case 'instagram':
-                                response = await this.postToInstagram(platformContent, platformImage, token);
-                                break;
-                            default:
-                                throw new Error(`Unsupported platform: ${platform}`);
-                        }
+                        const response = await this.retryOperation(async () => {
+                            switch (platform) {
+                                case 'facebook':
+                                    return await this.postToFacebook(platformContent, platformImage, token);
+                                case 'twitter':
+                                    return await this.postToTwitter(platformContent, platformImage, token);
+                                case 'linkedin':
+                                    return await this.postToLinkedIn(platformContent, platformImage, token);
+                                case 'instagram':
+                                    return await this.postToInstagram(platformContent, platformImage, token);
+                                default:
+                                    throw new Error(`Unsupported platform: ${platform}`);
+                            }
+                        }, platform);
 
                         return { platform, response };
                     } catch (error) {
-                        console.error(`Error posting to ${platform}:`, error.message);
+                        console.error(`All retry attempts failed for ${platform}:`, error.message);
                         return { platform, error: error.message };
                     }
                 })()
@@ -539,10 +556,8 @@ export class PostService {
             console.log('userId', userId);
 
             const scheduledPosts = await this.scheduledPostModel.find({ userId }).exec();
-            console.log('Scheduled posts', scheduledPosts);
 
             const postedPosts = await this.postModel.find({ userId }).exec();
-            console.log('Posted posts', postedPosts);
 
             const mergedPosts = [...scheduledPosts, ...postedPosts];
 

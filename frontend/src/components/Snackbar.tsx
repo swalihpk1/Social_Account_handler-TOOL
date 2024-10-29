@@ -5,6 +5,11 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CloseIcon from '@mui/icons-material/Close';
 
+interface SnackbarPosition {
+    vertical: 'top' | 'bottom';
+    horizontal: 'left' | 'center' | 'right';
+}
+
 const iconMap = {
     success: CheckCircleOutlineIcon,
     error: ErrorOutlineIcon,
@@ -17,7 +22,7 @@ const Snackbar = ({
     message,
     severity,
     onClose,
-    position = { vertical: 'bottom', horizontal: 'right' }
+    position = { vertical: 'bottom', horizontal: 'right' } as SnackbarPosition
 }) => {
     const Icon = iconMap[severity];
 
