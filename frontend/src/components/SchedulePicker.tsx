@@ -3,7 +3,22 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Stack, TextF
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import { format } from 'date-fns';
+import { format, isSameDay, setHours, setMinutes } from 'date-fns';
+
+
+const styles = `
+  .react-datepicker-popper {
+    margin-top: -3rem;
+  }
+   .react-datepicker--time-only{
+    margin-top: -5rem;
+    right: -6rem;
+    }
+
+  .react-datepicker__time {
+    position: relative;
+  }
+`;
 
 const SchedulePicker = ({ open, onClose, onSchedule }: { open: boolean, onClose: () => void, onSchedule: (dateTime: string) => void }) => {
     const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -23,10 +38,33 @@ const SchedulePicker = ({ open, onClose, onSchedule }: { open: boolean, onClose:
 
     const handleDateChange = (date: Date) => {
         setSelectedDate(date);
+        if (isSameDay(date, new Date())) {
+            const now = new Date();
+            const currentMinutes = now.getMinutes();
+            const nextInterval = Math.ceil(currentMinutes / 15) * 15;
+            const adjustedTime = setMinutes(setHours(now, now.getHours()), nextInterval);
+
+            if (selectedTime && selectedTime < now) {
+                setSelectedTime(adjustedTime);
+            }
+        }
     };
 
     const handleTimeChange = (time: Date) => {
         setSelectedTime(time);
+    };
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const filterTime = (time: Date) => {
+        const currentDate = new Date();
+
+        if (selectedDate && isSameDay(selectedDate, currentDate)) {
+            return time >= currentDate;
+        }
+
+        return true;
     };
 
     return (
@@ -40,6 +78,7 @@ const SchedulePicker = ({ open, onClose, onSchedule }: { open: boolean, onClose:
                 sx: { top: '18%', left: '30%', width: '300px', height: '294px' },
             }}
         >
+            <style>{styles}</style>
             <DialogTitle sx={{ p: '8px 1rem' }}>Schedule Post</DialogTitle>
             <DialogContent sx={{ p: 2 }}>
                 <Stack spacing={2}>
@@ -48,6 +87,7 @@ const SchedulePicker = ({ open, onClose, onSchedule }: { open: boolean, onClose:
                         onChange={handleDateChange}
                         dateFormat="MMMM d, yyyy"
                         placeholderText="Select Date"
+                        minDate={today}
                         customInput={
                             <TextField
                                 fullWidth
@@ -57,6 +97,7 @@ const SchedulePicker = ({ open, onClose, onSchedule }: { open: boolean, onClose:
                                         borderRadius: '8px',
                                         border: '1px solid #ccc',
                                         backgroundColor: '#f9f9f9',
+
                                     },
                                     '& input': {
                                         fontSize: '16px',
@@ -82,7 +123,10 @@ const SchedulePicker = ({ open, onClose, onSchedule }: { open: boolean, onClose:
                         timeCaption="Time"
                         dateFormat="h:mm aa"
                         placeholderText="Select Time"
+                        filterTime={filterTime}
                         className="time-picker-input"
+                        minTime={setHours(setMinutes(new Date(), 0), 0)}
+                        maxTime={setHours(setMinutes(new Date(), 45), 23)}
                         customInput={
                             <TextField
                                 fullWidth
@@ -92,6 +136,7 @@ const SchedulePicker = ({ open, onClose, onSchedule }: { open: boolean, onClose:
                                         borderRadius: '8px',
                                         border: '1px solid #ccc',
                                         backgroundColor: '#f9f9f9',
+                                        // top: '-20rem',
                                     },
                                     '& input': {
                                         fontSize: '16px',

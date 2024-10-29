@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, IconButton, Stack, Dialog, CircularProgress, DialogContent, TextField } from '@mui/material';
+import { Box, Typography, IconButton, Stack, Dialog, CircularProgress, DialogContent, TextField, Dialog as ConfirmDialog, DialogTitle, DialogActions, Button } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -44,6 +44,9 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
 
     const [isAddSocialModalOpen, setIsAddSocialModalOpen] = useState(false);
 
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [selectedProviderToRemove, setSelectedProviderToRemove] = useState<string | null>(null);
+
     const handleAddAccountClick = () => {
         setIsAddSocialModalOpen(true);
     };
@@ -79,23 +82,33 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
         }
     };
 
-    const handleRemove = async (provider: string) => {
+    const handleRemoveClick = (provider: string) => {
+        setSelectedProviderToRemove(provider);
+        setConfirmDialogOpen(true);
+    };
+
+    const handleConfirmRemove = async () => {
+        if (!selectedProviderToRemove) return;
+
         try {
-            await removeSocialAccountApi({ provider }).unwrap();
-            dispatch(removeSocialAccount(provider));
+            await removeSocialAccountApi({ provider: selectedProviderToRemove }).unwrap();
+            dispatch(removeSocialAccount(selectedProviderToRemove));
 
             setSnackbarProps({
-                message: `${provider} account removed successfully`,
+                message: `${selectedProviderToRemove} account removed successfully`,
                 severity: 'success',
             });
             setSnackbarOpen(true);
         } catch (error) {
             console.error('Failed to remove social account:', error);
             setSnackbarProps({
-                message: `Failed to remove ${provider} account`,
+                message: `Failed to remove ${selectedProviderToRemove} account`,
                 severity: 'error',
             });
             setSnackbarOpen(true);
+        } finally {
+            setConfirmDialogOpen(false);
+            setSelectedProviderToRemove(null);
         }
     };
 
@@ -231,7 +244,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
                                     </Typography>
                                 </Box>
                                 <IconButton
-                                    onClick={() => handleRemove(provider)}
+                                    onClick={() => handleRemoveClick(provider)}
                                     sx={{
                                         color: '#dfdfdf',
                                     }}
@@ -320,6 +333,52 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onClose }) => {
                 severity={snackbarProps.severity}
                 onClose={handleCloseSnackbar}
             />
+
+            <ConfirmDialog
+                open={confirmDialogOpen}
+                onClose={() => setConfirmDialogOpen(false)}
+                PaperProps={{
+                    sx: {
+                        backgroundColor: 'white',
+                        borderRadius: '8px',
+                        padding: '1rem',
+                    }
+                }}
+            >
+                <DialogTitle>
+                    Are you sure you want to remove this {selectedProviderToRemove} account?
+                </DialogTitle>
+                <DialogActions sx={{ justifyContent: 'flex-end', px: 2, pb: 2 }}>
+                    <Button
+                        onClick={() => setConfirmDialogOpen(false)}
+                        variant="outlined"
+                        sx={{
+                            color: '#203170',
+                            borderColor: '#203170',
+                            marginRight: '1rem',
+                            '&:hover': {
+                                borderColor: '#203170',
+                                backgroundColor: 'rgba(32, 49, 112, 0.04)',
+                            },
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleConfirmRemove}
+                        variant="contained"
+                        sx={{
+                            backgroundColor: '#ff3737',
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: '#d63030',
+                            },
+                        }}
+                    >
+                        Remove
+                    </Button>
+                </DialogActions>
+            </ConfirmDialog>
         </Stack>
     );
 };
