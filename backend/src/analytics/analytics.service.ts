@@ -1,15 +1,10 @@
-import { Injectable } from "@nestjs/common";
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Post, PostDocument } from "src/schemas/post.schema";
-import { ScheduledPost, ScheduledPostDocument } from "src/schemas/shedulePost.shcema";
-
+import { Inject, Injectable } from "@nestjs/common";
+import { IAnalyticsRepository } from "./interfaces/analytics.repository.interface";
 
 @Injectable()
 export class AnalyticService {
     constructor(
-        @InjectModel(Post.name) private postModel: Model<PostDocument>,
-        @InjectModel(ScheduledPost.name) private scheduledPostModel: Model<ScheduledPostDocument>,
+        @Inject('IAnalyticsRepository') private analyticsRepository: IAnalyticsRepository
     ) { }
 
     async getAllAnalytics(userId: string) {
@@ -26,34 +21,16 @@ export class AnalyticService {
     }
 
     private async getPostsByPlatform(userId: string) {
-        return await this.postModel.aggregate([
-            { $match: { userId } }, // Filter by userId
-            { $unwind: "$platforms" },
-            {
-                $group: {
-                    _id: "$platforms.platform",
-                    count: { $sum: 1 },
-                },
-            },
-        ]).exec();
+        return await this.analyticsRepository.getPostsByPlatform(userId);
     }
 
     private async getScheduledPosted(userId: string) {
-        return await this.scheduledPostModel.aggregate([
-            { $match: { userId } }, // Filter by userId
-            { $unwind: "$platforms" },
-            {
-                $group: {
-                    _id: "$platforms",
-                    count: { $sum: 1 },
-                },
-            },
-        ]).exec();
+        return await this.analyticsRepository.getScheduledPostsByPlatform(userId);
     }
 
     private async getPlatformEngagement(userId: string) {
-        const totalPosts = await this.postModel.countDocuments({ userId }); // Filter by userId
-        const platformCounts = await this.getPostsByPlatform(userId);
+        const totalPosts = await this.analyticsRepository.getTotalPostCount(userId);
+        const platformCounts = await this.analyticsRepository.getPostsByPlatform(userId);
 
         return platformCounts.map(platform => ({
             platform: platform._id,
@@ -62,53 +39,7 @@ export class AnalyticService {
     }
 
     private async getBestPostingTime(userId: string) {
-        const data = await this.postModel.aggregate([
-            { $match: { userId } }, // Filter by userId
-            { $unwind: "$platforms" },
-            {
-                $group: {
-                    _id: {
-                        platform: "$platforms.platform",
-                        hour: { $hour: { date: "$timestamp", timezone: "UTC" } },
-                        dayOfWeek: { $dayOfWeek: { date: "$timestamp", timezone: "UTC" } },
-                    },
-                    postCount: { $sum: 1 },
-                    posts: { $push: "$$ROOT" }
-                },
-            },
-            {
-                $project: {
-                    platform: "$_id.platform",
-                    hour: "$_id.hour",
-                    dayOfWeek: "$_id.dayOfWeek",
-                    postCount: 1,
-                    averageEngagement: {
-                        $avg: {
-                            $size: {
-                                $filter: {
-                                    input: "$posts.platforms",
-                                    as: "platform",
-                                    cond: { $eq: ["$$platform.platform", "$_id.platform"] }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            { $sort: { averageEngagement: -1, postCount: -1 } },
-            {
-                $group: {
-                    _id: "$platform",
-                    bestTimes: { $push: "$$ROOT" }
-                }
-            },
-            {
-                $project: {
-                    platform: "$_id",
-                    bestTimes: { $slice: ["$bestTimes", 3] }
-                }
-            }
-        ]).exec();
+        const data = await this.analyticsRepository.getBestPostingTimeAnalytics(userId);
 
         const formattedData = data.map(item => ({
             platform: item.platform,
@@ -135,13 +66,8 @@ export class AnalyticService {
     }
 
     async getBestPosts(userId: string) {
-        const allPostsWithImages = await this.postModel
-            .find({ userId, image: { $exists: true, $ne: '' } })
-            .exec();
+        const allPostsWithImages = await this.analyticsRepository.getPostsWithImages(userId);
         const shuffledPosts = allPostsWithImages.sort(() => 0.5 - Math.random());
-        const bestPosts = shuffledPosts.slice(0, 5);
-    
-        return bestPosts;
+        return shuffledPosts.slice(0, 5);
     }
-    
 }

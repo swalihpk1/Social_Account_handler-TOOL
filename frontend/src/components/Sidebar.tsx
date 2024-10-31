@@ -21,6 +21,7 @@ import Edit from '@mui/icons-material/Edit';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import CalendarToday from '@mui/icons-material/CalendarToday';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import AnalyticIcon from './icons/AnalyticIcon';
 
 const drawerWidth = 200;
 const reducedDrawerWidth = 80;
@@ -30,6 +31,7 @@ const Sidebar: React.FC<any> = ({ setOpen }) => {
     const [open, setOpenState] = useState(false);
     const [profileView, setProfileView] = useState(false);
     const [searchModalOpen, setSearchModalOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<string | null>(null); // new state for selected item
 
     const handleDrawerToggle = () => {
         setOpenState(!open);
@@ -43,7 +45,12 @@ const Sidebar: React.FC<any> = ({ setOpen }) => {
         setProfileView(false);
     };
 
+    const handleItemClick = (itemName: string) => {
+        setSelectedItem(itemName);
+    };
+
     const handleSearchClick = () => {
+        handleItemClick('Search');
         setSearchModalOpen(true);
     };
 
@@ -90,11 +97,45 @@ const Sidebar: React.FC<any> = ({ setOpen }) => {
                         <Divider />
                         {!profileView && (
                             <List sx={{ color: 'white', flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 0 }}>
-                                <StyledListItem icon={<DashboardOutlinedIcon />} text="Dashboard" open={open} to="/dashboard" />
-                                <StyledListItem icon={<SearchIcon />} text="Search" open={open} onClick={handleSearchClick} />
-                                <StyledListItem icon={<img src='Compose.svg' alt="Compose" style={{ filter: 'brightness(0) invert(1)' }} />} text="Create Post" open={open} to="/create" />
-                                <StyledListItem icon={<CalendarIcon />} text="Planner" open={open} to="/planner" />
-                                <StyledListItem icon={<BarChartIcon />} text="Analytics" open={open} to="/analytics" />
+                                <StyledListItem
+                                    icon={<DashboardOutlinedIcon />}
+                                    text="Dashboard"
+                                    open={open}
+                                    to="/dashboard"
+                                    selected={selectedItem === 'Dashboard'}
+                                    onClick={() => handleItemClick('Dashboard')}
+                                />
+                                <StyledListItem
+                                    icon={<SearchIcon />}
+                                    text="Search"
+                                    open={open}
+                                    selected={selectedItem === 'Search'}
+                                    onClick={handleSearchClick}
+                                />
+                                <StyledListItem
+                                    icon={<img src='Compose.svg' alt="Compose" style={{ filter: 'brightness(0) invert(1)' }} />}
+                                    text="Create Post"
+                                    open={open}
+                                    to="/create"
+                                    selected={selectedItem === 'Create Post'}
+                                    onClick={() => handleItemClick('Create Post')}
+                                />
+                                <StyledListItem
+                                    icon={<CalendarIcon />}
+                                    text="Planner"
+                                    open={open}
+                                    to="/planner"
+                                    selected={selectedItem === 'Planner'}
+                                    onClick={() => handleItemClick('Planner')}
+                                />
+                                <StyledListItem
+                                    icon={<AnalyticIcon />}
+                                    text="Analytics"
+                                    open={open}
+                                    to="/analytics"
+                                    selected={selectedItem === 'Analytics'}
+                                    onClick={() => handleItemClick('Analytics')}
+                                />
                             </List>
                         )}
                         {profileView && <ProfileDetails onClose={handleCloseProfileView} />}
@@ -111,7 +152,8 @@ const Sidebar: React.FC<any> = ({ setOpen }) => {
                                     open={open}
                                     size="large"
                                     iconStyles={{ backgroundColor: 'white', border: '3px #CE9500 solid' }}
-                                    onClick={handleProfileClick}
+                                    selected={selectedItem === 'Profile'}
+                                    onClick={() => { handleProfileClick(); handleItemClick('Profile'); }}
                                 />
                             </>
                         )}
@@ -137,7 +179,6 @@ const Sidebar: React.FC<any> = ({ setOpen }) => {
                     { name: 'Sheduled Posts', icon: <CalendarMonthIcon />, action: () => { window.location.href = '/planner'; handleCloseSearchModal(); } },
                     { name: 'Edit name', icon: <Edit />, action: handleProfileClick },
                     { name: 'Log out', icon: <ExitToAppIcon />, action: handleProfileClick },
-
                 ]}
             />
         </>

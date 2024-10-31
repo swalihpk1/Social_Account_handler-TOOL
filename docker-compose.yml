@@ -30,7 +30,7 @@ services:
       - app-network
 
   redis:
-    image: redis:alpine
+    image: arm64v8/redis:alpine
     ports:
       - "6379:6379"
     volumes:

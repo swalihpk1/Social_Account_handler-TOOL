@@ -273,7 +273,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
     };
 
     const handleSubmit = async () => {
-
+        // Validation checks
         if (!Object.values(text).some((content) => content.trim() !== '')) {
             setSnackbarMessage("Content cannot be empty!");
             setSnackbarSeverity('error');
@@ -300,15 +300,12 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
             }
         }
 
-        setUpLoading(true);
-
         const filteredContent = Object.keys(text)
             .filter((key) => selectedOptions.includes(key))
             .reduce((obj, key) => {
                 obj[key] = text[key];
                 return obj;
             }, {});
-
 
         const formData = new FormData();
         formData.append('content', JSON.stringify(filteredContent));
@@ -320,8 +317,6 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
             formData.append('image', file);
         }
 
-        console.log('Form data', Object.fromEntries(formData.entries()));
-
         try {
             if (scheduledTime) {
                 formData.append('scheduledTime', scheduledTime);
@@ -329,13 +324,15 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
             } else {
                 await createPost(formData).unwrap();
             }
+
+            // Show the upload animation after successful post creation
+            setUpLoading(true);
+
         } catch (error) {
             console.error('Failed to create post:', error);
             setSnackbarMessage('Failed to create post');
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
-        } finally {
-            setUpLoading(false);
         }
     };
 

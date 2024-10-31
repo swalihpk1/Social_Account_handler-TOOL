@@ -1,5 +1,5 @@
 # Base image
-FROM node:18-alpine
+FROM arm64v8/node:16-alpine
 
 # Set the working directory
 WORKDIR /usr/src/app

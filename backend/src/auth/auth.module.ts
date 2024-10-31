@@ -5,6 +5,7 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { User, UserSchema } from "../schemas/user.schema";
 import { CustomConfigModule } from "src/config/customConfig.module";
 import { GlobalStateModule } from "src/utils/global-state.module";
+import { AuthRepository } from "./repositories/auth.repository";
 
 @Module({
     imports: [
@@ -12,7 +13,14 @@ import { GlobalStateModule } from "src/utils/global-state.module";
         MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
         GlobalStateModule
     ],
-    providers: [AuthService],
+    providers: [
+        AuthService,
+        AuthRepository,
+        {
+            provide: 'IAuthRepository',
+            useClass: AuthRepository
+        }
+    ],
     controllers: [AuthController]
 })
 

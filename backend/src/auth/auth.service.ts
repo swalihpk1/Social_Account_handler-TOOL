@@ -1,36 +1,32 @@
-import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { ConflictException, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import { UserData } from "./dto/auth.dto";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from 'mongoose';
-import { User, UserDocument } from "../schemas/user.schema";
+import { User } from "../schemas/user.schema";
 import { JwtConfigService } from "src/config/jwt/jwt.config";
 import { Request } from 'express';
 import { GlobalStateService } from '../utils/global-state.service';
+import { IAuthRepository } from "./interfaces/auth.repository.interface";
 
 @Injectable()
 export class AuthService {
     constructor(
-        @InjectModel(User.name) private userModel: Model<UserDocument>,
+        @Inject('IAuthRepository') private authRepository: IAuthRepository,
         private jwtSecret: JwtConfigService,
         private globalStateService: GlobalStateService
     ) { }
 
     async signup(userDto: UserData): Promise<User> {
-        const { email } = userDto;
-        const existingUser = await this.userModel.findOne({ email });
+        const existingUser = await this.authRepository.findByEmail(userDto.email);
 
         if (existingUser) {
             throw new ConflictException('User already exists');
         }
 
-        const createdUser = new this.userModel(userDto);
-        await createdUser.save();
-        return createdUser;
+        return this.authRepository.create(userDto);
     }
 
     async login(userDto: UserData, req: Request): Promise<{ accessToken: string, refreshToken: string }> {
         const { email, password } = userDto;
-        const user = await this.userModel.findOne({ email });
+        const user = await this.authRepository.findByEmail(email);
 
         if (!user) {
             throw new UnauthorizedException('Email is not valid');
@@ -42,8 +38,6 @@ export class AuthService {
         }
 
         req.session.user = { email: user.email, id: user._id };
-        console.log('Session data:', req.session);
-
         this.globalStateService.setUserId(user._id.toString());
 
         const accessToken = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id });
@@ -63,27 +57,10 @@ export class AuthService {
     }
 
     async removeSocialAccount(userId: string, provider: string) {
-        const user = await this.userModel.findById(userId);
-
-        if (!user) {
-            throw new UnauthorizedException('User not found');
-        }
-
-        if (user.socialAccessTokens && user.socialAccessTokens[provider]) {
-            delete user.socialAccessTokens[provider];
-        }
-
-        await user.save();
-        return user;
+        return this.authRepository.removeSocialProvider(userId, provider);
     }
 
     async updateUsername(userId: string, name: string) {
-        const user = await this.userModel.findById(userId);
-        if (!user) {
-            throw new Error('User not found');
-        }
-        user.name = name;
-        await user.save();
-        return user;
+        return this.authRepository.updateUsername(userId, name);
     }
 }

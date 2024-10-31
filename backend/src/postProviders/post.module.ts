@@ -11,6 +11,7 @@ import { UserModule } from 'src/schemas/user.module';
 import { GlobalStateModule } from 'src/utils/global-state.module';
 import { CustomConfigModule } from 'src/config/customConfig.module';
 import { ScheduledPost, ScheduledPostSchema } from 'src/schemas/shedulePost.shcema';
+import { PostRepository } from './repositories/post.repository';
 
 @Module({
     imports: [
@@ -28,7 +29,14 @@ import { ScheduledPost, ScheduledPostSchema } from 'src/schemas/shedulePost.shce
         HttpModule,
         forwardRef(() => CustomConfigModule),
     ],
-    providers: [PostService],
+    providers: [
+        PostService,
+        PostRepository,
+        {
+            provide: 'IPostRepository',
+            useClass: PostRepository
+        }
+    ],
     exports: [PostService],
     controllers: [PostController],
 })

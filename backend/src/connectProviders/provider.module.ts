@@ -11,7 +11,9 @@ import { CustomConfigModule } from 'src/config/customConfig.module';
 import { UserModule } from 'src/schemas/user.module';
 import { HttpModule } from '@nestjs/axios';
 import { GlobalStateModule } from 'src/utils/global-state.module';
-
+import { ProviderRepository } from './repositories/provider.repository';
+import { MongooseModule } from '@nestjs/mongoose';
+import { User, UserSchema } from '../schemas/user.schema';
 
 @Module({
   imports: [
@@ -19,9 +21,21 @@ import { GlobalStateModule } from 'src/utils/global-state.module';
     CustomConfigModule,
     UserModule,
     HttpModule,
-    GlobalStateModule
+    GlobalStateModule,
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])
   ],
   controllers: [ProviderController],
-  providers: [ProviderService, FacebookStrategy, InstagramStrategy, LinkedInStrategy, TwitterStrategy]
+  providers: [
+    ProviderService,
+    FacebookStrategy,
+    InstagramStrategy,
+    LinkedInStrategy,
+    TwitterStrategy,
+    ProviderRepository,
+    {
+      provide: 'IProviderRepository',
+      useClass: ProviderRepository
+    }
+  ]
 })
 export class ProvidersModule { }
