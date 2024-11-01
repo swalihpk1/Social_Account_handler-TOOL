@@ -15,7 +15,7 @@ const InstagramCallback: React.FC = () => {
         console.log('accessToken', accessToken);
 
         if (accessToken) {
-            axios.get('http://localhost:3001/connect/instagram/getUser', {
+            axios.get('https://backend.frostbay.online/connect/instagram/getUser', {
                 params: { access_token: accessToken }
             })
                 .then(response => {

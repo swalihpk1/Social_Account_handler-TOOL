@@ -37,7 +37,7 @@ const Connect: React.FC = () => {
             setSnackbarMessage('Already connected');
             setSnackbarOpen(true);
         } else {
-            window.location.href = `http://localhost:3001/connect/${provider}`;
+            window.location.href = `https://backend.frostbay.online/connect/${provider}`;
         }
     };
 
@@ -116,7 +116,7 @@ const Connect: React.FC = () => {
         console.log('accessToken', accessToken);
 
         if (accessToken) {
-            axios.get('http://localhost:3001/connect/instagram/token', {
+            axios.get('https://backend.frostbay.online/connect/instagram/token', {
                 params: { access_token: accessToken }
             })
                 .then(response => {

@@ -105,7 +105,7 @@ const AddSocialModal: React.FC<AddSocialModalProps> = ({ open, handleClose }) =>
                 severity: 'info',
             });
         } else {
-            window.location.href = `http://localhost:3001/connect/${provider}?redirectUri=${encodeURIComponent('/dashboard')}`;
+            window.location.href = `https://backend.frostbay.online/connect/${provider}?redirectUri=${encodeURIComponent('/dashboard')}`;
         }
     };
 
