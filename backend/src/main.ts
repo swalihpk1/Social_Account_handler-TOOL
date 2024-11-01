@@ -3,8 +3,6 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import * as session from 'express-session';
-// import { NotFoundExceptionFilter } from './filters/not-found-exception.filter';
-// import { CustomExceptionFilter } from './filters/custom-exception.filter';
 
 async function bootstrap() {
   dotenv.config();
@@ -38,10 +36,10 @@ async function bootstrap() {
   }));
 
   app.useGlobalPipes(new ValidationPipe());
-  // app.useGlobalFilters(new NotFoundExceptionFilter());
-  // app.useGlobalFilters(new CustomExceptionFilter());
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: ['connect/*'],
+  });
 
   const port = process.env.PORT || 3001;
   await app.listen(port, () => {

@@ -12,7 +12,7 @@ import { GlobalStateService } from 'src/utils/global-state.service';
 import { TwitterStrategy } from './providerStrategys/twitter.strategy';
 
 
-@Controller('connect')
+@Controller('api/connect')
 export class ProviderController {
     constructor(
         private readonly providerService: ProviderService,
@@ -29,7 +29,7 @@ export class ProviderController {
     @Get('facebook')
     @Redirect()
     login() {
-        const facebookLoginUrl = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&response_type=code&scope=email,public_profile,instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights,pages_show_list,pages_read_engagement,pages_manage_posts`;
+        const facebookLoginUrl = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID}&redirect_uri=https://backend.frostbay.online/api/connect/facebook/callback&response_type=code&scope=email,public_profile,instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights,pages_show_list,pages_read_engagement,pages_manage_posts`;
         return { url: facebookLoginUrl };
     }
 
@@ -152,7 +152,7 @@ export class ProviderController {
     @Redirect()
     redirectToLinkedin() {
         const clientId = process.env.LINKEDIN_CLIENT_ID;
-        const redirectUri = process.env.LINKEDIN_REDIRECT_URI;
+        const redirectUri = 'https://backend.frostbay.online/api/connect/linkedin/callback';
         const scope = 'openid profile email w_member_social';
         const state = '12345';
 
@@ -163,7 +163,6 @@ export class ProviderController {
 
     @Get('linkedin/callback')
     async linkedinCallback(@Query('code') code: string, @Query('state') state: string, @Req() req: Request, @Res() res: Response) {
-        console.log("VAnn");
         if (!code) {
             throw new UnauthorizedException('No code provided');
         }
@@ -171,7 +170,7 @@ export class ProviderController {
         try {
             const accessToken = await this.linkedInStrategy.getAccessToken(code);
             const linkedinUser = await this.linkedInStrategy.getUserProfile(accessToken);
-            console.log("ACCESS", accessToken);
+
             if (!linkedinUser || !accessToken) {
                 return res.status(400).json({
                     message: 'LinkedIn user data or accessToken not found'
@@ -182,10 +181,10 @@ export class ProviderController {
             if (!userId) {
                 return res.status(400).json({ message: 'User ID not found in session' });
             }
-            console.log('LinkedIn', linkedinUser);
+
             const linkedInData = await this.providerService.handleLinkedInLoginCallback(userId, linkedinUser, accessToken);
 
-            res.redirect(`https://backend.frostbay.online/connect?user=${encodeURIComponent(JSON.stringify(linkedInData))}`);
+            res.redirect(`https://smh.frostbay.online/connect?user=${encodeURIComponent(JSON.stringify(linkedInData))}`);
         } catch (error) {
             console.error("Error in LinkedIn Callback:", error);
             res.status(500).json({ message: 'Internal server error' });
