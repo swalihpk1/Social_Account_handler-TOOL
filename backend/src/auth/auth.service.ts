@@ -5,6 +5,7 @@ import { JwtConfigService } from "src/config/jwt/jwt.config";
 import { Request } from 'express';
 import { GlobalStateService } from '../utils/global-state.service';
 import { IAuthRepository } from "./interfaces/auth.repository.interface";
+import { CustomException } from '../exceptions/custom.exception';
 
 @Injectable()
 export class AuthService {
@@ -15,35 +16,46 @@ export class AuthService {
     ) { }
 
     async signup(userDto: UserData): Promise<User> {
-        const existingUser = await this.authRepository.findByEmail(userDto.email);
+        try {
+            const existingUser = await this.authRepository.findByEmail(userDto.email);
 
-        if (existingUser) {
-            throw new ConflictException('User already exists');
+            if (existingUser) {
+                throw new CustomException('User already exists', 409);
+            }
+
+            return await this.authRepository.create(userDto);
+        } catch (error) {
+            if (error instanceof CustomException) throw error;
+            throw new CustomException('Error creating user', 500);
         }
-
-        return this.authRepository.create(userDto);
     }
 
     async login(userDto: UserData, req: Request): Promise<{ accessToken: string, refreshToken: string }> {
-        const { email, password } = userDto;
-        const user = await this.authRepository.findByEmail(email);
+        try {
 
-        if (!user) {
-            throw new UnauthorizedException('Email is not valid');
+            const { email, password } = userDto;
+            const user = await this.authRepository.findByEmail(email);
+
+            if (!user) {
+                throw new CustomException('Invalid email or password', 401);
+            }
+
+            const isMatch = await user.comparePassword(password);
+            if (!isMatch) {
+                throw new CustomException('Invalid email or password', 401);
+            }
+
+            req.session.user = { email: user.email, id: user._id };
+            this.globalStateService.setUserId(user._id.toString());
+
+            const accessToken = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id });
+            const refreshToken = this.jwtSecret.generateRefreshToken({ email: user.email, sub: user._id });
+
+            return { accessToken, refreshToken };
+        } catch (error) {
+            if (error instanceof CustomException) throw error;
+            throw new CustomException('Login failed', 500);
         }
-
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
-            throw new UnauthorizedException('Incorrect password');
-        }
-
-        req.session.user = { email: user.email, id: user._id };
-        this.globalStateService.setUserId(user._id.toString());
-
-        const accessToken = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id });
-        const refreshToken = this.jwtSecret.generateRefreshToken({ email: user.email, sub: user._id });
-
-        return { accessToken, refreshToken };
     }
 
     async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {

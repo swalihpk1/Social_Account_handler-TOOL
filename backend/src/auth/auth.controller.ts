@@ -5,11 +5,15 @@ import { Request, Response } from 'express';
 
 @Controller('user')
 export class AuthController {
-    constructor(private readonly authService: AuthService) { }
+    constructor(private readonly authService: AuthService) {
+        console.log('ethi')
+    }
+
 
     @Post('login')
     @HttpCode(200)
     async login(@Body() userDto: UserData, @Req() req: Request, @Res() res: Response) {
+
         const tokens = await this.authService.login(userDto, req);
         res.json(tokens);
     }

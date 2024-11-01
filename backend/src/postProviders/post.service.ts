@@ -16,6 +16,7 @@ const fs = require('fs');
 import { unlink } from 'fs/promises';
 import { BullQueueService } from "src/config/taskSheduler/bullQueue.service";
 import { GlobalStateService } from "src/utils/global-state.service";
+import { CustomException } from '../exceptions/custom.exception';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 5000; // 5 seconds
@@ -65,18 +66,24 @@ export class PostService {
             const foundUser = await this.userModel.findById(userId);
 
             if (!foundUser) {
-                throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+                throw new CustomException('User not found', 404);
             }
 
-            const socialAccessTokens = foundUser.socialAccessTokens;
             const content = JSON.parse(body.content);
+            if (!content || Object.keys(content).length === 0) {
+                throw new CustomException('Invalid content format', 400);
+            }
 
             let imageUrl = null;
             if (file) {
-                imageUrl = await this.uploadImageToS3(file);
+                try {
+                    imageUrl = await this.uploadImageToS3(file);
+                } catch (error) {
+                    throw new CustomException('Failed to upload image', 500);
+                }
             }
 
-            const results = await this.createPost(content, file, socialAccessTokens);
+            const results = await this.createPost(content, file, foundUser.socialAccessTokens);
             const currentTimeInIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString();
             console.log('currentTimeInIST', currentTimeInIST);
             const newPost = new this.postModel({
@@ -106,8 +113,11 @@ export class PostService {
 
             return results.map(result => result.response || result.error);
         } catch (error) {
-            console.error('Error while creating post:', error);
-            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+            if (error instanceof CustomException) throw error;
+            throw new CustomException(
+                'Failed to create post: ' + error.message,
+                500
+            );
         }
     }
 
@@ -427,13 +437,15 @@ export class PostService {
                 console.log(`Attempt ${attempt} failed for ${platform}:`, error.message);
 
                 if (attempt < MAX_RETRIES) {
-                    console.log(`Retrying ${platform} in ${RETRY_DELAY / 1000} seconds...`);
                     await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
                 }
             }
         }
 
-        throw lastError;
+        throw new CustomException(
+            `Failed to post to ${platform} after ${MAX_RETRIES} attempts: ${lastError.message}`,
+            503
+        );
     }
 
     async publishToAllPlatforms(

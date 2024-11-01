@@ -5,7 +5,13 @@ const USER_URL = 'api/user';
 const POST_URL = 'api/post';
 const ANALYTICS_URL = 'api/analytics';
 
-const baseQuery = fetchBaseQuery({ baseUrl: '' });
+const baseQuery = fetchBaseQuery({
+    baseUrl: '',
+    credentials: 'include',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
 
 export const apiSlice = createApi({
     baseQuery,
@@ -110,7 +116,7 @@ export const apiSlice = createApi({
         }),
         fetchBestPosts: builder.query<any, void>({
             query: () => ({
-                url: `${ANALYTICS_URL}/best-posts`, 
+                url: `${ANALYTICS_URL}/best-posts`,
             }),
         }),
     }),

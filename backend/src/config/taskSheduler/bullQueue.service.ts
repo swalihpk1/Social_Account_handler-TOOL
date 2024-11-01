@@ -6,6 +6,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ScheduledPost, ScheduledPostDocument } from 'src/schemas/shedulePost.shcema';
 import { PostDocument } from 'src/schemas/post.schema';
+import { CustomException } from '../../exceptions/custom.exception';
 
 
 @Injectable()
@@ -67,40 +68,48 @@ export class BullQueueService {
     }
 
     async addPostToQueue(data: any) {
-        const { scheduledTime } = data;
-        const delay = scheduledTime.getTime() - Date.now();
+        try {
+            const { scheduledTime } = data;
+            const delay = scheduledTime.getTime() - Date.now();
 
-        if (delay <= 0) {
-            throw new Error("Scheduled time must be in the future.");
+            if (delay <= 0) {
+                throw new CustomException('Scheduled time must be in the future', 400);
+            }
+
+            const job = await this.postScheduleQueue.add('postSchedule', data, { delay });
+            return job.id;
+        } catch (error) {
+            if (error instanceof CustomException) throw error;
+            throw new CustomException('Failed to schedule post', 500);
         }
-
-        const job = await this.postScheduleQueue.add('postSchedule', data, { delay });
-
-        console.log("Job added to queue with delay:", delay);
-        return job.id;
     }
 
     async reschedulePost(jobId: string, newScheduledTime: Date) {
-        const job = await this.postScheduleQueue.getJob(jobId);
+        try {
+            const job = await this.postScheduleQueue.getJob(jobId);
 
-        if (!job) {
-            throw new Error('Job not found');
+            if (!job) {
+                throw new CustomException('Scheduled post not found', 404);
+            }
+
+            await job.remove();
+
+            const newDelay = newScheduledTime.getTime() - Date.now();
+            const newJobData = job.data;
+            newJobData.scheduledTime = newScheduledTime;
+
+            const newJob = await this.postScheduleQueue.add('postSchedule', newJobData, { delay: newDelay });
+
+
+            await this.scheduledPostModel.findByIdAndUpdate(job.data._id, {
+                scheduledTime: newScheduledTime,
+                jobId: newJob.id,
+            });
+
+            return newJob.id;
+        } catch (error) {
+            if (error instanceof CustomException) throw error;
+            throw new CustomException('Failed to reschedule post', 500);
         }
-
-        await job.remove();
-
-        const newDelay = newScheduledTime.getTime() - Date.now();
-        const newJobData = job.data;
-        newJobData.scheduledTime = newScheduledTime;
-
-        const newJob = await this.postScheduleQueue.add('postSchedule', newJobData, { delay: newDelay });
-
-
-        await this.scheduledPostModel.findByIdAndUpdate(job.data._id, {
-            scheduledTime: newScheduledTime,
-            jobId: newJob.id,
-        });
-
-        return newJob.id;
     }
 }

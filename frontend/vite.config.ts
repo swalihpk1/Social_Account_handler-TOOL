@@ -5,12 +5,18 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    // host: '0.0.0.0',
+    host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'https://backend.frostbay.online',
         changeOrigin: true,
+        secure: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      '/connect': {
+        target: 'https://backend.frostbay.online',
+        changeOrigin: true,
+        secure: true,
       },
     },
   },
