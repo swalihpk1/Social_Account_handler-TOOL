@@ -5,11 +5,13 @@ const USER_URL = 'api/user';
 const POST_URL = 'api/post';
 const ANALYTICS_URL = 'api/analytics';
 
+const baseUrl = 'https://backend.frostbay.online';
+
 const baseQuery = fetchBaseQuery({
-    baseUrl: '',
+    baseUrl,
     credentials: 'include',
     headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
     },
 });
 

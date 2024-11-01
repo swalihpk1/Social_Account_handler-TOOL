@@ -3,8 +3,8 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import * as session from 'express-session';
-import { NotFoundExceptionFilter } from './filters/not-found-exception.filter';
-import { CustomExceptionFilter } from './filters/custom-exception.filter';
+// import { NotFoundExceptionFilter } from './filters/not-found-exception.filter';
+// import { CustomExceptionFilter } from './filters/custom-exception.filter';
 
 async function bootstrap() {
   dotenv.config();
@@ -31,15 +31,24 @@ async function bootstrap() {
       httpOnly: true,
       sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000,
-      domain: '.frostbay.online'
+      domain: process.env.NODE_ENV === 'production'
+        ? '.frostbay.online'
+        : undefined
     },
   }));
 
   app.useGlobalPipes(new ValidationPipe());
-  app.useGlobalFilters(new NotFoundExceptionFilter());
-  app.useGlobalFilters(new CustomExceptionFilter());
+  // app.useGlobalFilters(new NotFoundExceptionFilter());
+  // app.useGlobalFilters(new CustomExceptionFilter());
 
-  await app.listen(3001, () => Logger.log('Server running on http://localhost:3001', 'Bootstrap'));
+  app.setGlobalPrefix('api');
+
+  const port = process.env.PORT || 3001;
+  await app.listen(port, () => {
+    Logger.log(`Server running on ${process.env.NODE_ENV === 'production'
+      ? 'https://backend.frostbay.online'
+      : `http://localhost:${port}`}`, 'Bootstrap');
+  });
 }
 
 bootstrap();

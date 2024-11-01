@@ -13,11 +13,6 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
-      '/connect': {
-        target: 'https://backend.frostbay.online',
-        changeOrigin: true,
-        secure: true,
-      },
     },
   },
   preview: {
@@ -25,6 +20,3 @@ export default defineConfig({
     host: true
   }
 });
-
-
-
