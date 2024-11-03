@@ -31,7 +31,6 @@ const Connect: React.FC = () => {
     const isFromSignup = location.state && location.state.fromSignup;
 
     const handleSocialLogin = (provider: string) => {
-        console.log("asdfadsf");
 
         if (userInfo?.socialAccounts && userInfo.socialAccounts[provider]) {
             setSnackbarMessage('Already connected');
@@ -116,7 +115,7 @@ const Connect: React.FC = () => {
         console.log('accessToken', accessToken);
 
         if (accessToken) {
-            axios.get('https://backend.frostbay.online/connect/instagram/token', {
+            axios.get('http://localhost:3000/connect/instagram/token', {
                 params: { access_token: accessToken }
             })
                 .then(response => {

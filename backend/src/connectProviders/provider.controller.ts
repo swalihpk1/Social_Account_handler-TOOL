@@ -35,6 +35,7 @@ export class ProviderController {
 
     @Get('facebook/callback')
     async facebookCallback(@Query('code') code: string, @Req() req, @Res() res): Promise<any> {
+        console.log('facebook')
         if (code) {
             try {
                 const data = await this.facebookStrategy.getAccessToken(code);
@@ -77,7 +78,7 @@ export class ProviderController {
                     }))
                 };
 
-                const redirectUrl = `https://backend.frostbay.online/connect?user=${encodeURIComponent(JSON.stringify(responseData))}`;
+                const redirectUrl = `http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(responseData))}`;
                 res.redirect(redirectUrl);
 
             } catch (error) {
@@ -98,7 +99,7 @@ export class ProviderController {
 
     @Get('instagram/callback')
     async instagramCallback(@Req() req: Request, @Res() res: Response) {
-        const redirectUrl = 'https://backend.frostbay.online/connect/instagram/callback';
+        const redirectUrl = 'http://localhost:3000/connect/instagram/callback';
         res.redirect(redirectUrl);
     }
 
@@ -145,8 +146,6 @@ export class ProviderController {
     }
 
 
-
-
     // ====================LinkedIn======================
     @Get('linkedin')
     @Redirect()
@@ -185,7 +184,7 @@ export class ProviderController {
             console.log('LinkedIn', linkedinUser);
             const linkedInData = await this.providerService.handleLinkedInLoginCallback(userId, linkedinUser, accessToken);
 
-            res.redirect(`https://backend.frostbay.online/connect?user=${encodeURIComponent(JSON.stringify(linkedInData))}`);
+            res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(linkedInData))}`);
         } catch (error) {
             console.error("Error in LinkedIn Callback:", error);
             res.status(500).json({ message: 'Internal server error' });
@@ -194,11 +193,8 @@ export class ProviderController {
 
     // ==================== Twitter-X ======================
     @Get('twitter')
-    async twitterLogin(@Query('redirectUri') redirectUri: string, @Req() req, @Res() res): Promise<void> {
+    async twitterLogin(@Res() res): Promise<void> {
         try {
-            console.log("Vann");
-            req.session.redirectUri = redirectUri;
-
             const { oauthToken } = await this.twitterStrategy.getRequestToken();
             res.redirect(`https://api.twitter.com/oauth/authenticate?oauth_token=${oauthToken}`);
         } catch (error) {
@@ -239,7 +235,7 @@ export class ProviderController {
 
             const redirectPath = req.session.redirectUri ? `/${req.session.redirectUri}` : '/connect';
             console.log("Redirect", redirectPath);
-            res.redirect(`https://backend.frostbay.online${redirectPath}?user=${encodeURIComponent(JSON.stringify(twitterData))}`);
+            res.redirect(`http://localhost:3000${redirectPath}?user=${encodeURIComponent(JSON.stringify(twitterData))}`);
         } catch (error) {
             res.status(500).json({ message: 'Internal server error' });
         }
