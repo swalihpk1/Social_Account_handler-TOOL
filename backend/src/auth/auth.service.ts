@@ -32,8 +32,8 @@ export class AuthService {
 
     async login(userDto: UserData, req: Request): Promise<{ accessToken: string, refreshToken: string }> {
         try {
-
             const { email, password } = userDto;
+            console.log(email, password);
             const user = await this.authRepository.findByEmail(email);
 
             if (!user) {
@@ -45,8 +45,12 @@ export class AuthService {
                 throw new CustomException('Invalid email or password', 401);
             }
 
+            // Set session and global state
             req.session.user = { email: user.email, id: user._id };
             this.globalStateService.setUserId(user._id.toString());
+
+            // Log the user ID after setting it
+            console.log('User logged in. User ID:', user._id.toString());
 
             const accessToken = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id });
             const refreshToken = this.jwtSecret.generateRefreshToken({ email: user.email, sub: user._id });

@@ -18,4 +18,8 @@ export class GlobalStateService {
         }
         return this.userId;
     }
+
+    clearUserId(): void {
+        this.userId = null;
+    }
 }

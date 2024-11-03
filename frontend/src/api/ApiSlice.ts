@@ -1,11 +1,12 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { AuthResponse, CharacterLimits, UserData, UserInfo } from '../types/Types';
 
-const USER_URL = 'api/user';
-const POST_URL = 'api/post';
-const ANALYTICS_URL = 'api/analytics';
+const USER_URL = 'user';
+const POST_URL = 'post';
+const ANALYTICS_URL = 'analytics';
 
 const baseUrl = 'https://backend.frostbay.online';
+// const baseUrl = 'http://localhost:3001';
 
 const baseQuery = fetchBaseQuery({
     baseUrl,

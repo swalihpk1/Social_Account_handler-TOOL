@@ -20,6 +20,7 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
 
+
   app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -35,11 +36,11 @@ async function bootstrap() {
     },
   }));
 
+
+
   app.useGlobalPipes(new ValidationPipe());
 
-  app.setGlobalPrefix('api', {
-    exclude: ['connect/*'],
-  });
+  // app.setGlobalPrefix('api');
 
   const port = process.env.PORT || 3001;
   await app.listen(port, () => {
