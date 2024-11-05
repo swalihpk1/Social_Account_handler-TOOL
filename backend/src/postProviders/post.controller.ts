@@ -93,20 +93,17 @@ export class PostController {
     }
 
     @Delete('delete-schedule-post')
-    async deleteScheduledPost(@Body() body: { jobId: string }, @Res() res: Response) {
+    async deleteScheduledPost(@Body() body: { jobId: string }) {
         const { jobId } = body;
         try {
             const result = await this.postService.deleteScheduledPost(jobId);
-            return res.status(HttpStatus.OK).json({
-                message: 'Post deleted successfully',
-                result
-            });
+            return result;
         } catch (error) {
             console.error('Error deleting scheduled post:', error.message);
-            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-                message: 'Could not delete the scheduled post',
-                error: error.message
-            });
+            throw new HttpException(
+                'Could not delete the scheduled post',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 

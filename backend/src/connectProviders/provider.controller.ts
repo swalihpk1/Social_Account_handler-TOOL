@@ -79,7 +79,7 @@ export class ProviderController {
                     }))
                 };
 
-                const redirectUrl = `http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(responseData))}`;
+                const redirectUrl = `https://smh.frostbay.online/connect?user=${encodeURIComponent(JSON.stringify(responseData))}`;
                 res.redirect(redirectUrl);
 
             } catch (error) {
@@ -100,7 +100,7 @@ export class ProviderController {
 
     @Get('instagram/callback')
     async instagramCallback(@Req() req: Request, @Res() res: Response) {
-        const redirectUrl = 'http://localhost:3000/connect/instagram/callback';
+        const redirectUrl = 'https://smh.frostbay.online/connect/instagram/callback';
         res.redirect(redirectUrl);
     }
 
@@ -152,7 +152,7 @@ export class ProviderController {
     @Redirect()
     redirectToLinkedin() {
         const clientId = '868kl1t1rcs245';
-        const redirectUri = 'http://localhost:3001/connect/linkedin/callback';
+        const redirectUri = 'https://backend.frostbay.online/connect/linkedin/callback';
         const scope = 'openid profile email w_member_social';
         const state = '12345';
 
@@ -184,7 +184,7 @@ export class ProviderController {
 
             const linkedInData = await this.providerService.handleLinkedInLoginCallback(userId, linkedinUser, accessToken);
 
-            res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(linkedInData))}`);
+            res.redirect(`https://smh.frostbay.online/connect?user=${encodeURIComponent(JSON.stringify(linkedInData))}`);
         } catch (error) {
             console.error("Error in LinkedIn Callback:", error);
             res.status(500).json({ message: 'Internal server error' });
@@ -254,7 +254,7 @@ export class ProviderController {
             const redirectPath = req.session.redirectUri ? `/${req.session.redirectUri}` : '/connect';
             console.log('7. Final redirect path:', redirectPath);
 
-            const finalUrl = `http://localhost:3000${redirectPath}?user=${encodeURIComponent(JSON.stringify(twitterData))}`;
+            const finalUrl = `https://smh.frostbay.online${redirectPath}?user=${encodeURIComponent(JSON.stringify(twitterData))}`;
             console.log('8. Final redirect URL:', finalUrl);
 
             res.redirect(finalUrl);
