@@ -9,7 +9,7 @@ export class FacebookStrategy {
     constructor(private readonly httpService: HttpService) { }
 
     async getAccessToken(code: string): Promise<any> {
-        const url = `https://graph.facebook.com/v12.0/oauth/access_token?client_id=${process.env.FACEBOOK_CLIENT_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&client_secret=${process.env.FACEBOOK_CLIENT_SECRET}&code=${code}`;
+        const url = `https://graph.facebook.com/v12.0/oauth/access_token?client_id=828422535901053&redirect_uri=https://backend.frostbay.online/connect/facebook/callback&client_secret=36dcccf7b5d595cf2a8f273f106d25f1&code=${code}`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data;

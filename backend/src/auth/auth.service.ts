@@ -49,7 +49,6 @@ export class AuthService {
             req.session.user = { email: user.email, id: user._id };
             this.globalStateService.setUserId(user._id.toString());
 
-            // Log the user ID after setting it
             console.log('User logged in. User ID:', user._id.toString());
 
             const accessToken = this.jwtSecret.generateJwtToken({ email: user.email, sub: user._id });
@@ -61,6 +60,7 @@ export class AuthService {
             throw new CustomException('Login failed', 500);
         }
     }
+
 
     async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
         const decoded = this.jwtSecret.verifyRefreshToken(refreshToken);

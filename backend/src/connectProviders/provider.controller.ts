@@ -29,7 +29,8 @@ export class ProviderController {
     @Get('facebook')
     @Redirect()
     login() {
-        const facebookLoginUrl = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&response_type=code&scope=email,public_profile,instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights,pages_show_list,pages_read_engagement,pages_manage_posts`;
+        // const facebookLoginUrl = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${process.env.FACEBOOK_CLIENT_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&response_type=code&scope=email,public_profile,instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights,pages_show_list,pages_read_engagement,pages_manage_posts`;
+        const facebookLoginUrl = `https://www.facebook.com/v20.0/dialog/oauth?client_id=828422535901053&redirect_uri=https://backend.frostbay.online/connect/facebook/callback&response_type=code&scope=email,public_profile,instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights,pages_show_list,pages_read_engagement,pages_manage_posts`;
         return { url: facebookLoginUrl };
     }
 
@@ -78,7 +79,7 @@ export class ProviderController {
                     }))
                 };
 
-                const redirectUrl = `http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(responseData))}`;
+                const redirectUrl = `https://smh.frostbay.online/connect?user=${encodeURIComponent(JSON.stringify(responseData))}`;
                 res.redirect(redirectUrl);
 
             } catch (error) {
@@ -99,7 +100,7 @@ export class ProviderController {
 
     @Get('instagram/callback')
     async instagramCallback(@Req() req: Request, @Res() res: Response) {
-        const redirectUrl = 'http://localhost:3000/connect/instagram/callback';
+        const redirectUrl = 'https://smh.frostbay.online/connect/instagram/callback';
         res.redirect(redirectUrl);
     }
 
@@ -150,8 +151,8 @@ export class ProviderController {
     @Get('linkedin')
     @Redirect()
     redirectToLinkedin() {
-        const clientId = process.env.LINKEDIN_CLIENT_ID;
-        const redirectUri = process.env.LINKEDIN_REDIRECT_URI;
+        const clientId = '868kl1t1rcs245';
+        const redirectUri = 'https://backend.frostbay.online/connect/linkedin/callback';
         const scope = 'openid profile email w_member_social';
         const state = '12345';
 
@@ -162,7 +163,6 @@ export class ProviderController {
 
     @Get('linkedin/callback')
     async linkedinCallback(@Query('code') code: string, @Query('state') state: string, @Req() req: Request, @Res() res: Response) {
-        console.log("VAnn");
         if (!code) {
             throw new UnauthorizedException('No code provided');
         }
@@ -170,7 +170,7 @@ export class ProviderController {
         try {
             const accessToken = await this.linkedInStrategy.getAccessToken(code);
             const linkedinUser = await this.linkedInStrategy.getUserProfile(accessToken);
-            console.log("ACCESS", accessToken);
+
             if (!linkedinUser || !accessToken) {
                 return res.status(400).json({
                     message: 'LinkedIn user data or accessToken not found'
@@ -181,10 +181,10 @@ export class ProviderController {
             if (!userId) {
                 return res.status(400).json({ message: 'User ID not found in session' });
             }
-            console.log('LinkedIn', linkedinUser);
+
             const linkedInData = await this.providerService.handleLinkedInLoginCallback(userId, linkedinUser, accessToken);
 
-            res.redirect(`http://localhost:3000/connect?user=${encodeURIComponent(JSON.stringify(linkedInData))}`);
+            res.redirect(`https://smh.frostbay.online/connect?user=${encodeURIComponent(JSON.stringify(linkedInData))}`);
         } catch (error) {
             console.error("Error in LinkedIn Callback:", error);
             res.status(500).json({ message: 'Internal server error' });
@@ -195,14 +195,15 @@ export class ProviderController {
     @Get('twitter')
     async twitterLogin(@Res() res): Promise<void> {
         try {
+            console.log('Starting Twitter login flow...');
             const { oauthToken } = await this.twitterStrategy.getRequestToken();
+            console.log('OAuth Token received:', oauthToken);
             res.redirect(`https://api.twitter.com/oauth/authenticate?oauth_token=${oauthToken}`);
         } catch (error) {
+            console.error('Twitter login error:', error);
             res.status(500).json({ message: 'Failed to initiate Twitter login' });
         }
     }
-
-
 
     @Get('twitter/callback')
     async twitterLoginCallback(
@@ -213,6 +214,11 @@ export class ProviderController {
         @Session() session
     ): Promise<any> {
         try {
+            console.log('1. Callback received with tokens:', {
+                oauthToken,
+                oauthVerifier,
+                sessionOauthSecret: req.session.oauthTokenSecret
+            });
 
             const { accessToken, accessTokenSecret } = await this.twitterStrategy.getAccessToken(
                 oauthToken,
@@ -220,23 +226,40 @@ export class ProviderController {
                 oauthVerifier
             );
 
+            console.log('2. Access tokens obtained:', {
+                hasAccessToken: !!accessToken,
+                hasAccessTokenSecret: !!accessTokenSecret
+            });
+
             const twitterUser = await this.twitterStrategy.getUserProfile(accessToken, accessTokenSecret);
+            console.log('3. Twitter user data:', twitterUser);
+
             if (!twitterUser) {
+                console.error('Twitter user data not found');
                 return res.status(400).json({ message: 'Twitter user data not found' });
             }
-            console.log("session", session);
+
+            console.log('4. Session data:', session);
             const userId = this.globalStateService.getUserId();
-            console.log("userId", userId);
+            console.log('5. Global state userId:', userId);
+
             if (!userId) {
+                console.error('User ID not found in global state');
                 return res.status(400).json({ message: 'User ID not found in session' });
             }
 
             const twitterData = await this.providerService.handleTwitterLoginCallback(userId, twitterUser, accessToken);
+            console.log('6. Processed Twitter data:', twitterData);
 
             const redirectPath = req.session.redirectUri ? `/${req.session.redirectUri}` : '/connect';
-            console.log("Redirect", redirectPath);
-            res.redirect(`http://localhost:3000${redirectPath}?user=${encodeURIComponent(JSON.stringify(twitterData))}`);
+            console.log('7. Final redirect path:', redirectPath);
+
+            const finalUrl = `https://smh.frostbay.online${redirectPath}?user=${encodeURIComponent(JSON.stringify(twitterData))}`;
+            console.log('8. Final redirect URL:', finalUrl);
+
+            res.redirect(finalUrl);
         } catch (error) {
+            console.error('Callback error:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
     }

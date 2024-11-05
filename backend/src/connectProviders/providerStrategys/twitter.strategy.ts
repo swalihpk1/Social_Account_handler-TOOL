@@ -9,10 +9,10 @@ export class TwitterStrategy {
         this.oauth = new OAuth.OAuth(
             'https://api.twitter.com/oauth/request_token',
             'https://api.twitter.com/oauth/access_token',
-            process.env.TWITTER_CLIENT_ID,
-            process.env.TWITTER_CLIENT_SECRET,
+            'ibGbOBb59kHTTrr6DsAeE8SWD',
+            'Rl3PCbhej2pNrKQiZqccLZBBePycDASp57gIc2ssc7Q4PGExLY',
             '1.0A',
-            'http://localhost:3001/connect/twitter/callback',
+            'https://backend.frostbay.online/connect/twitter/callback',
             'HMAC-SHA1'
         );
     }

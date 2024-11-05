@@ -212,20 +212,30 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
                 platforms: [platform],
             };
 
-            console.log('Edit request:', editRequest);
-
             await editPost(editRequest).unwrap();
 
-            const updatedEvent = { ...event, title: newContent };
+            const updatedEvent = {
+                ...event,
+                id: event.id,
+                title: newContent,
+                extendedProps: {
+                    ...event.extendedProps,
+                    content: newContent,
+                    imageUrl: selectedLocalImage
+                        ? URL.createObjectURL(selectedLocalImage)
+                        : selectedLibraryImage
+                            ? selectedLibraryImage.src
+                            : null
+                }
+            };
+
             updateEvents(updatedEvent, 'edit');
-            window.location.reload();
 
             triggerSnackbar('Post updated successfully!', 'success');
             onClose();
-            console.error('Failed to update post:', Error);
         } catch (error) {
-            triggerSnackbar('Failed to update post', 'error');
             console.error('Failed to update post:', error);
+            triggerSnackbar('Failed to update post', 'error');
         } finally {
             setUpLoading(false);
         }
@@ -273,8 +283,10 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
     };
 
     const handleSubmit = async () => {
-        // Validation checks
+        setUpLoading(true);
+
         if (!Object.values(text).some((content) => content.trim() !== '')) {
+            setUpLoading(false);
             setSnackbarMessage("Content cannot be empty!");
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
@@ -282,6 +294,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
         }
 
         if (selectedOptions.includes('instagram') && !selectedLocalImage && !selectedLibraryImage) {
+            setUpLoading(false);
             setSnackbarMessage("Instagram posts require an image!");
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
@@ -293,6 +306,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
             const now = new Date();
 
             if (scheduledDate <= now) {
+                setUpLoading(false);
                 setSnackbarMessage("Scheduled time must be in the future!");
                 setSnackbarSeverity('error');
                 setSnackbarOpen(true);
@@ -325,11 +339,13 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
                 await createPost(formData).unwrap();
             }
 
-            // Show the upload animation after successful post creation
-            setUpLoading(true);
+            setTimeout(() => {
+                navigate('/planner');
+            }, 3000);
 
         } catch (error) {
             console.error('Failed to create post:', error);
+            setUpLoading(false);
             setSnackbarMessage('Failed to create post');
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
@@ -579,6 +595,8 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
                     <Stack component='form'>
                         <Typography>Publish to</Typography>
                         <TextField
+                            id="social-platform-select"
+                            name="social-platforms"
                             select
                             fullWidth
                             SelectProps={{
@@ -768,6 +786,8 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
 
 
                             <TextField
+                                id="post-content"
+                                name="post-content"
                                 multiline
                                 rows={8}
                                 placeholder="Enter your text and links"
@@ -949,6 +969,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
                                     <input
                                         type="file"
                                         id="fileInput"
+                                        name="file-upload"
                                         accept="image/*"
                                         style={{ display: 'none' }}
                                         onChange={handleFileInputChange}
@@ -1297,6 +1318,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ event, onClose, triggerSnackbar
                             }}
                             selectedPlatforms={selectedOptions}
                             scheduledTime={scheduledTime}
+                            error={snackbarSeverity === 'error'}
                         />
                     </>
 

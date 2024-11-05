@@ -24,9 +24,9 @@ export class LinkedInStrategy {
         const params = {
             grant_type: 'authorization_code',
             code,
-            redirect_uri: this.redirectUri,
-            client_id: this.clientId,
-            client_secret: this.clientSecret,
+            redirect_uri: 'https://backend.frostbay.online/connect/linkedin/callback',
+            client_id: '868kl1t1rcs245',
+            client_secret: '3813HFoCPHmyH79l',
         };
 
         const response = await firstValueFrom(this.httpService.post(url, null, { params }));
@@ -52,9 +52,9 @@ export class LinkedInStrategy {
         const getKey = (header, callback) => {
             client.getSigningKey(header.kid,
                 (err, key) => {
-                const signingKey = key.getPublicKey();
-                callback(null, signingKey);
-            });
+                    const signingKey = key.getPublicKey();
+                    callback(null, signingKey);
+                });
         };
 
         return new Promise((resolve, reject) => {

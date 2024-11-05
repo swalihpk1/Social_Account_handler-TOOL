@@ -53,7 +53,6 @@ const Planner = () => {
     const [statusFilter, setStatusFilter] = useState('');
 
     const { data, isLoading } = useFetchPostsQuery(undefined);
-    console.log("data", data);
     const [reschedulePost] = useReschedulePostMutation();
     const [deleteSchedulePost] = useDeleteShedulePostMutation();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
@@ -86,7 +85,7 @@ const Planner = () => {
                             platform: platform,
                             userId: post.userId,
                             status: post.status,
-                            // Store original UTC time for reference
+
                             originalTime: timestamp,
                             ...(isScheduled ? { jobId: post.jobId } : { response: post.platforms.find(p => p.platform === platform)?.response }),
                         },
@@ -179,6 +178,7 @@ const Planner = () => {
             await deleteSchedulePost({ jobId }).unwrap();
             updateEventsAfterChange({ jobId }, 'delete');
             showSnackbar('Post deleted successfully!', 'success');
+            handleClosePreviewDrawer();
         } catch (error) {
             console.error('Error deleting post:', error);
             showSnackbar('Failed to delete post.', 'error');
@@ -226,7 +226,6 @@ const Planner = () => {
         if (rescheduleInfo) {
             const { jobId, reScheduleTime } = rescheduleInfo;
 
-            // Convert to UTC ISO string for the API
             const utcTime = reScheduleTime.toISOString();
 
             reschedulePost({ jobId, reScheduleTime: utcTime })
@@ -331,14 +330,13 @@ const Planner = () => {
             hour: 'numeric',
             minute: '2-digit',
             hour12: true,
-            timeZone: 'UTC' // Use UTC to prevent double conversion
+            timeZone: 'UTC'
         });
     };
 
     const renderEventPreview = () => {
         if (!selectedEvent) return null;
 
-        console.log('selectedEvent', selectedEvent);
 
         const account = userSocialAccounts.find(acc => acc.provider === selectedEvent.extendedProps.platform);
         const eventData: SocialPreviewProps = {
@@ -441,17 +439,16 @@ const Planner = () => {
     };
 
     const renderEventContent = (eventInfo) => {
-
         const { event, view } = eventInfo;
 
         if (event.extendedProps.isLoading) {
             return renderSkeletonEvent(eventInfo);
         }
 
-        const platform = event.extendedProps.platform;
+        const platform = event.extendedProps.platform || 'unknown';
 
         const getPlatformIcon = (platform) => {
-            switch (platform) {
+            switch (platform.toLowerCase()) {
                 case 'facebook':
                     return <FacebookRoundedIcon sx={{ fontSize: '1rem', color: '#1877F2' }} />;
                 case 'twitter':
@@ -464,7 +461,6 @@ const Planner = () => {
                     return null;
             }
         };
-
 
         const truncateText = (text, maxLength) => {
             return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
@@ -490,11 +486,10 @@ const Planner = () => {
                         spacing={0.5}
                         sx={{ width: '100%' }}
                     >
-
                         <Stack direction="row" alignItems="center" spacing={0.5}>
                             {getPlatformIcon(platform)}
                             <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 'bold', lineHeight: 1 }}>
-                                {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                                {platform !== 'unknown' ? platform.charAt(0).toUpperCase() + platform.slice(1) : 'Unknown'}
                             </Typography>
                         </Stack>
 
