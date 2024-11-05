@@ -6,38 +6,52 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import XIcon from '@mui/icons-material/X';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 
-const SocialPlatformUploader = ({ open, handleClose, selectedPlatforms, scheduledTime }) => {
+const SocialPlatformUploader = ({ open, handleClose, selectedPlatforms, scheduledTime, error = false }) => {
     const [uploadStatus, setUploadStatus] = useState({});
     const [overallProgress, setOverallProgress] = useState(0);
     const [showProgressBar, setShowProgressBar] = useState(true);
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+    const [showErrorMessage, setShowErrorMessage] = useState(false);
 
     useEffect(() => {
         if (open) {
-
             const initialStatus = Object.fromEntries(selectedPlatforms.map(p => [p, { uploading: false, success: false }]));
             setUploadStatus(initialStatus);
             setOverallProgress(0);
             setShowProgressBar(true);
             setShowSuccessMessage(false);
+            setShowErrorMessage(false);
 
-            selectedPlatforms.forEach((platform, index) => {
-                simulateUpload(platform, index);
-            });
+            if (!error) {
+                selectedPlatforms.forEach((platform, index) => {
+                    simulateUpload(platform, index);
+                });
 
-            const totalAnimationTime = (selectedPlatforms.length * 2 + 1) * 1000;
+                const totalAnimationTime = (selectedPlatforms.length * 2 + 1) * 1000;
 
-            setTimeout(() => {
-                setShowProgressBar(false);
-                setShowSuccessMessage(true);
-            }, totalAnimationTime);
+                setTimeout(() => {
+                    setShowProgressBar(false);
+                    setShowSuccessMessage(true);
+                }, totalAnimationTime);
 
-            setTimeout(() => {
-                handleClose();
-            }, totalAnimationTime + 2000);
+                setTimeout(() => {
+                    handleClose();
+                }, totalAnimationTime + 2000);
+            } else {
+                // Show error state immediately
+                setTimeout(() => {
+                    setShowProgressBar(false);
+                    setShowErrorMessage(true);
+                }, 1000);
+
+                setTimeout(() => {
+                    handleClose();
+                }, 3000);
+            }
         }
-    }, [open, selectedPlatforms, handleClose]);
+    }, [open, selectedPlatforms, handleClose, error]);
 
     const simulateUpload = (platform, index) => {
         setTimeout(() => {
@@ -201,24 +215,43 @@ const SocialPlatformUploader = ({ open, handleClose, selectedPlatforms, schedule
                         </Box>
                     </Fade>
 
-                    {showSuccessMessage && (
+                    {showErrorMessage && (
+                        <Fade in={showErrorMessage}>
+                            <Box sx={{
+                                mt: 2,
+                                p: 2,
+                                bgcolor: 'white',
+                                borderRadius: 2,
+                                boxShadow: 3,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexDirection: 'column',
+                            }}>
+                                <ReportProblemIcon sx={{ fontSize: 53, color: 'error.main', mb: 1 }} />
+                                <Typography variant="h6" color="error.main">
+                                    Failed to {scheduledTime ? 'schedule' : 'create'} post
+                                </Typography>
+                            </Box>
+                        </Fade>
+                    )}
+
+                    {showSuccessMessage && !showErrorMessage && (
                         <Fade in={showSuccessMessage}>
-                            <Box
-                                sx={{
-                                    mt: 2,
-                                    p: 2,
-                                    bgcolor: 'white',
-                                    borderRadius: 2,
-                                    boxShadow: 3,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flexDirection: 'column',
-                                }}
-                            >
+                            <Box sx={{
+                                mt: 2,
+                                p: 2,
+                                bgcolor: 'white',
+                                borderRadius: 2,
+                                boxShadow: 3,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexDirection: 'column',
+                            }}>
                                 <CheckCircleIcon sx={{ fontSize: 53, color: 'success.main', mb: 1 }} />
                                 <Typography variant="h6" color="success.main">
-                                    Post successfully  {scheduledTime ? ' sheduled' : 'created'}
+                                    Post successfully {scheduledTime ? 'scheduled' : 'created'}
                                 </Typography>
                             </Box>
                         </Fade>

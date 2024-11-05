@@ -20,33 +20,29 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
 
-
-  app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: true,
-      httpOnly: true,
-      sameSite: 'none',
-      maxAge: 24 * 60 * 60 * 1000,
-      domain: process.env.NODE_ENV === 'production'
-        ? '.frostbay.online'
-        : undefined
-    },
-  }));
-
-
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || 'default_secret',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        sameSite: 'none',
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        domain: process.env.NODE_ENV === 'production' ? '.frostbay.online' : undefined,
+      },
+    })
+  );
 
   app.useGlobalPipes(new ValidationPipe());
 
-  // app.setGlobalPrefix('api');
-
   const port = process.env.PORT || 3001;
   await app.listen(port, () => {
-    Logger.log(`Server running on ${process.env.NODE_ENV === 'production'
-      ? 'https://backend.frostbay.online'
-      : `http://localhost:${port}`}`, 'Bootstrap');
+    Logger.log(
+      `Server running on ${process.env.NODE_ENV === 'production' ? 'https://backend.frostbay.online' : `http://localhost:${port}`}`,
+      'Bootstrap'
+    );
   });
 }
 

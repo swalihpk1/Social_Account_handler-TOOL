@@ -185,9 +185,11 @@ export class PostService {
             ? 'https://graph.facebook.com/v20.0/404645566059003/photos'
             : 'https://graph.facebook.com/v20.0/404645566059003/feed';
 
-        const formData = new FormData();
+        let bodyData: any;
+        let headers: any;
 
         if (imageUrl) {
+            const formData = new FormData();
             try {
                 if (fs.existsSync(imageUrl)) {
                     formData.append('source', fs.createReadStream(imageUrl));
@@ -198,15 +200,20 @@ export class PostService {
                 console.error('Error reading file:', err.message);
                 throw new Error('Failed to read the local image file.');
             }
+            formData.append('message', content);
+            formData.append('access_token', accessToken);
+            bodyData = formData;
+            headers = formData.getHeaders();
+        } else {
+            bodyData = {
+                message: content,
+                access_token: accessToken,
+            };
+            headers = { 'Content-Type': 'application/json' };
         }
 
-        formData.append('message', content);
-        formData.append('access_token', accessToken);
-
         try {
-            const response = await this.httpService.post(url, formData, {
-                headers: formData.getHeaders(),
-            }).toPromise();
+            const response = await this.httpService.post(url, bodyData, { headers }).toPromise();
             return response.data;
         } catch (error) {
             console.error('Error posting to Facebook:', error.response?.data || error.message);

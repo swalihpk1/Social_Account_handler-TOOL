@@ -14,7 +14,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import FBAccountListModal from '../../components/FBAccountListModal';
 
-
 const Connect: React.FC = () => {
     const dispatch = useDispatch();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
@@ -26,8 +25,6 @@ const Connect: React.FC = () => {
     const [fbUserData, setFbUserData] = useState(null);
     const location = useLocation();
 
-
-
     const isFromSignup = location.state && location.state.fromSignup;
 
     const handleSocialLogin = (provider: string) => {
@@ -37,6 +34,7 @@ const Connect: React.FC = () => {
             setSnackbarOpen(true);
         } else {
             window.location.href = `https://backend.frostbay.online/connect/${provider}`;
+            // window.location.href = `http://localhost:3001/connect/${provider}`;
         }
     };
 

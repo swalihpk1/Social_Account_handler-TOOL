@@ -7,13 +7,8 @@ const ANALYTICS_URL = 'analytics';
 
 const baseUrl = 'https://backend.frostbay.online';
 // const baseUrl = 'http://localhost:3001';
-
 const baseQuery = fetchBaseQuery({
-    baseUrl,
-    credentials: 'include',
-    headers: {
-        'Content-Type': 'application/json'
-    },
+    baseUrl
 });
 
 export const apiSlice = createApi({
@@ -46,18 +41,20 @@ export const apiSlice = createApi({
                 method: 'GET',
             }),
         }),
-        createPost: builder.mutation<void, FormData>({
-            query: (data) => ({
-                url: `${POST_URL}/create`,
+        createPost: builder.mutation<any, FormData>({
+            query: (formData) => ({
+                url: '/post/create',
                 method: 'POST',
-                body: data,
+                body: formData,
+                formData: true,
             }),
         }),
-        shedulePost: builder.mutation<void, FormData>({
-            query: (data) => ({
-                url: `${POST_URL}/schedule`,
+        shedulePost: builder.mutation<any, FormData>({
+            query: (formData) => ({
+                url: '/post/schedule',
                 method: 'POST',
-                body: data,
+                body: formData,
+                formData: true,
             }),
         }),
         getInstagramAccessToken: builder.query({
