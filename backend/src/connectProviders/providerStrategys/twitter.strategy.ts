@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import * as OAuth from 'oauth';
-import axios from 'axios';
 
 @Injectable()
 export class TwitterStrategy {

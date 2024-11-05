@@ -45,6 +45,7 @@ export class AuthService {
                 throw new CustomException('Invalid email or password', 401);
             }
 
+            // Set session and global state
             req.session.user = { email: user.email, id: user._id };
             this.globalStateService.setUserId(user._id.toString());
 
